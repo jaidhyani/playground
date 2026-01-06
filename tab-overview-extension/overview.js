@@ -12,6 +12,7 @@ class TabOverview {
     this.contextMenuTab = null;
     this.isCapturing = false;
     this.pendingTabIds = new Set(); // Track tabs we're closing to skip redundant updates
+    this.pendingMoveTabIds = new Set(); // Track tabs we're moving to skip redundant updates
     this.loadDebounceTimer = null;
     this.groupByDomain = false;
     this.collapsedDomains = new Set();
@@ -311,10 +312,21 @@ class TabOverview {
       this.debouncedLoadTabs();
     });
     chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+      // Skip if we're moving this tab
+      if (this.pendingMoveTabIds.has(tabId)) {
+        return;
+      }
       // Only reload for meaningful changes
       if (changeInfo.status === 'complete' || changeInfo.title || changeInfo.favIconUrl) {
         this.debouncedLoadTabs();
       }
+    });
+    chrome.tabs.onMoved.addListener((tabId) => {
+      // Skip if we already handled this move optimistically
+      if (this.pendingMoveTabIds.has(tabId)) {
+        return;
+      }
+      this.debouncedLoadTabs();
     });
     chrome.tabs.onActivated.addListener(() => {
       this.debouncedLoadTabs();
@@ -747,16 +759,75 @@ class TabOverview {
 
   async moveTab(tabId, fromWindowId, toWindowId, targetIndex) {
     try {
-      // Move the tab - Chrome handles cross-window moves automatically
+      // Track this tab so we skip redundant Chrome events
+      this.pendingMoveTabIds.add(tabId);
+
+      // Optimistically update the DOM immediately for smooth UX
+      const draggedCard = document.querySelector(`[data-tab-id="${tabId}"]`);
+      const targetCard = document.querySelector(`[data-tab-id="${this.dropTarget?.tabId}"]`);
+
+      if (draggedCard && targetCard && this.dropTarget) {
+        // Move the card in the DOM
+        const parent = targetCard.parentNode;
+        if (this.dropTarget.position === 'before') {
+          parent.insertBefore(draggedCard, targetCard);
+        } else {
+          parent.insertBefore(draggedCard, targetCard.nextSibling);
+        }
+
+        // Update data attributes to reflect new position
+        draggedCard.dataset.windowId = toWindowId;
+      }
+
+      // Update local state without full re-render
+      this.updateLocalTabOrder(tabId, fromWindowId, toWindowId, targetIndex);
+
+      // Move the tab via Chrome API
       await chrome.tabs.move(tabId, {
         windowId: toWindowId,
         index: targetIndex
       });
-      // Reload tabs to reflect new order
-      await this.loadTabs(true);
+
+      // Clear pending flag after a short delay to let any Chrome events settle
+      setTimeout(() => {
+        this.pendingMoveTabIds.delete(tabId);
+      }, 300);
     } catch (error) {
       console.error('Error moving tab:', error);
+      this.pendingMoveTabIds.delete(tabId);
+      this.loadTabs(true);
     }
+  }
+
+  updateLocalTabOrder(tabId, fromWindowId, toWindowId, targetIndex) {
+    // Find and remove the tab from its original window
+    const fromWindow = this.windows.find(w => w.id === fromWindowId);
+    const toWindow = this.windows.find(w => w.id === toWindowId);
+
+    if (!fromWindow) return;
+
+    const tabIndex = fromWindow.tabs.findIndex(t => t.id === tabId);
+    if (tabIndex === -1) return;
+
+    const [tab] = fromWindow.tabs.splice(tabIndex, 1);
+    tab.windowId = toWindowId;
+
+    // Insert into target window
+    if (toWindow) {
+      toWindow.tabs.splice(targetIndex, 0, tab);
+
+      // Update indices for all tabs in affected windows
+      fromWindow.tabs.forEach((t, i) => t.index = i);
+      if (fromWindowId !== toWindowId) {
+        toWindow.tabs.forEach((t, i) => t.index = i);
+      }
+    }
+
+    // Update flat tabs array
+    this.tabs = this.windows.flatMap(w => w.tabs || []);
+
+    // Update stats without re-rendering
+    this.updateStats();
   }
 
   async switchToTab(tabId, windowId) {
