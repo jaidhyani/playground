@@ -23,9 +23,9 @@
   box-sizing: border-box;
 }
 
-body {
-  width: 700px;
-  height: 550px;
+html, body {
+  width: 100%;
+  height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -36,7 +36,9 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 16px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 24px 32px;
 }
 
 /* Header Styles */
@@ -44,12 +46,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   flex-shrink: 0;
 }
 
 .header h1 {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -74,13 +76,13 @@ body {
 }
 
 #searchInput {
-  width: 200px;
-  padding: 8px 12px 8px 32px;
+  width: 300px;
+  padding: 10px 14px 10px 36px;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
@@ -202,11 +204,11 @@ body {
 .tab-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
   overflow-y: auto;
   padding-right: 8px;
-  padding-bottom: 8px;
+  padding-bottom: 16px;
 }
 
 .tab-grid::-webkit-scrollbar {
@@ -261,7 +263,7 @@ body {
 .tab-preview {
   position: relative;
   width: 100%;
-  height: 100px;
+  height: 160px;
   background: var(--bg-tertiary);
   overflow: hidden;
 }
@@ -450,8 +452,8 @@ body {
 
 .window-tabs {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .tab-grid.list-view .window-tabs {
@@ -604,13 +606,46 @@ body {
 .tab-card:nth-child(6) { animation-delay: 0.25s; }
 
 /* Responsive adjustments */
-@media (max-width: 500px) {
-  .tab-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+@media (max-width: 900px) {
+  .container {
+    padding: 16px 20px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+  }
+
+  #searchInput {
+    width: 200px;
+  }
+
+  .tab-grid,
+  .window-tabs {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .tab-preview {
+    height: 130px;
+  }
+}
+
+@media (max-width: 600px) {
+  .tab-grid,
+  .window-tabs {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
   }
 
   .tab-preview {
-    height: 80px;
+    height: 100px;
+  }
+
+  .header-controls {
+    flex-wrap: wrap;
+  }
+
+  #searchInput {
+    width: 160px;
   }
 }

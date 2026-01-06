@@ -3,7 +3,64 @@
 // Cache for tab screenshots
 const screenshotCache = new Map();
 
-// Listen for messages from popup
+// URL of the overview page
+const OVERVIEW_URL = chrome.runtime.getURL('overview.html');
+
+// Open overview page when extension icon is clicked
+chrome.action.onClicked.addListener(async () => {
+  // Check if overview tab already exists
+  const tabs = await chrome.tabs.query({ url: OVERVIEW_URL });
+
+  if (tabs.length > 0) {
+    // Focus existing overview tab
+    await chrome.tabs.update(tabs[0].id, { active: true });
+    await chrome.windows.update(tabs[0].windowId, { focused: true });
+  } else {
+    // Open new overview tab
+    await chrome.tabs.create({ url: OVERVIEW_URL });
+  }
+});
+
+// Capture screenshot when a tab is activated and broadcast to overview
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  try {
+    const tab = await chrome.tabs.get(activeInfo.tabId);
+
+    // Skip restricted URLs and the overview page itself
+    if (tab.url.startsWith('chrome://') ||
+        tab.url.startsWith('chrome-extension://') ||
+        tab.url.startsWith('devtools://') ||
+        tab.url.startsWith('edge://') ||
+        tab.url.startsWith('about:')) {
+      return;
+    }
+
+    // Small delay to let the tab render
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Capture using debugger API
+    const dataUrl = await captureTabWithDebugger(activeInfo.tabId);
+
+    if (dataUrl) {
+      // Cache it
+      const cacheKey = `${tab.id}-${tab.url}`;
+      screenshotCache.set(cacheKey, dataUrl);
+
+      // Broadcast to any listening overview pages
+      chrome.runtime.sendMessage({
+        action: 'screenshotUpdated',
+        tabId: tab.id,
+        dataUrl: dataUrl
+      }).catch(() => {
+        // No listeners, ignore
+      });
+    }
+  } catch (error) {
+    console.log('Error capturing on activation:', error.message);
+  }
+});
+
+// Listen for messages from overview page
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'captureTab') {
     captureTabScreenshot(request.tabId, request.windowId)

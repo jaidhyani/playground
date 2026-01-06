@@ -152,13 +152,17 @@ class TabOverview {
 
   handleScreenshotMessage(message) {
     if (message.action === 'screenshotCaptured') {
-      // Update the screenshot and refresh just that card
+      // Update the screenshot and refresh just that card (during bulk capture)
       this.screenshots[message.tabId] = message.dataUrl;
       this.updateTabCardPreview(message.tabId, message.dataUrl);
 
       // Update button progress
       const captureBtn = document.getElementById('captureBtn');
       this.updateCaptureButton(captureBtn, message.progress.captured, message.progress.total);
+    } else if (message.action === 'screenshotUpdated') {
+      // Real-time update when user switches tabs
+      this.screenshots[message.tabId] = message.dataUrl;
+      this.updateTabCardPreview(message.tabId, message.dataUrl);
     } else if (message.action === 'captureComplete') {
       this.finishCapture();
     } else if (message.action === 'captureError') {
@@ -274,8 +278,7 @@ class TabOverview {
     });
     chrome.tabs.onActivated.addListener(() => {
       this.debouncedLoadTabs();
-      // Capture the newly active tab's screenshot
-      this.captureActiveTab();
+      // Screenshot capture is handled by background script and broadcast via screenshotUpdated
     });
   }
 
@@ -545,7 +548,7 @@ class TabOverview {
     try {
       await chrome.windows.update(windowId, { focused: true });
       await chrome.tabs.update(tabId, { active: true });
-      window.close();
+      // Don't close - we're in a full tab now, user can navigate back
     } catch (error) {
       console.error('Error switching to tab:', error);
     }
