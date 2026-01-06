@@ -111,43 +111,97 @@ class TabOverview {
 
     this.isCapturing = true;
     const captureBtn = document.getElementById('captureBtn');
-    if (captureBtn) {
-      captureBtn.disabled = true;
-      captureBtn.innerHTML = `
-        <svg class="spinner-icon" viewBox="0 0 24 24" width="16" height="16">
-          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
-        </svg>
-        <span>Capturing...</span>
-      `;
-    }
+    this.updateCaptureButton(captureBtn, 0, 0);
 
     try {
-      const response = await chrome.runtime.sendMessage({
+      await chrome.runtime.sendMessage({
         action: 'captureAllTabPreviews'
       });
-
-      if (response && response.success) {
-        // Merge new screenshots with existing ones
-        this.screenshots = { ...this.screenshots, ...response.screenshots };
-        this.render();
-      }
+      // Streaming response - screenshots come via onMessage listener
     } catch (error) {
-      console.error('Error capturing all previews:', error);
-    } finally {
-      this.isCapturing = false;
-      if (captureBtn) {
-        captureBtn.disabled = false;
-        captureBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="16" height="16">
-            <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-          </svg>
-          <span>Capture Previews</span>
-        `;
-      }
+      console.error('Error starting capture:', error);
+      this.finishCapture();
+    }
+  }
+
+  updateCaptureButton(btn, captured, total) {
+    if (!btn) return;
+    btn.disabled = true;
+    const progress = total > 0 ? ` (${captured}/${total})` : '...';
+    btn.innerHTML = `
+      <svg class="spinner-icon" viewBox="0 0 24 24" width="16" height="16">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+      </svg>
+      <span>Capturing${progress}</span>
+    `;
+  }
+
+  finishCapture() {
+    this.isCapturing = false;
+    const captureBtn = document.getElementById('captureBtn');
+    if (captureBtn) {
+      captureBtn.disabled = false;
+      captureBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14">
+          <path fill="currentColor" d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+        </svg>
+        <span>Capture Previews</span>
+      `;
+    }
+  }
+
+  handleScreenshotMessage(message) {
+    if (message.action === 'screenshotCaptured') {
+      // Update the screenshot and refresh just that card
+      this.screenshots[message.tabId] = message.dataUrl;
+      this.updateTabCardPreview(message.tabId, message.dataUrl);
+
+      // Update button progress
+      const captureBtn = document.getElementById('captureBtn');
+      this.updateCaptureButton(captureBtn, message.progress.captured, message.progress.total);
+    } else if (message.action === 'captureComplete') {
+      this.finishCapture();
+    } else if (message.action === 'captureError') {
+      console.error('Capture error:', message.error);
+      this.finishCapture();
+    }
+  }
+
+  updateTabCardPreview(tabId, dataUrl) {
+    const card = document.querySelector(`[data-tab-id="${tabId}"]`);
+    if (!card) return;
+
+    const preview = card.querySelector('.tab-preview');
+    if (!preview) return;
+
+    // Replace placeholder with actual screenshot
+    const existingImg = preview.querySelector('img:not(.placeholder img)');
+    const placeholder = preview.querySelector('.placeholder');
+
+    if (placeholder) {
+      // Create new image and fade it in
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = 'Tab preview';
+      img.style.opacity = '0';
+      img.style.transition = 'opacity 0.2s';
+      preview.insertBefore(img, placeholder);
+
+      img.onload = () => {
+        img.style.opacity = '1';
+        placeholder.remove();
+      };
+    } else if (existingImg) {
+      existingImg.src = dataUrl;
     }
   }
 
   setupEventListeners() {
+    // Listen for streamed screenshots from background
+    chrome.runtime.onMessage.addListener((message) => {
+      this.handleScreenshotMessage(message);
+    });
+
     // Search input
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', (e) => {

@@ -27,9 +27,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'captureAllTabPreviews') {
-    captureAllTabPreviews()
-      .then(screenshots => sendResponse({ success: true, screenshots }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
+    // Start capture and stream results back
+    captureAllTabPreviewsStreaming(sender.tab?.id);
+    sendResponse({ success: true, streaming: true });
     return true;
   }
 
@@ -143,17 +143,27 @@ async function captureTabWithDebugger(tabId) {
   }
 }
 
-// Capture previews of ALL tabs using debugger API (no tab switching)
-async function captureAllTabPreviews() {
-  const screenshots = {};
-
+// Capture previews of ALL tabs using debugger API, streaming results back
+async function captureAllTabPreviewsStreaming() {
   try {
     const windows = await chrome.windows.getAll({ populate: true });
+    const allTabs = windows
+      .filter(w => w.type === 'normal')
+      .flatMap(w => w.tabs);
+
+    const totalTabs = allTabs.filter(tab =>
+      !tab.url.startsWith('chrome://') &&
+      !tab.url.startsWith('chrome-extension://') &&
+      !tab.url.startsWith('devtools://') &&
+      !tab.url.startsWith('edge://') &&
+      !tab.url.startsWith('about:')
+    ).length;
+
+    let captured = 0;
 
     for (const win of windows) {
       if (win.type !== 'normal') continue;
 
-      // Capture each tab in this window
       for (const tab of win.tabs) {
         try {
           // Skip chrome:// and other restricted URLs
@@ -169,22 +179,41 @@ async function captureAllTabPreviews() {
           const dataUrl = await captureTabWithDebugger(tab.id);
 
           if (dataUrl) {
-            screenshots[tab.id] = dataUrl;
-
             // Cache it
             const cacheKey = `${tab.id}-${tab.url}`;
             screenshotCache.set(cacheKey, dataUrl);
+
+            captured++;
+
+            // Send this screenshot immediately to the popup
+            chrome.runtime.sendMessage({
+              action: 'screenshotCaptured',
+              tabId: tab.id,
+              dataUrl: dataUrl,
+              progress: { captured, total: totalTabs }
+            }).catch(() => {
+              // Popup might be closed, ignore
+            });
           }
         } catch (e) {
           console.log('Could not capture tab:', tab.id, e.message);
         }
       }
     }
+
+    // Signal completion
+    chrome.runtime.sendMessage({
+      action: 'captureComplete',
+      progress: { captured, total: totalTabs }
+    }).catch(() => {});
+
   } catch (error) {
     console.error('Error capturing all tab previews:', error);
+    chrome.runtime.sendMessage({
+      action: 'captureError',
+      error: error.message
+    }).catch(() => {});
   }
-
-  return screenshots;
 }
 
 // Clean up cache when tabs are updated or closed
