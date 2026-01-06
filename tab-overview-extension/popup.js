@@ -10,6 +10,9 @@ class TabOverview {
     this.currentWindowFilter = 'all';
     this.searchQuery = '';
     this.contextMenuTab = null;
+    this.isCapturing = false;
+    this.pendingTabIds = new Set(); // Track tabs we're closing to skip redundant updates
+    this.loadDebounceTimer = null;
 
     this.init();
   }
@@ -20,11 +23,29 @@ class TabOverview {
     this.render();
   }
 
-  async loadTabs() {
+  // Debounced version for event listeners
+  debouncedLoadTabs() {
+    if (this.loadDebounceTimer) {
+      clearTimeout(this.loadDebounceTimer);
+    }
+    this.loadDebounceTimer = setTimeout(() => {
+      this.loadTabs(true);
+    }, 150);
+  }
+
+  async loadTabs(isFromEvent = false) {
     try {
       // Get all windows with their tabs
       this.windows = await chrome.windows.getAll({ populate: true });
       this.tabs = this.windows.flatMap(w => w.tabs || []);
+
+      // Clean up pendingTabIds - remove any that no longer exist
+      const currentTabIds = new Set(this.tabs.map(t => t.id));
+      for (const id of this.pendingTabIds) {
+        if (!currentTabIds.has(id)) {
+          this.pendingTabIds.delete(id);
+        }
+      }
 
       // Try to get tab groups (Chrome 89+)
       try {
@@ -33,8 +54,10 @@ class TabOverview {
         this.tabGroups = [];
       }
 
-      // Capture screenshots of active tabs
-      await this.captureScreenshots();
+      // Only capture screenshots on initial load, not from events
+      if (!isFromEvent) {
+        await this.captureScreenshots();
+      }
 
       this.updateStats();
       this.updateWindowFilter();
@@ -58,12 +81,58 @@ class TabOverview {
     }
   }
 
+  async captureAllPreviews() {
+    if (this.isCapturing) return;
+
+    this.isCapturing = true;
+    const captureBtn = document.getElementById('captureBtn');
+    if (captureBtn) {
+      captureBtn.disabled = true;
+      captureBtn.innerHTML = `
+        <svg class="spinner-icon" viewBox="0 0 24 24" width="16" height="16">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+        </svg>
+        <span>Capturing...</span>
+      `;
+    }
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'captureAllTabPreviews'
+      });
+
+      if (response && response.success) {
+        // Merge new screenshots with existing ones
+        this.screenshots = { ...this.screenshots, ...response.screenshots };
+        this.render();
+      }
+    } catch (error) {
+      console.error('Error capturing all previews:', error);
+    } finally {
+      this.isCapturing = false;
+      if (captureBtn) {
+        captureBtn.disabled = false;
+        captureBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+          <span>Capture Previews</span>
+        `;
+      }
+    }
+  }
+
   setupEventListeners() {
     // Search input
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', (e) => {
       this.searchQuery = e.target.value.toLowerCase();
       this.render();
+    });
+
+    // Capture button
+    document.getElementById('captureBtn').addEventListener('click', () => {
+      this.captureAllPreviews();
     });
 
     // View toggle
@@ -108,11 +177,23 @@ class TabOverview {
       }
     });
 
-    // Listen for tab changes
-    chrome.tabs.onCreated.addListener(() => this.loadTabs());
-    chrome.tabs.onRemoved.addListener(() => this.loadTabs());
-    chrome.tabs.onUpdated.addListener(() => this.loadTabs());
-    chrome.tabs.onActivated.addListener(() => this.loadTabs());
+    // Listen for tab changes with debouncing
+    chrome.tabs.onCreated.addListener(() => this.debouncedLoadTabs());
+    chrome.tabs.onRemoved.addListener((tabId) => {
+      // Skip if we already handled this tab removal optimistically
+      if (this.pendingTabIds.has(tabId)) {
+        this.pendingTabIds.delete(tabId);
+        return;
+      }
+      this.debouncedLoadTabs();
+    });
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+      // Only reload for meaningful changes
+      if (changeInfo.status === 'complete' || changeInfo.title || changeInfo.favIconUrl) {
+        this.debouncedLoadTabs();
+      }
+    });
+    chrome.tabs.onActivated.addListener(() => this.debouncedLoadTabs());
   }
 
   setView(view) {
@@ -389,6 +470,9 @@ class TabOverview {
 
   async closeTab(tabId) {
     try {
+      // Track this tab so we skip the redundant onRemoved event
+      this.pendingTabIds.add(tabId);
+
       // Remove from local state immediately for instant UI feedback
       this.tabs = this.tabs.filter(t => t.id !== tabId);
       this.windows = this.windows.map(w => ({
@@ -397,15 +481,27 @@ class TabOverview {
       }));
       delete this.screenshots[tabId];
 
-      // Update UI immediately
-      this.updateStats();
-      this.updateWindowFilter();
-      this.render();
+      // Update UI immediately - just remove the element instead of full re-render
+      const card = document.querySelector(`[data-tab-id="${tabId}"]`);
+      if (card) {
+        card.style.transform = 'scale(0.8)';
+        card.style.opacity = '0';
+        card.style.transition = 'transform 0.15s, opacity 0.15s';
+        setTimeout(() => {
+          card.remove();
+          this.updateStats();
+          this.updateWindowFilter();
+        }, 150);
+      } else {
+        this.updateStats();
+        this.updateWindowFilter();
+      }
 
       // Then remove via Chrome API
       await chrome.tabs.remove(tabId);
     } catch (error) {
       console.error('Error closing tab:', error);
+      this.pendingTabIds.delete(tabId);
       // Reload tabs if there was an error to restore correct state
       await this.loadTabs();
     }
@@ -415,6 +511,9 @@ class TabOverview {
     if (!tabIds.length) return;
 
     try {
+      // Track these tabs so we skip the redundant onRemoved events
+      tabIds.forEach(id => this.pendingTabIds.add(id));
+
       // Remove from local state immediately for instant UI feedback
       const tabIdSet = new Set(tabIds);
       this.tabs = this.tabs.filter(t => !tabIdSet.has(t.id));
@@ -424,15 +523,30 @@ class TabOverview {
       }));
       tabIds.forEach(id => delete this.screenshots[id]);
 
-      // Update UI immediately
-      this.updateStats();
-      this.updateWindowFilter();
-      this.render();
+      // Animate out and remove elements
+      tabIds.forEach(id => {
+        const card = document.querySelector(`[data-tab-id="${id}"]`);
+        if (card) {
+          card.style.transform = 'scale(0.8)';
+          card.style.opacity = '0';
+          card.style.transition = 'transform 0.15s, opacity 0.15s';
+        }
+      });
+
+      setTimeout(() => {
+        tabIds.forEach(id => {
+          const card = document.querySelector(`[data-tab-id="${id}"]`);
+          if (card) card.remove();
+        });
+        this.updateStats();
+        this.updateWindowFilter();
+      }, 150);
 
       // Then remove via Chrome API
       await chrome.tabs.remove(tabIds);
     } catch (error) {
       console.error('Error closing tabs:', error);
+      tabIds.forEach(id => this.pendingTabIds.delete(id));
       // Reload tabs if there was an error to restore correct state
       await this.loadTabs();
     }
