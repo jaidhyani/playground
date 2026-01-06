@@ -110,7 +110,40 @@ async function captureAllTabsInWindow(windowId) {
   return screenshots;
 }
 
-// Capture previews of ALL tabs by briefly activating each one
+// Capture a single tab using the debugger API (no tab switching required)
+async function captureTabWithDebugger(tabId) {
+  const debuggee = { tabId };
+
+  try {
+    // Attach debugger to the tab
+    await chrome.debugger.attach(debuggee, '1.3');
+
+    // Capture screenshot using DevTools Protocol
+    const result = await chrome.debugger.sendCommand(debuggee, 'Page.captureScreenshot', {
+      format: 'jpeg',
+      quality: 70
+    });
+
+    // Detach debugger
+    await chrome.debugger.detach(debuggee);
+
+    if (result && result.data) {
+      return `data:image/jpeg;base64,${result.data}`;
+    }
+    return null;
+  } catch (error) {
+    // Try to detach if we attached
+    try {
+      await chrome.debugger.detach(debuggee);
+    } catch (e) {
+      // Ignore detach errors
+    }
+    console.log('Debugger capture failed for tab', tabId, error.message);
+    return null;
+  }
+}
+
+// Capture previews of ALL tabs using debugger API (no tab switching)
 async function captureAllTabPreviews() {
   const screenshots = {};
 
@@ -119,10 +152,6 @@ async function captureAllTabPreviews() {
 
     for (const win of windows) {
       if (win.type !== 'normal') continue;
-
-      // Remember the originally active tab
-      const originalActiveTab = win.tabs.find(t => t.active);
-      if (!originalActiveTab) continue;
 
       // Capture each tab in this window
       for (const tab of win.tabs) {
@@ -136,34 +165,19 @@ async function captureAllTabPreviews() {
             continue;
           }
 
-          // Activate the tab
-          await chrome.tabs.update(tab.id, { active: true });
+          // Use debugger API to capture without switching tabs
+          const dataUrl = await captureTabWithDebugger(tab.id);
 
-          // Small delay to let the tab render
-          await new Promise(resolve => setTimeout(resolve, 150));
+          if (dataUrl) {
+            screenshots[tab.id] = dataUrl;
 
-          // Capture the screenshot
-          const dataUrl = await chrome.tabs.captureVisibleTab(win.id, {
-            format: 'jpeg',
-            quality: 60
-          });
-
-          screenshots[tab.id] = dataUrl;
-
-          // Cache it
-          const cacheKey = `${tab.id}-${tab.url}`;
-          screenshotCache.set(cacheKey, dataUrl);
-
+            // Cache it
+            const cacheKey = `${tab.id}-${tab.url}`;
+            screenshotCache.set(cacheKey, dataUrl);
+          }
         } catch (e) {
           console.log('Could not capture tab:', tab.id, e.message);
         }
-      }
-
-      // Restore the original active tab
-      try {
-        await chrome.tabs.update(originalActiveTab.id, { active: true });
-      } catch (e) {
-        console.log('Could not restore original tab:', e.message);
       }
     }
   } catch (error) {
