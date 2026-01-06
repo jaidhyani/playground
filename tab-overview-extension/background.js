@@ -6,6 +6,11 @@ const screenshotCache = new Map();
 // URL of the overview page
 const OVERVIEW_URL = chrome.runtime.getURL('overview.html');
 
+// Check if a URL can be captured (only http/https are reliably capturable)
+function isCapturableUrl(url) {
+  return url && (url.startsWith('http://') || url.startsWith('https://'));
+}
+
 // Open overview page when extension icon is clicked
 chrome.action.onClicked.addListener(async () => {
   // Check if overview tab already exists
@@ -26,12 +31,8 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
 
-    // Skip restricted URLs and the overview page itself
-    if (tab.url.startsWith('chrome://') ||
-        tab.url.startsWith('chrome-extension://') ||
-        tab.url.startsWith('devtools://') ||
-        tab.url.startsWith('edge://') ||
-        tab.url.startsWith('about:')) {
+    // Only capture http/https URLs (skip internal/extension pages)
+    if (!isCapturableUrl(tab.url)) {
       return;
     }
 
@@ -211,13 +212,7 @@ async function captureAllTabPreviewsStreaming() {
       .filter(w => w.type === 'normal')
       .flatMap(w => w.tabs);
 
-    const totalTabs = allTabs.filter(tab =>
-      !tab.url.startsWith('chrome://') &&
-      !tab.url.startsWith('chrome-extension://') &&
-      !tab.url.startsWith('devtools://') &&
-      !tab.url.startsWith('edge://') &&
-      !tab.url.startsWith('about:')
-    ).length;
+    const totalTabs = allTabs.filter(tab => isCapturableUrl(tab.url)).length;
 
     let captured = 0;
 
@@ -226,12 +221,8 @@ async function captureAllTabPreviewsStreaming() {
 
       for (const tab of win.tabs) {
         try {
-          // Skip chrome:// and other restricted URLs
-          if (tab.url.startsWith('chrome://') ||
-              tab.url.startsWith('chrome-extension://') ||
-              tab.url.startsWith('devtools://') ||
-              tab.url.startsWith('edge://') ||
-              tab.url.startsWith('about:')) {
+          // Only capture http/https URLs
+          if (!isCapturableUrl(tab.url)) {
             continue;
           }
 
