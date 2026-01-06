@@ -16,6 +16,8 @@ class TabOverview {
     this.groupByDomain = false;
     this.collapsedDomains = new Set();
     this.draggedTab = null;
+    this.dropIndicator = null;
+    this.dropTarget = null; // { tabId, windowId, position: 'before' | 'after' }
 
     this.init();
   }
@@ -23,7 +25,37 @@ class TabOverview {
   async init() {
     await this.loadTabs();
     this.setupEventListeners();
+    this.createDropIndicator();
     this.render();
+  }
+
+  createDropIndicator() {
+    this.dropIndicator = document.createElement('div');
+    this.dropIndicator.className = 'drop-indicator';
+    this.dropIndicator.style.display = 'none';
+    document.body.appendChild(this.dropIndicator);
+  }
+
+  showDropIndicator(card, position) {
+    const rect = card.getBoundingClientRect();
+    const indicator = this.dropIndicator;
+
+    indicator.style.display = 'block';
+    indicator.style.height = `${rect.height}px`;
+    indicator.style.top = `${rect.top}px`;
+
+    if (position === 'before') {
+      indicator.style.left = `${rect.left - 12}px`;
+    } else {
+      indicator.style.left = `${rect.right + 8}px`;
+    }
+  }
+
+  hideDropIndicator() {
+    if (this.dropIndicator) {
+      this.dropIndicator.style.display = 'none';
+    }
+    this.dropTarget = null;
   }
 
   // Debounced version for event listeners
@@ -595,6 +627,64 @@ class TabOverview {
   }
 
   attachTabListeners() {
+    const grid = document.getElementById('tabGrid');
+
+    // Grid-level drag handlers for showing indicator
+    grid.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (!this.draggedTab) return;
+
+      e.dataTransfer.dropEffect = 'move';
+
+      // Find the card under the cursor
+      const card = e.target.closest('.tab-card');
+      if (card && !card.classList.contains('dragging')) {
+        const tabId = parseInt(card.dataset.tabId);
+        const windowId = parseInt(card.dataset.windowId);
+        const rect = card.getBoundingClientRect();
+        const mouseX = e.clientX;
+
+        // Determine if we're on the left or right half of the card
+        const position = mouseX < rect.left + rect.width / 2 ? 'before' : 'after';
+
+        this.dropTarget = {
+          tabId,
+          windowId,
+          index: parseInt(card.dataset.tabIndex),
+          position
+        };
+
+        this.showDropIndicator(card, position);
+      }
+    });
+
+    grid.addEventListener('dragleave', (e) => {
+      // Only hide if we're actually leaving the grid
+      if (!grid.contains(e.relatedTarget)) {
+        this.hideDropIndicator();
+      }
+    });
+
+    grid.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (this.draggedTab && this.dropTarget) {
+        const { windowId, index, position } = this.dropTarget;
+        // Calculate actual target index based on position
+        let targetIndex = index;
+        if (position === 'after') {
+          targetIndex = index + 1;
+        }
+
+        // If moving within same window and dragged tab is before target, adjust index
+        if (this.draggedTab.windowId === windowId && this.draggedTab.index < index) {
+          targetIndex--;
+        }
+
+        this.moveTab(this.draggedTab.tabId, this.draggedTab.windowId, windowId, targetIndex);
+      }
+      this.hideDropIndicator();
+    });
+
     document.querySelectorAll('.tab-card').forEach(card => {
       const tabId = parseInt(card.dataset.tabId);
       const windowId = parseInt(card.dataset.windowId);
@@ -618,42 +708,24 @@ class TabOverview {
         this.showContextMenu(e, tabId, windowId);
       });
 
-      // Drag and drop handlers
+      // Drag start
       card.addEventListener('dragstart', (e) => {
         this.draggedTab = { tabId, windowId, index: parseInt(card.dataset.tabIndex) };
         card.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', tabId.toString());
+
+        // Use a timeout to allow the drag image to be created before we style it
+        setTimeout(() => {
+          card.style.opacity = '0.4';
+        }, 0);
       });
 
       card.addEventListener('dragend', () => {
         card.classList.remove('dragging');
+        card.style.opacity = '';
         this.draggedTab = null;
-        document.querySelectorAll('.tab-card.drag-over').forEach(c => c.classList.remove('drag-over'));
-      });
-
-      card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-      });
-
-      card.addEventListener('dragenter', (e) => {
-        e.preventDefault();
-        if (this.draggedTab && this.draggedTab.tabId !== tabId) {
-          card.classList.add('drag-over');
-        }
-      });
-
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('drag-over');
-      });
-
-      card.addEventListener('drop', (e) => {
-        e.preventDefault();
-        card.classList.remove('drag-over');
-        if (this.draggedTab && this.draggedTab.tabId !== tabId) {
-          this.moveTab(this.draggedTab.tabId, this.draggedTab.windowId, windowId, parseInt(card.dataset.tabIndex));
-        }
+        this.hideDropIndicator();
       });
     });
 
@@ -673,14 +745,13 @@ class TabOverview {
     });
   }
 
-  async moveTab(tabId, fromWindowId, toWindowId, toIndex) {
+  async moveTab(tabId, fromWindowId, toWindowId, targetIndex) {
     try {
-      // If moving to a different window, we need to move across windows
-      if (fromWindowId !== toWindowId) {
-        await chrome.tabs.move(tabId, { windowId: toWindowId, index: toIndex });
-      } else {
-        await chrome.tabs.move(tabId, { index: toIndex });
-      }
+      // Move the tab - Chrome handles cross-window moves automatically
+      await chrome.tabs.move(tabId, {
+        windowId: toWindowId,
+        index: targetIndex
+      });
       // Reload tabs to reflect new order
       await this.loadTabs(true);
     } catch (error) {

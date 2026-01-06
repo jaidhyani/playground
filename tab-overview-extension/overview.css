@@ -654,18 +654,45 @@ html, body {
 
 /* Drag and Drop */
 .tab-card.dragging {
-  opacity: 0.5;
+  opacity: 0.4;
   transform: scale(0.95);
   cursor: grabbing;
-}
-
-.tab-card.drag-over {
-  border-color: var(--accent-color);
-  transform: scale(1.02);
+  z-index: 1;
 }
 
 .tab-card[draggable="true"] {
   cursor: grab;
+}
+
+/* Drop indicator - vertical line between cards */
+.drop-indicator {
+  position: absolute;
+  width: 4px;
+  background: var(--accent-color);
+  border-radius: 2px;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 0 8px var(--accent-color);
+}
+
+.drop-indicator::before,
+.drop-indicator::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: var(--accent-color);
+  border-radius: 50%;
+}
+
+.drop-indicator::before {
+  top: -4px;
+}
+
+.drop-indicator::after {
+  bottom: -4px;
 }
 
 /* Domain Groups */
