@@ -32,6 +32,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
+
+  if (request.action === 'getCachedScreenshots') {
+    // Return all cached screenshots
+    const cached = {};
+    for (const [key, value] of screenshotCache.entries()) {
+      const tabId = parseInt(key.split('-')[0]);
+      if (!isNaN(tabId)) {
+        cached[tabId] = value;
+      }
+    }
+    sendResponse({ success: true, screenshots: cached });
+    return true;
+  }
 });
 
 // Capture screenshot of a specific tab

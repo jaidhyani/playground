@@ -69,15 +69,40 @@ class TabOverview {
 
   async captureScreenshots() {
     try {
+      // First, get any cached screenshots from background
+      const cachedResponse = await chrome.runtime.sendMessage({
+        action: 'getCachedScreenshots'
+      });
+
+      if (cachedResponse && cachedResponse.success) {
+        this.screenshots = { ...this.screenshots, ...cachedResponse.screenshots };
+      }
+
+      // Then capture currently visible tabs (one per window)
       const response = await chrome.runtime.sendMessage({
         action: 'captureAllTabs'
       });
 
       if (response && response.success) {
-        this.screenshots = response.screenshots;
+        this.screenshots = { ...this.screenshots, ...response.screenshots };
       }
     } catch (error) {
       console.error('Error capturing screenshots:', error);
+    }
+  }
+
+  async captureActiveTab() {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'captureAllTabs'
+      });
+
+      if (response && response.success) {
+        this.screenshots = { ...this.screenshots, ...response.screenshots };
+        this.render();
+      }
+    } catch (error) {
+      console.error('Error capturing active tab:', error);
     }
   }
 
@@ -193,7 +218,11 @@ class TabOverview {
         this.debouncedLoadTabs();
       }
     });
-    chrome.tabs.onActivated.addListener(() => this.debouncedLoadTabs());
+    chrome.tabs.onActivated.addListener(() => {
+      this.debouncedLoadTabs();
+      // Capture the newly active tab's screenshot
+      this.captureActiveTab();
+    });
   }
 
   setView(view) {
