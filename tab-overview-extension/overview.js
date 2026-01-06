@@ -13,6 +13,9 @@ class TabOverview {
     this.isCapturing = false;
     this.pendingTabIds = new Set(); // Track tabs we're closing to skip redundant updates
     this.loadDebounceTimer = null;
+    this.groupByDomain = false;
+    this.collapsedDomains = new Set();
+    this.draggedTab = null;
 
     this.init();
   }
@@ -218,6 +221,11 @@ class TabOverview {
       this.captureAllPreviews();
     });
 
+    // Group by domain toggle
+    document.getElementById('groupByDomain').addEventListener('click', () => {
+      this.toggleGroupByDomain();
+    });
+
     // View toggle
     document.getElementById('viewGrid').addEventListener('click', () => {
       this.setView('grid');
@@ -302,6 +310,42 @@ class TabOverview {
     this.render();
   }
 
+  toggleGroupByDomain() {
+    this.groupByDomain = !this.groupByDomain;
+    document.getElementById('groupByDomain').classList.toggle('active', this.groupByDomain);
+    this.render();
+  }
+
+  getDomain(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname;
+    } catch {
+      return 'other';
+    }
+  }
+
+  groupTabsByDomain(tabs) {
+    const groups = new Map();
+
+    tabs.forEach(tab => {
+      const domain = this.getDomain(tab.url);
+      if (!groups.has(domain)) {
+        groups.set(domain, []);
+      }
+      groups.get(domain).push(tab);
+    });
+
+    // Sort groups by tab count (descending), then alphabetically
+    return Array.from(groups.entries())
+      .sort((a, b) => {
+        if (b[1].length !== a[1].length) {
+          return b[1].length - a[1].length;
+        }
+        return a[0].localeCompare(b[0]);
+      });
+  }
+
   updateStats() {
     const tabCount = this.tabs.length;
     const windowCount = this.windows.filter(w => w.type === 'normal').length;
@@ -360,27 +404,57 @@ class TabOverview {
       return;
     }
 
-    // Group tabs by window
-    grid.innerHTML = filteredWindows.map((window, windowIndex) => {
-      const tabs = this.renderTabs(window.tabs, window.id);
+    // Get all tabs from filtered windows
+    const allTabs = filteredWindows.flatMap(w => w.tabs);
 
-      if (this.currentWindowFilter === 'all' && filteredWindows.length > 1) {
-        return `
-          <div class="window-section">
-            <div class="window-header">
-              <h3>Window ${windowIndex + 1}</h3>
-              <span class="tab-count">${window.tabs.length} tabs</span>
+    if (this.groupByDomain) {
+      // Render grouped by domain
+      const domainGroups = this.groupTabsByDomain(allTabs);
+      grid.innerHTML = domainGroups.map(([domain, tabs]) => this.renderDomainGroup(domain, tabs)).join('');
+    } else {
+      // Group tabs by window
+      grid.innerHTML = filteredWindows.map((window, windowIndex) => {
+        const tabs = this.renderTabs(window.tabs, window.id);
+
+        if (this.currentWindowFilter === 'all' && filteredWindows.length > 1) {
+          return `
+            <div class="window-section">
+              <div class="window-header">
+                <h3>Window ${windowIndex + 1}</h3>
+                <span class="tab-count">${window.tabs.length} tabs</span>
+              </div>
+              <div class="window-tabs">${tabs}</div>
             </div>
-            <div class="window-tabs">${tabs}</div>
-          </div>
-        `;
-      }
+          `;
+        }
 
-      return tabs;
-    }).join('');
+        return tabs;
+      }).join('');
+    }
 
     // Add event listeners to tab cards
     this.attachTabListeners();
+  }
+
+  renderDomainGroup(domain, tabs) {
+    const isCollapsed = this.collapsedDomains.has(domain);
+    const favicon = tabs[0]?.favIconUrl || this.getDefaultFavicon(`https://${domain}`);
+
+    return `
+      <div class="domain-group ${isCollapsed ? 'collapsed' : ''}" data-domain="${this.escapeHtml(domain)}">
+        <div class="domain-group-header">
+          <img class="domain-group-icon" src="${favicon}" alt="" onerror="this.style.display='none'">
+          <span class="domain-group-name">${this.escapeHtml(domain)}</span>
+          <span class="domain-group-count">${tabs.length} tab${tabs.length !== 1 ? 's' : ''}</span>
+          <svg class="domain-group-toggle" viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+          </svg>
+        </div>
+        <div class="domain-group-tabs">
+          ${tabs.map(tab => this.renderTabCard(tab, tab.windowId)).join('')}
+        </div>
+      </div>
+    `;
   }
 
   renderTabs(tabs, windowId) {
@@ -463,7 +537,9 @@ class TabOverview {
     return `
       <div class="tab-card ${isActive ? 'active' : ''} ${isPinned ? 'pinned' : ''}"
            data-tab-id="${tab.id}"
-           data-window-id="${windowId}">
+           data-window-id="${windowId}"
+           data-tab-index="${tab.index}"
+           draggable="true">
         <div class="tab-preview">
           ${hasScreenshot
             ? `<img src="${hasScreenshot}" alt="Tab preview" loading="lazy">`
@@ -541,7 +617,75 @@ class TabOverview {
         e.preventDefault();
         this.showContextMenu(e, tabId, windowId);
       });
+
+      // Drag and drop handlers
+      card.addEventListener('dragstart', (e) => {
+        this.draggedTab = { tabId, windowId, index: parseInt(card.dataset.tabIndex) };
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', tabId.toString());
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        this.draggedTab = null;
+        document.querySelectorAll('.tab-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+      });
+
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      card.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        if (this.draggedTab && this.draggedTab.tabId !== tabId) {
+          card.classList.add('drag-over');
+        }
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('drag-over');
+      });
+
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+        if (this.draggedTab && this.draggedTab.tabId !== tabId) {
+          this.moveTab(this.draggedTab.tabId, this.draggedTab.windowId, windowId, parseInt(card.dataset.tabIndex));
+        }
+      });
     });
+
+    // Domain group collapse/expand handlers
+    document.querySelectorAll('.domain-group-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const group = header.closest('.domain-group');
+        const domain = group.dataset.domain;
+        if (this.collapsedDomains.has(domain)) {
+          this.collapsedDomains.delete(domain);
+          group.classList.remove('collapsed');
+        } else {
+          this.collapsedDomains.add(domain);
+          group.classList.add('collapsed');
+        }
+      });
+    });
+  }
+
+  async moveTab(tabId, fromWindowId, toWindowId, toIndex) {
+    try {
+      // If moving to a different window, we need to move across windows
+      if (fromWindowId !== toWindowId) {
+        await chrome.tabs.move(tabId, { windowId: toWindowId, index: toIndex });
+      } else {
+        await chrome.tabs.move(tabId, { index: toIndex });
+      }
+      // Reload tabs to reflect new order
+      await this.loadTabs(true);
+    } catch (error) {
+      console.error('Error moving tab:', error);
+    }
   }
 
   async switchToTab(tabId, windowId) {

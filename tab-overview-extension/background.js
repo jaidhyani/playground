@@ -38,8 +38,11 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     // Small delay to let the tab render
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Capture using debugger API
-    const dataUrl = await captureTabWithDebugger(activeInfo.tabId);
+    // Use vanilla captureVisibleTab for the active/focused tab (simpler and less disruptive)
+    const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
+      format: 'jpeg',
+      quality: 70
+    });
 
     if (dataUrl) {
       // Cache it

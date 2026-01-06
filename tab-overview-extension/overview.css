@@ -209,6 +209,7 @@ html, body {
   overflow-y: auto;
   padding-right: 8px;
   padding-bottom: 16px;
+  align-content: start;
 }
 
 .tab-grid::-webkit-scrollbar {
@@ -454,6 +455,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
+  align-content: start;
 }
 
 .tab-grid.list-view .window-tabs {
@@ -648,4 +650,109 @@ html, body {
   #searchInput {
     width: 160px;
   }
+}
+
+/* Drag and Drop */
+.tab-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  cursor: grabbing;
+}
+
+.tab-card.drag-over {
+  border-color: var(--accent-color);
+  transform: scale(1.02);
+}
+
+.tab-card[draggable="true"] {
+  cursor: grab;
+}
+
+/* Domain Groups */
+.domain-group {
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
+}
+
+.domain-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  user-select: none;
+}
+
+.domain-group-header:hover {
+  color: var(--text-primary);
+}
+
+.domain-group-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.domain-group-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.domain-group-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+.domain-group-toggle {
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.domain-group.collapsed .domain-group-toggle {
+  transform: rotate(-90deg);
+}
+
+.domain-group-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  align-content: start;
+}
+
+.domain-group.collapsed .domain-group-tabs {
+  display: none;
+}
+
+/* Group by toggle */
+.group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.group-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.group-toggle.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
 }
