@@ -38,6 +38,7 @@ class TabOverview {
 
       this.updateStats();
       this.updateWindowFilter();
+      this.render();
     } catch (error) {
       console.error('Error loading tabs:', error);
     }
@@ -388,9 +389,52 @@ class TabOverview {
 
   async closeTab(tabId) {
     try {
+      // Remove from local state immediately for instant UI feedback
+      this.tabs = this.tabs.filter(t => t.id !== tabId);
+      this.windows = this.windows.map(w => ({
+        ...w,
+        tabs: w.tabs.filter(t => t.id !== tabId)
+      }));
+      delete this.screenshots[tabId];
+
+      // Update UI immediately
+      this.updateStats();
+      this.updateWindowFilter();
+      this.render();
+
+      // Then remove via Chrome API
       await chrome.tabs.remove(tabId);
     } catch (error) {
       console.error('Error closing tab:', error);
+      // Reload tabs if there was an error to restore correct state
+      await this.loadTabs();
+    }
+  }
+
+  async closeTabs(tabIds) {
+    if (!tabIds.length) return;
+
+    try {
+      // Remove from local state immediately for instant UI feedback
+      const tabIdSet = new Set(tabIds);
+      this.tabs = this.tabs.filter(t => !tabIdSet.has(t.id));
+      this.windows = this.windows.map(w => ({
+        ...w,
+        tabs: w.tabs.filter(t => !tabIdSet.has(t.id))
+      }));
+      tabIds.forEach(id => delete this.screenshots[id]);
+
+      // Update UI immediately
+      this.updateStats();
+      this.updateWindowFilter();
+      this.render();
+
+      // Then remove via Chrome API
+      await chrome.tabs.remove(tabIds);
+    } catch (error) {
+      console.error('Error closing tabs:', error);
+      // Reload tabs if there was an error to restore correct state
+      await this.loadTabs();
     }
   }
 
@@ -447,7 +491,7 @@ class TabOverview {
           break;
 
         case 'close':
-          await chrome.tabs.remove(tabId);
+          await this.closeTab(tabId);
           break;
 
         case 'closeOthers':
@@ -456,7 +500,7 @@ class TabOverview {
             const otherTabIds = window.tabs
               .filter(t => t.id !== tabId && !t.pinned)
               .map(t => t.id);
-            await chrome.tabs.remove(otherTabIds);
+            await this.closeTabs(otherTabIds);
           }
           break;
 
@@ -468,7 +512,7 @@ class TabOverview {
               .slice(tabIndex + 1)
               .filter(t => !t.pinned)
               .map(t => t.id);
-            await chrome.tabs.remove(rightTabIds);
+            await this.closeTabs(rightTabIds);
           }
           break;
       }
