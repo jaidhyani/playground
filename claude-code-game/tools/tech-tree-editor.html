@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Tree Editor</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { margin: 0 0 20px; font-size: 1.5rem; color: #fff; }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover { background: #444; }
+        button.primary { background: #2a5298; border-color: #3a6ab8; }
+        button.primary:hover { background: #3a6ab8; }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .tree-view {
+            flex: 1;
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+            overflow: auto;
+            position: relative;
+        }
+
+        .phase {
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .phase-header {
+            font-weight: bold;
+            color: #888;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .phase-unlock {
+            font-weight: normal;
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        .tasks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .task {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 6px;
+            padding: 12px 16px;
+            cursor: pointer;
+            min-width: 200px;
+            transition: all 0.15s;
+        }
+        .task:hover { border-color: #666; background: #333; }
+        .task.selected { border-color: #4a9eff; background: #1a3a5a; }
+        .task.one-off { border-left: 4px solid #f0a030; }
+        .task.drag-over { border-color: #4a9eff; border-style: dashed; }
+        .task.dragging { opacity: 0.5; }
+
+        .phase.drag-over { background: rgba(74, 158, 255, 0.1); }
+        .phase-drop-zone {
+            min-height: 60px;
+            border: 2px dashed transparent;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.8rem;
+        }
+        .phase-drop-zone.drag-over {
+            border-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .task-name { font-weight: 500; margin-bottom: 4px; }
+        .task-meta {
+            font-size: 0.8rem;
+            color: #888;
+            display: flex;
+            gap: 12px;
+        }
+
+        .connector {
+            position: absolute;
+            height: 2px;
+            background: #444;
+            transform-origin: left center;
+        }
+
+        .editor-panel {
+            width: 350px;
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-panel h2 {
+            margin: 0 0 15px;
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        input, select, textarea {
+            width: 100%;
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .editor-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+        }
+        .editor-actions button { flex: 1; }
+        button.danger { background: #8a2a2a; border-color: #a33; }
+        button.danger:hover { background: #a33; }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+            width: 600px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow: auto;
+        }
+        .modal-content h2 { margin-top: 0; }
+        .modal-content textarea {
+            height: 300px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 60px 20px;
+        }
+        .empty-state p { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Tech Tree Editor</h1>
+
+    <div class="toolbar">
+        <button onclick="showImportModal()" class="primary">Import</button>
+        <button onclick="showExportModal()">Export JS</button>
+        <button onclick="exportJSON()">Export JSON</button>
+        <button onclick="addPhase()">+ Add Phase</button>
+        <button onclick="loadDefault()">Load Default</button>
+    </div>
+
+    <div class="container">
+        <div class="tree-view" id="tree-view">
+            <div class="empty-state">
+                <p>No tech tree loaded</p>
+                <p>Click <strong>Import</strong> to paste tech tree data, or <strong>Load Default</strong></p>
+            </div>
+        </div>
+
+        <div class="editor-panel" id="editor-panel">
+            <h2>Task Editor</h2>
+            <div id="editor-content">
+                <p style="color: #666;">Select a task to edit</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="import-modal">
+        <div class="modal-content">
+            <h2>Import Tech Tree</h2>
+            <p style="color: #888; font-size: 0.9rem;">Paste your tech-tree.js content or JSON:</p>
+            <textarea id="import-data" placeholder="export const techTree = { ... }"></textarea>
+            <div class="modal-actions">
+                <button onclick="closeModal('import-modal')">Cancel</button>
+                <button onclick="doImport()" class="primary">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="export-modal">
+        <div class="modal-content">
+            <h2>Export Tech Tree</h2>
+            <textarea id="export-data" readonly></textarea>
+            <div class="modal-actions">
+                <button onclick="closeModal('export-modal')">Close</button>
+                <button onclick="copyExport()" class="primary">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let techTree = {};
+        let selectedTask = null;
+        let selectedPhase = null;
+
+        // Default tech tree for quick loading
+        const defaultTechTree = {
+            initial: {
+                tasks: [
+                    { id: 'prototype', name: '[Dev] Claude Code Prototype', devPoints: 50, oneOff: true }
+                ],
+                unlockedBy: null
+            },
+            phase1: {
+                tasks: [
+                    { id: 'tool-calling', name: '[Dev] Basic tool calling', devPoints: 35, oneOff: true },
+                    { id: 'error-handling', name: '[Dev] Error handling', devPoints: 25 },
+                    { id: 'streaming', name: '[Dev] Streaming responses', devPoints: 30, oneOff: true }
+                ],
+                unlockedBy: '[Dev] Claude Code Prototype',
+                message: null
+            },
+            phase2: {
+                tasks: [
+                    { id: 'mcp-spec', name: '[Dev] MCP protocol spec', devPoints: 45, oneOff: true },
+                    { id: 'tool-discovery', name: '[Dev] Tool discovery', devPoints: 30 }
+                ],
+                unlockedBy: '[Dev] Basic tool calling',
+                message: 'Tool calling working. MCP protocol next.'
+            },
+            phase3: {
+                tasks: [
+                    { id: 'mcp-filesystem', name: '[Dev] Filesystem MCP server', devPoints: 40, oneOff: true },
+                    { id: 'mcp-git', name: '[Dev] Git MCP server', devPoints: 40, oneOff: true },
+                    { id: 'server-templates', name: '[Dev] MCP server templates', devPoints: 35 }
+                ],
+                unlockedBy: '[Dev] MCP protocol spec',
+                message: 'MCP spec complete. Server ecosystem unlocked.'
+            },
+            phase4: {
+                tasks: [
+                    { id: 'agent-loop', name: '[Dev] Agent loop', devPoints: 50, oneOff: true },
+                    { id: 'context-management', name: '[Dev] Context management', devPoints: 40 },
+                    { id: 'task-decomposition', name: '[Dev] Task decomposition', devPoints: 45, oneOff: true }
+                ],
+                unlockedBy: '[Dev] Filesystem MCP server',
+                message: 'Filesystem access enables agentic workflows.'
+            },
+            phase5: {
+                tasks: [
+                    { id: 'eval-framework', name: '[Dev] Eval framework', devPoints: 50, oneOff: true },
+                    { id: 'benchmark-suite', name: '[Dev] Benchmark suite', devPoints: 40 },
+                    { id: 'safety-checks', name: '[Dev] Safety checks', devPoints: 45 }
+                ],
+                unlockedBy: '[Dev] Agent loop',
+                message: 'Agents need evals. Measurement unlocked.'
+            }
+        };
+
+        function loadDefault() {
+            techTree = JSON.parse(JSON.stringify(defaultTechTree));
+            render();
+        }
+
+        function render() {
+            const container = document.getElementById('tree-view');
+
+            if (Object.keys(techTree).length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No tech tree loaded</p>
+                        <p>Click <strong>Import</strong> to paste tech tree data, or <strong>Load Default</strong></p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            for (const [phaseId, phase] of Object.entries(techTree)) {
+                const unlockText = phase.unlockedBy
+                    ? `unlocked by: ${phase.unlockedBy}`
+                    : 'starting phase';
+
+                const phaseKeys = Object.keys(techTree);
+                const phaseIndex = phaseKeys.indexOf(phaseId);
+                const canMoveUp = phaseIndex > 0;
+                const canMoveDown = phaseIndex < phaseKeys.length - 1;
+
+                html += `
+                    <div class="phase" data-phase="${phaseId}"
+                         ondragover="handlePhaseDragOver(event, '${phaseId}')"
+                         ondragleave="handlePhaseDragLeave(event)"
+                         ondrop="handlePhaseDrop(event, '${phaseId}')">
+                        <div class="phase-header">
+                            <span>${phaseId}</span>
+                            <span class="phase-unlock">${unlockText}</span>
+                            <button onclick="addTask('${phaseId}')" style="padding: 2px 8px; font-size: 0.75rem;">+ task</button>
+                            <button onclick="editPhase('${phaseId}')" style="padding: 2px 8px; font-size: 0.75rem;">edit</button>
+                            ${canMoveUp ? `<button onclick="movePhase('${phaseId}', -1)" style="padding: 2px 8px; font-size: 0.75rem;">&#9650;</button>` : ''}
+                            ${canMoveDown ? `<button onclick="movePhase('${phaseId}', 1)" style="padding: 2px 8px; font-size: 0.75rem;">&#9660;</button>` : ''}
+                            <button onclick="deletePhase('${phaseId}')" style="padding: 2px 8px; font-size: 0.75rem;" class="danger">&#10005;</button>
+                        </div>
+                        <div class="tasks">
+                `;
+
+                phase.tasks.forEach((task, taskIndex) => {
+                    const isSelected = selectedTask?.id === task.id && selectedPhase === phaseId;
+                    const oneOffClass = task.oneOff ? 'one-off' : '';
+                    const selectedClass = isSelected ? 'selected' : '';
+
+                    html += `
+                        <div class="task ${oneOffClass} ${selectedClass}"
+                             draggable="true"
+                             ondragstart="handleDragStart(event, '${phaseId}', '${task.id}')"
+                             ondragend="handleDragEnd(event)"
+                             ondragover="handleDragOver(event)"
+                             ondragleave="handleDragLeave(event)"
+                             ondrop="handleDrop(event, '${phaseId}', ${taskIndex})"
+                             onclick="selectTask('${phaseId}', '${task.id}')">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-meta">
+                                <span>${task.devPoints} pts</span>
+                                ${task.oneOff ? '<span>one-off</span>' : '<span>repeatable</span>'}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Drop zone for empty phases or end of list
+                html += `
+                        </div>
+                        <div class="phase-drop-zone"
+                             ondragover="handleDropZoneDragOver(event)"
+                             ondragleave="handleDropZoneDragLeave(event)"
+                             ondrop="handleDrop(event, '${phaseId}', ${phase.tasks.length})">
+                            ${phase.tasks.length === 0 ? 'Drop tasks here' : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function selectTask(phaseId, taskId) {
+            const phase = techTree[phaseId];
+            const task = phase.tasks.find(t => t.id === taskId);
+
+            selectedPhase = phaseId;
+            selectedTask = task;
+
+            renderEditor();
+            render();
+        }
+
+        function renderEditor() {
+            const panel = document.getElementById('editor-content');
+
+            if (!selectedTask) {
+                panel.innerHTML = '<p style="color: #666;">Select a task to edit</p>';
+                return;
+            }
+
+            // Get all task names for unlock dropdown
+            const allTaskNames = [];
+            for (const phase of Object.values(techTree)) {
+                for (const task of phase.tasks) {
+                    allTaskNames.push(task.name);
+                }
+            }
+
+            panel.innerHTML = `
+                <div class="form-group">
+                    <label>Task ID</label>
+                    <input type="text" id="edit-id" value="${selectedTask.id}">
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="edit-name" value="${selectedTask.name}">
+                </div>
+                <div class="form-group">
+                    <label>Dev Points Required</label>
+                    <input type="number" id="edit-points" value="${selectedTask.devPoints}" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="edit-oneoff" ${selectedTask.oneOff ? 'checked' : ''}>
+                        One-off task (disappears after completion)
+                    </label>
+                </div>
+                <div class="editor-actions">
+                    <button onclick="saveTask()">Save</button>
+                    <button onclick="deleteTask()" class="danger">Delete</button>
+                </div>
+            `;
+        }
+
+        function saveTask() {
+            if (!selectedTask || !selectedPhase) return;
+
+            const phase = techTree[selectedPhase];
+            const taskIndex = phase.tasks.findIndex(t => t.id === selectedTask.id);
+            if (taskIndex === -1) return;
+
+            const oldName = selectedTask.name;
+
+            selectedTask.id = document.getElementById('edit-id').value;
+            selectedTask.name = document.getElementById('edit-name').value;
+            selectedTask.devPoints = parseInt(document.getElementById('edit-points').value) || 1;
+            selectedTask.oneOff = document.getElementById('edit-oneoff').checked;
+
+            // Update any phases that unlock from this task's old name
+            if (oldName !== selectedTask.name) {
+                for (const phase of Object.values(techTree)) {
+                    if (phase.unlockedBy === oldName) {
+                        phase.unlockedBy = selectedTask.name;
+                    }
+                }
+            }
+
+            render();
+            renderEditor();
+        }
+
+        function deleteTask() {
+            if (!selectedTask || !selectedPhase) return;
+            if (!confirm(`Delete task "${selectedTask.name}"?`)) return;
+
+            const phase = techTree[selectedPhase];
+            phase.tasks = phase.tasks.filter(t => t.id !== selectedTask.id);
+
+            selectedTask = null;
+            render();
+            renderEditor();
+        }
+
+        function addTask(phaseId) {
+            const phase = techTree[phaseId];
+            const newId = `task-${Date.now()}`;
+
+            phase.tasks.push({
+                id: newId,
+                name: 'New Task',
+                devPoints: 30,
+                oneOff: false
+            });
+
+            selectTask(phaseId, newId);
+        }
+
+        function editPhase(phaseId) {
+            const phase = techTree[phaseId];
+            const newUnlock = prompt('Unlocked by (task name, or empty for none):', phase.unlockedBy || '');
+
+            if (newUnlock !== null) {
+                phase.unlockedBy = newUnlock || null;
+            }
+
+            const newMessage = prompt('Phase message (shown on unlock):', phase.message || '');
+            if (newMessage !== null) {
+                phase.message = newMessage || null;
+            }
+
+            render();
+        }
+
+        function addPhase() {
+            const phaseId = prompt('Phase ID (e.g., phase6):');
+            if (!phaseId) return;
+
+            techTree[phaseId] = {
+                tasks: [],
+                unlockedBy: null,
+                message: null
+            };
+
+            render();
+        }
+
+        function showImportModal() {
+            document.getElementById('import-modal').classList.add('open');
+            document.getElementById('import-data').value = '';
+            document.getElementById('import-data').focus();
+        }
+
+        function showExportModal() {
+            const js = generateJS();
+            document.getElementById('export-data').value = js;
+            document.getElementById('export-modal').classList.add('open');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        function doImport() {
+            const data = document.getElementById('import-data').value.trim();
+
+            try {
+                // Try parsing as JSON first
+                if (data.startsWith('{')) {
+                    techTree = JSON.parse(data);
+                } else {
+                    // Try extracting from JS module format
+                    const match = data.match(/export\s+const\s+techTree\s*=\s*(\{[\s\S]*\});?/);
+                    if (match) {
+                        // Use Function to safely evaluate the object literal
+                        techTree = (new Function('return ' + match[1]))();
+                    } else {
+                        throw new Error('Could not parse tech tree data');
+                    }
+                }
+
+                closeModal('import-modal');
+                selectedTask = null;
+                selectedPhase = null;
+                render();
+                renderEditor();
+            } catch (e) {
+                alert('Error parsing data: ' + e.message);
+            }
+        }
+
+        function generateJS() {
+            let js = `/**
+ * Tech Tree - The progression of Claude Code development
+ *
+ * Each phase unlocks after completing a key task from the previous phase.
+ * Tasks with oneOff: true disappear after completion.
+ */
+
+export const techTree = {\n`;
+
+            const phases = Object.entries(techTree);
+            phases.forEach(([phaseId, phase], phaseIndex) => {
+                js += `    // ${phaseId}\n`;
+                js += `    ${phaseId}: {\n`;
+                js += `        tasks: [\n`;
+
+                phase.tasks.forEach((task, taskIndex) => {
+                    const parts = [`id: '${task.id}'`, `name: '${task.name}'`, `devPoints: ${task.devPoints}`];
+                    if (task.oneOff) parts.push('oneOff: true');
+
+                    const comma = taskIndex < phase.tasks.length - 1 ? ',' : '';
+                    js += `            { ${parts.join(', ')} }${comma}\n`;
+                });
+
+                js += `        ],\n`;
+                js += `        unlockedBy: ${phase.unlockedBy ? `'${phase.unlockedBy}'` : 'null'}`;
+
+                if (phase.message !== undefined) {
+                    js += `,\n        message: ${phase.message ? `'${phase.message}'` : 'null'}`;
+                }
+
+                const phaseComma = phaseIndex < phases.length - 1 ? ',' : '';
+                js += `\n    }${phaseComma}\n\n`;
+            });
+
+            js += `};
+
+/**
+ * Get the phase that should unlock when a PR with this title is merged
+ */
+export function getPhaseUnlockedBy(prTitle) {
+    for (const [phaseId, phase] of Object.entries(techTree)) {
+        if (phase.unlockedBy === prTitle) {
+            return { phaseId, phase };
+        }
+    }
+    return null;
+}
+`;
+
+            return js;
+        }
+
+        function exportJSON() {
+            const json = JSON.stringify(techTree, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tech-tree.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyExport() {
+            const textarea = document.getElementById('export-data');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        }
+
+        // Drag and drop state
+        let dragData = null;
+
+        function handleDragStart(event, phaseId, taskId) {
+            dragData = { phaseId, taskId };
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(event) {
+            event.target.classList.remove('dragging');
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            dragData = null;
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.target.closest('.task')?.classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            event.target.closest('.task')?.classList.remove('drag-over');
+        }
+
+        function handleDrop(event, targetPhaseId, targetIndex) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+            if (!dragData) return;
+
+            const { phaseId: sourcePhaseId, taskId } = dragData;
+            const sourcePhase = techTree[sourcePhaseId];
+            const targetPhase = techTree[targetPhaseId];
+
+            const taskIndex = sourcePhase.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+
+            const [task] = sourcePhase.tasks.splice(taskIndex, 1);
+
+            // Adjust target index if moving within same phase and source was before target
+            let adjustedIndex = targetIndex;
+            if (sourcePhaseId === targetPhaseId && taskIndex < targetIndex) {
+                adjustedIndex--;
+            }
+
+            targetPhase.tasks.splice(adjustedIndex, 0, task);
+
+            // Update selection if we moved the selected task
+            if (selectedTask?.id === taskId) {
+                selectedPhase = targetPhaseId;
+            }
+
+            render();
+        }
+
+        function handleDropZoneDragOver(event) {
+            event.preventDefault();
+            event.target.classList.add('drag-over');
+        }
+
+        function handleDropZoneDragLeave(event) {
+            event.target.classList.remove('drag-over');
+        }
+
+        function handlePhaseDragOver(event, phaseId) {
+            event.preventDefault();
+        }
+
+        function handlePhaseDragLeave(event) {
+            // Handled by specific handlers
+        }
+
+        function handlePhaseDrop(event, phaseId) {
+            // Only handle if dropped on phase itself, not on a task
+            if (event.target.closest('.task') || event.target.closest('.phase-drop-zone')) return;
+            handleDrop(event, phaseId, techTree[phaseId].tasks.length);
+        }
+
+        function movePhase(phaseId, direction) {
+            const entries = Object.entries(techTree);
+            const index = entries.findIndex(([id]) => id === phaseId);
+
+            if (index === -1) return;
+
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= entries.length) return;
+
+            // Swap positions
+            [entries[index], entries[newIndex]] = [entries[newIndex], entries[index]];
+
+            // Rebuild techTree with new order
+            techTree = Object.fromEntries(entries);
+            render();
+        }
+
+        function deletePhase(phaseId) {
+            const phase = techTree[phaseId];
+            const taskCount = phase.tasks.length;
+
+            const msg = taskCount > 0
+                ? `Delete phase "${phaseId}" and its ${taskCount} task(s)?`
+                : `Delete empty phase "${phaseId}"?`;
+
+            if (!confirm(msg)) return;
+
+            delete techTree[phaseId];
+
+            if (selectedPhase === phaseId) {
+                selectedPhase = null;
+                selectedTask = null;
+                renderEditor();
+            }
+
+            render();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal('import-modal');
+                closeModal('export-modal');
+            }
+        });
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>

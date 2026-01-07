@@ -95,7 +95,7 @@ export function renderButtons() {
 
     // Tasks as clickable progress bars
     for (const task of gameState.tasks) {
-        const currentPoints = Math.floor(task.progress);
+        const currentPoints = task.progress.toFixed(2);
         const requiredPoints = task.devPoints;
         const fillPercent = Math.min(100, (task.progress / requiredPoints) * 100);
         html += `<button class="btn task progress-btn" onclick="clickTask('${task.id}')">
