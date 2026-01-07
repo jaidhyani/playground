@@ -608,3 +608,59 @@ section h2 {
 .resource[data-resource="energy"].low .resource-value {
     color: #fbbf24;
 }
+
+/* Resource change flash effect */
+.resource-value.flash-up {
+    animation: flashGreen 0.5s ease-out;
+}
+
+.resource-value.flash-down {
+    animation: flashRed 0.5s ease-out;
+}
+
+@keyframes flashGreen {
+    0% { color: #4ade80; transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+@keyframes flashRed {
+    0% { color: #ef4444; transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Action card click feedback */
+.action-card.clicked {
+    animation: cardClick 0.15s ease-out;
+}
+
+@keyframes cardClick {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+}
+
+/* Week transition highlight */
+.week-advance {
+    animation: weekPulse 0.6s ease-out;
+}
+
+@keyframes weekPulse {
+    0% { background: #7b68ee; color: white; }
+    100% { background: #2a2a4a; }
+}
+
+/* Upgrade card entrance */
+.upgrade-card {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

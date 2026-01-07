@@ -481,22 +481,95 @@ function advanceWeek() {
 }
 
 function generateWeeklyEvent() {
-    const { flags, branch } = gameState.narrative;
+    const { flags, branch, week } = gameState.narrative;
+    const { money, codebase, energy } = gameState.resources;
     const roll = Math.random();
 
-    if (roll > 0.7) {
-        // Something happens
-        if (flags.hasShipped && roll > 0.9) {
-            addEvent("Someone wrote about your app on Hacker News. Traffic spiked. Mostly tire-kickers, but still.", 'success');
-            gameState.resources.codebase += 2;
-        } else if (flags.aiAdopted && roll > 0.85) {
-            addEvent("The AI suggested something you didn't expect. It was actually... good? You're not sure how to feel about that.", 'neutral');
-        } else if (branch === 'bootstrap' && roll > 0.8) {
-            addEvent("A user emailed you directly with a feature request. They said 'please' and everything.", 'success');
-            if (gameState.pathResources.userTrust !== null) {
-                gameState.pathResources.userTrust += 2;
-            }
+    // Early game flavor events
+    if (week <= 4 && roll > 0.6) {
+        const earlyEvents = [
+            { msg: "Your neighbor's wifi password changed. Time to actually pay for internet.", type: 'neutral' },
+            { msg: "You discovered a new coffee shop with good wifi. Productivity location unlocked.", type: 'success' },
+            { msg: "Your laptop fan is making concerning noises. It's fine. Probably.", type: 'warning' },
+            { msg: "You checked Twitter for 'just five minutes'. It was two hours.", type: 'negative', energyLoss: 10 },
+            { msg: "A friend asked what you're working on. You explained it. They nodded politely.", type: 'neutral' }
+        ];
+        const event = earlyEvents[Math.floor(Math.random() * earlyEvents.length)];
+        addEvent(event.msg, event.type);
+        if (event.energyLoss) gameState.resources.energy -= event.energyLoss;
+        return;
+    }
+
+    // Low money events
+    if (money < 300 && roll > 0.5) {
+        const brokeEvents = [
+            "You checked your bank balance. You checked it again. Still the same number.",
+            "Ramen for dinner again. At least you're efficient at cooking it now.",
+            "Your credit card company sent a 'friendly reminder'. How thoughtful.",
+            "You calculated how many days until rent. Then stopped calculating."
+        ];
+        addEvent(brokeEvents[Math.floor(Math.random() * brokeEvents.length)], 'warning');
+        return;
+    }
+
+    // Post-ship events
+    if (flags.hasShipped && roll > 0.6) {
+        const shipEvents = [
+            { msg: "Someone wrote about your app on Hacker News. Traffic spiked. Mostly tire-kickers, but still.", type: 'success', codebase: 2 },
+            { msg: "A user reported a bug. A real bug report! Someone cares enough to report bugs!", type: 'success' },
+            { msg: "You got your first 1-star review. It stung more than expected.", type: 'negative' },
+            { msg: "Someone forked your repo on GitHub. Flattering or threatening? Both?", type: 'neutral' },
+            { msg: "A user said your app 'changed their workflow'. You screenshot it for dark days.", type: 'success', codebase: 1 },
+            { msg: "You found a tutorial someone made for your app. You didn't write it. Wild.", type: 'success' }
+        ];
+        const event = shipEvents[Math.floor(Math.random() * shipEvents.length)];
+        addEvent(event.msg, event.type);
+        if (event.codebase) gameState.resources.codebase += event.codebase;
+        return;
+    }
+
+    // AI-related events
+    if (flags.aiAdopted && roll > 0.65) {
+        const aiEvents = [
+            { msg: "The AI suggested something you didn't expect. It was actually... good?", type: 'neutral' },
+            { msg: "You spent an hour debugging AI-generated code. The irony isn't lost on you.", type: 'negative' },
+            { msg: "The AI completed a task faster than you could have. Efficient. Unsettling.", type: 'neutral' },
+            { msg: "You caught the AI making a subtle mistake. Good thing you're still paying attention.", type: 'warning' }
+        ];
+        if (flags.aiFullIntegration) {
+            aiEvents.push({ msg: "You're not sure which parts of the codebase you wrote anymore. Does it matter?", type: 'warning' });
+            aiEvents.push({ msg: "The AI suggested refactoring code it wrote last week. It's optimizing itself?", type: 'neutral' });
         }
+        const event = aiEvents[Math.floor(Math.random() * aiEvents.length)];
+        addEvent(event.msg, event.type);
+        return;
+    }
+
+    // Bootstrap path events
+    if (branch === 'bootstrap' && roll > 0.65) {
+        const bootstrapEvents = [
+            { msg: "A user emailed you directly with a feature request. They said 'please' and everything.", type: 'success', trust: 2 },
+            { msg: "Someone compared your app favorably to a VC-funded competitor. David vs Goliath vibes.", type: 'success' },
+            { msg: "You turned down a feature request. It didn't fit. Users respected that.", type: 'success', trust: 1 },
+            { msg: "A user offered to help translate your app. The community is growing.", type: 'success' }
+        ];
+        const event = bootstrapEvents[Math.floor(Math.random() * bootstrapEvents.length)];
+        addEvent(event.msg, event.type);
+        if (event.trust && gameState.pathResources.userTrust !== null) {
+            gameState.pathResources.userTrust += event.trust;
+        }
+        return;
+    }
+
+    // Generic flavor events
+    if (roll > 0.75) {
+        const genericEvents = [
+            "You refactored something. It's cleaner now. Nobody will ever notice.",
+            "You read a blog post about productivity. Ironically, it cost you an hour.",
+            "Your standing desk reminded you to stand. You ignored it.",
+            "You pushed code on a Friday. Living dangerously."
+        ];
+        addEvent(genericEvents[Math.floor(Math.random() * genericEvents.length)], 'neutral');
     }
 }
 
@@ -590,11 +663,29 @@ function updateDisplay() {
     renderPathResources();
 }
 
+// Track previous values for change detection
+let previousResources = { ...gameState.resources };
+
 function renderResources() {
-    document.getElementById('money').textContent = gameState.resources.money.toFixed(0);
-    document.getElementById('time').textContent = gameState.resources.time;
-    document.getElementById('energy').textContent = Math.floor(gameState.resources.energy);
-    document.getElementById('codebase').textContent = gameState.resources.codebase.toFixed(0);
+    const resources = ['money', 'time', 'energy', 'codebase'];
+
+    resources.forEach(key => {
+        const el = document.getElementById(key);
+        if (!el) return;
+
+        const currentValue = key === 'codebase' ? gameState.resources[key].toFixed(0) : Math.floor(gameState.resources[key]);
+        const previousValue = previousResources[key];
+
+        el.textContent = currentValue;
+
+        // Flash effect on change
+        if (previousValue !== undefined && currentValue !== previousValue) {
+            el.classList.remove('flash-up', 'flash-down');
+            void el.offsetWidth; // Trigger reflow to restart animation
+            el.classList.add(currentValue > previousValue ? 'flash-up' : 'flash-down');
+        }
+    });
+
     document.getElementById('week').textContent = gameState.narrative.week;
 
     // Add low resource warnings
@@ -602,6 +693,9 @@ function renderResources() {
     const energyEl = document.querySelector('.resource[data-resource="energy"]');
     if (moneyEl) moneyEl.classList.toggle('low', gameState.resources.money < 200);
     if (energyEl) energyEl.classList.toggle('low', gameState.resources.energy < 30);
+
+    // Update previous values
+    previousResources = { ...gameState.resources };
 }
 
 function renderPathResources() {
