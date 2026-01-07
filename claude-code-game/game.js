@@ -15,7 +15,9 @@ const gameState = {
         money: 500,        // Dollars - need to pay rent!
         time: 100,         // Hours available this "week"
         energy: 100,       // Motivation/focus (regenerates)
-        codebase: 0        // Quality/size of your work
+        codebase: 0,       // Quality/size of your work
+        techDebt: 0,       // Accumulated shortcuts and hacks (bad!)
+        reputation: 0      // Your standing in the dev community (0-100)
     },
 
     // PR queue - vibe coding generates PRs that need review
@@ -144,12 +146,26 @@ function mergePR(prId) {
 
     gameState.resources.codebase += pr.codebaseGain;
 
+    // Low quality PRs add tech debt
+    if (pr.quality < 0.5) {
+        const debtAdded = Math.floor((1 - pr.quality) * 5);
+        gameState.resources.techDebt += debtAdded;
+    }
+
     if (pr.hasBug) {
         gameState.narrative.flags.bugsInCodebase = (gameState.narrative.flags.bugsInCodebase || 0) + 1;
         // Bug might be discovered later...
     }
 
-    addEvent(`Merged: "${pr.title}" (+${pr.codebaseGain} codebase)`, pr.quality > 0.5 ? 'success' : 'neutral');
+    // Update event message based on quality
+    if (pr.quality > 0.7) {
+        addEvent(`Merged: "${pr.title}" (+${pr.codebaseGain} codebase) - Clean code!`, 'success');
+    } else if (pr.quality > 0.4) {
+        addEvent(`Merged: "${pr.title}" (+${pr.codebaseGain} codebase)`, 'neutral');
+    } else {
+        addEvent(`Merged: "${pr.title}" (+${pr.codebaseGain} codebase) - This might come back to haunt you...`, 'negative');
+    }
+
     updateDisplay();
 }
 
@@ -243,9 +259,18 @@ const actions = {
                 addEvent("You tried to iterate, but... iterate on what? You need to build something first.", 'negative');
                 return;
             }
-            const improvement = Math.min(10, gameState.resources.codebase * 0.2);
+            const improvement = Math.floor(Math.min(10, gameState.resources.codebase * 0.2));
             gameState.resources.codebase += improvement;
-            addEvent("You cleaned up tech debt and fixed some bugs. The codebase feels tighter.", 'success');
+
+            // Also reduces tech debt
+            const debtReduced = Math.min(gameState.resources.techDebt, 3);
+            gameState.resources.techDebt -= debtReduced;
+
+            if (debtReduced > 0) {
+                addEvent(`Refactored and improved the codebase. (+${improvement} codebase, -${debtReduced} tech debt)`, 'success');
+            } else {
+                addEvent(`Polished and improved the codebase. (+${improvement} codebase)`, 'success');
+            }
 
             // Iteration builds craft mastery if on bootstrap path
             if (gameState.pathResources.craftMastery !== null) {
@@ -256,18 +281,76 @@ const actions = {
         available: () => gameState.resources.codebase >= 10
     },
 
+    refactor: {
+        id: 'refactor',
+        name: 'Deep Refactor',
+        description: 'Burn it down and rebuild it right. Expensive but sometimes necessary.',
+        cost: { time: 25, energy: 35 },
+        execute: () => {
+            const debtBefore = gameState.resources.techDebt;
+            const debtReduced = Math.min(debtBefore, Math.floor(debtBefore * 0.5) + 5);
+            gameState.resources.techDebt -= debtReduced;
+
+            // Small chance of breaking something
+            if (Math.random() < 0.15) {
+                const codebaseLost = Math.floor(gameState.resources.codebase * 0.1);
+                gameState.resources.codebase -= codebaseLost;
+                addEvent(`Deep refactor complete. (-${debtReduced} tech debt) But... you broke something. (-${codebaseLost} codebase)`, 'negative');
+            } else {
+                addEvent(`Deep refactor complete. The codebase is much cleaner now. (-${debtReduced} tech debt)`, 'success');
+            }
+            checkNarrativeTriggers();
+        },
+        available: () => gameState.resources.techDebt >= 5
+    },
+
     freelance: {
         id: 'freelance',
         name: 'Freelance Gig',
-        description: 'Take contract work. Reliable money, but it\'s time away from your own projects.',
+        description: 'Take contract work. Pay depends on your reputation and the client.',
         cost: { time: 30, energy: 40 },
         execute: () => {
-            const pay = 200 + Math.floor(Math.random() * 100);
-            gameState.resources.money += pay;
-            addEvent(`Finished a freelance gig. $${pay} in the bank. Client happy enough.`, 'neutral');
+            // Different client types with different characteristics
+            const clients = [
+                { name: 'startup', pay: [150, 250], description: 'Quick startup gig', repGain: 1, hassle: 0.1 },
+                { name: 'enterprise', pay: [300, 500], description: 'Enterprise contract', repGain: 2, hassle: 0.3, minRep: 10 },
+                { name: 'agency', pay: [200, 350], description: 'Agency project', repGain: 1, hassle: 0.2 },
+                { name: 'friend', pay: [50, 150], description: 'Helped a friend\'s startup', repGain: 3, hassle: 0 },
+                { name: 'nightmare', pay: [400, 600], description: 'Nightmare client', repGain: 0, hassle: 0.6, energyDrain: 20 }
+            ];
 
-            // Freelancing doesn't build your thing
-            if (Math.random() > 0.7) {
+            // Filter by reputation requirements
+            const availableClients = clients.filter(c => !c.minRep || gameState.resources.reputation >= c.minRep);
+            const client = availableClients[Math.floor(Math.random() * availableClients.length)];
+
+            // Calculate pay (reputation bonus)
+            const repBonus = 1 + (gameState.resources.reputation / 100);
+            const basePay = client.pay[0] + Math.floor(Math.random() * (client.pay[1] - client.pay[0]));
+            const finalPay = Math.floor(basePay * repBonus);
+
+            gameState.resources.money += finalPay;
+            gameState.resources.reputation = Math.min(100, gameState.resources.reputation + client.repGain);
+
+            // Extra energy drain for nightmare clients
+            if (client.energyDrain) {
+                gameState.resources.energy = Math.max(0, gameState.resources.energy - client.energyDrain);
+            }
+
+            // Hassle factor - might have issues
+            if (Math.random() < client.hassle) {
+                const hassleEvents = [
+                    "Client asked for 'just one more revision'. It was not just one.",
+                    "Scope creep struck again. You finished anyway, somehow.",
+                    "They paid late. Classic.",
+                    "The requirements changed three times. You adapted."
+                ];
+                addEvent(hassleEvents[Math.floor(Math.random() * hassleEvents.length)], 'warning');
+            }
+
+            addEvent(`${client.description}. $${finalPay} earned.${client.repGain > 1 ? ` (+${client.repGain} reputation)` : ''}`, 'neutral');
+
+            // Small chance of insight
+            if (Math.random() > 0.8) {
                 addEvent("While debugging their code, you had an idea for your own project...", 'neutral');
                 gameState.resources.codebase += 2;
             }
@@ -290,6 +373,47 @@ const actions = {
                 "You called a friend. Remembered there's a world outside code."
             ];
             addEvent(messages[Math.floor(Math.random() * messages.length)], 'neutral');
+        },
+        available: () => true
+    },
+
+    network: {
+        id: 'network',
+        name: 'Network',
+        description: 'Go to a meetup, post on Twitter, engage with the community. Build your reputation.',
+        cost: { time: 15, energy: 20 },
+        execute: () => {
+            const activities = [
+                { msg: "You attended a tech meetup. Made some connections, got a few business cards.", repGain: 2 },
+                { msg: "You posted a technical thread on Twitter. It did... okay. A few likes.", repGain: 1 },
+                { msg: "You helped someone on Stack Overflow. Feels good to give back.", repGain: 2 },
+                { msg: "You commented on a popular HN thread. Someone agreed with you!", repGain: 1 },
+                { msg: "You joined a Discord for indie hackers. Good vibes.", repGain: 1 },
+                { msg: "You streamed some coding. Three viewers! All bots probably, but still.", repGain: 1 },
+                { msg: "You wrote a blog post about something you learned. It got shared!", repGain: 3 },
+                { msg: "You gave feedback on someone's project. They were grateful.", repGain: 2 }
+            ];
+
+            // Higher chance of good outcomes as reputation grows
+            const goodOutcomeChance = 0.3 + (gameState.resources.reputation / 200);
+            const activity = activities[Math.floor(Math.random() * activities.length)];
+
+            // Sometimes networking leads to opportunities
+            if (Math.random() < goodOutcomeChance) {
+                const bonuses = [
+                    { msg: "Someone reached out about a collaboration!", bonus: 'collab' },
+                    { msg: "A potential client saw your work!", bonus: 'money', amount: 50 },
+                    { msg: "You got a follower who's actually relevant!", bonus: 'rep', amount: 2 }
+                ];
+                const bonus = bonuses[Math.floor(Math.random() * bonuses.length)];
+                if (bonus.bonus === 'money') gameState.resources.money += bonus.amount;
+                if (bonus.bonus === 'rep') activity.repGain += bonus.amount;
+                addEvent(bonus.msg, 'success');
+            }
+
+            gameState.resources.reputation = Math.min(100, gameState.resources.reputation + activity.repGain);
+            addEvent(`${activity.msg} (+${activity.repGain} reputation)`, 'neutral');
+            checkNarrativeTriggers();
         },
         available: () => true
     },
@@ -735,6 +859,44 @@ function generateWeeklyEvent() {
         return;
     }
 
+    // Bug discovery events (hidden bugs from PRs manifest)
+    const hiddenBugs = flags.bugsInCodebase || 0;
+    if (hiddenBugs > 0 && Math.random() < 0.15 * hiddenBugs) {
+        const bugEvents = [
+            { msg: "A user reported a crash. You traced it to code you merged last week. Oops.", severity: 1 },
+            { msg: "Something broke in production. You're not sure when it started breaking.", severity: 2 },
+            { msg: "Edge case discovered! The fix took all day. Should have written tests.", severity: 1 },
+            { msg: "The bug was in the AI-generated code. At least you can blame the machine.", severity: 1 },
+            { msg: "Critical bug found. Users are upset. You're upset. Everyone's upset.", severity: 3 }
+        ];
+        const event = bugEvents[Math.floor(Math.random() * bugEvents.length)];
+        addEvent(event.msg, 'negative');
+        gameState.narrative.flags.bugsInCodebase = Math.max(0, hiddenBugs - 1);
+        gameState.resources.techDebt += event.severity;
+
+        // Severe bugs can cost codebase quality
+        if (event.severity >= 2) {
+            const codebaseLost = Math.floor(event.severity * 2);
+            gameState.resources.codebase = Math.max(0, gameState.resources.codebase - codebaseLost);
+        }
+        return;
+    }
+
+    // High tech debt events
+    const { techDebt } = gameState.resources;
+    if (techDebt >= 10 && roll > 0.6) {
+        const debtEvents = [
+            { msg: "Adding a simple feature took three times longer than expected. Tech debt strikes again.", energyLoss: 15 },
+            { msg: "You tried to understand code you wrote last month. You couldn't. The debt compounds.", energyLoss: 10 },
+            { msg: "A 'quick fix' turned into a four-hour refactoring session. The shortcuts caught up.", energyLoss: 20 },
+            { msg: "New feature? First you need to untangle the spaghetti from two sprints ago.", energyLoss: 10 }
+        ];
+        const event = debtEvents[Math.floor(Math.random() * debtEvents.length)];
+        addEvent(event.msg, 'warning');
+        gameState.resources.energy = Math.max(0, gameState.resources.energy - event.energyLoss);
+        return;
+    }
+
     // Post-ship events
     if (flags.hasShipped && roll > 0.6) {
         const shipEvents = [
@@ -891,7 +1053,7 @@ function updateDisplay() {
 let previousResources = { ...gameState.resources };
 
 function renderResources() {
-    const resources = ['money', 'time', 'energy', 'codebase'];
+    const resources = ['money', 'time', 'energy', 'codebase', 'techDebt', 'reputation'];
 
     resources.forEach(key => {
         const el = document.getElementById(key);
@@ -906,11 +1068,28 @@ function renderResources() {
         if (previousValue !== undefined && currentValue !== previousValue) {
             el.classList.remove('flash-up', 'flash-down');
             void el.offsetWidth; // Trigger reflow to restart animation
-            el.classList.add(currentValue > previousValue ? 'flash-up' : 'flash-down');
+            // For tech debt, down is good, up is bad (inverted)
+            if (key === 'techDebt') {
+                el.classList.add(currentValue < previousValue ? 'flash-up' : 'flash-down');
+            } else {
+                el.classList.add(currentValue > previousValue ? 'flash-up' : 'flash-down');
+            }
         }
     });
 
     document.getElementById('week').textContent = gameState.narrative.week;
+
+    // Show/hide tech debt display
+    const techDebtDisplay = document.getElementById('tech-debt-display');
+    if (techDebtDisplay) {
+        techDebtDisplay.style.display = gameState.resources.techDebt > 0 ? 'flex' : 'none';
+    }
+
+    // Show/hide reputation display
+    const reputationDisplay = document.getElementById('reputation-display');
+    if (reputationDisplay) {
+        reputationDisplay.style.display = gameState.resources.reputation > 0 ? 'flex' : 'none';
+    }
 
     // Add low resource warnings
     const moneyEl = document.querySelector('.resource[data-resource="money"]');
@@ -1192,8 +1371,18 @@ function loadGame() {
     try {
         const saved = localStorage.getItem('claudeCodeGame');
         if (saved) {
-            Object.assign(gameState, JSON.parse(saved));
+            const parsed = JSON.parse(saved);
+            Object.assign(gameState, parsed);
             gameState.lastTick = Date.now();
+
+            // Migration: ensure new resource fields exist with defaults
+            if (gameState.resources.techDebt === undefined || gameState.resources.techDebt === null) {
+                gameState.resources.techDebt = 0;
+            }
+            if (gameState.resources.reputation === undefined || gameState.resources.reputation === null) {
+                gameState.resources.reputation = 0;
+            }
+
             updateDisplay();
             return true;
         }
