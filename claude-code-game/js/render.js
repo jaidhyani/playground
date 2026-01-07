@@ -109,11 +109,11 @@ export function renderButtons() {
         html += `<button class="btn action" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">${action.name}</button>`;
     }
 
-    // PRs as merge buttons
+    // PRs as buttons that open panel
     for (const pr of gameState.prQueue) {
         const isRisky = pr.quality < 0.4;
-        const label = isRisky ? `merge "${pr.title}" ⚠` : `merge "${pr.title}"`;
-        html += `<button class="btn pr ${isRisky ? 'risky' : ''}" onclick="mergePR(${pr.id})">${label}</button>`;
+        const label = isRisky ? `PR: "${pr.title}" ⚠` : `PR: "${pr.title}"`;
+        html += `<button class="btn pr ${isRisky ? 'risky' : ''}" onclick="openPR(${pr.id})">${label}</button>`;
     }
 
     // Upgrades/Decisions

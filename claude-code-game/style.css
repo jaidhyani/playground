@@ -14,9 +14,54 @@ body {
 }
 
 #game-container {
-    max-width: 700px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 20px;
+}
+
+#main-content {
+    display: flex;
+    gap: 20px;
+}
+
+#gameplay {
+    flex: 1;
+}
+
+/* Side panels */
+.panel {
+    width: 250px;
+    flex-shrink: 0;
+    border: 1px solid #333;
+    padding: 15px;
+}
+
+.panel.hidden {
+    display: none;
+}
+
+.panel-header {
+    color: #666;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pr-title {
+    color: #0af;
+    margin-bottom: 10px;
+}
+
+.pr-details {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 8px;
 }
 
 /* Header */
@@ -79,6 +124,17 @@ body {
 
 .log-entry a:hover {
     color: #0f0;
+}
+
+.log-entry a.external-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.85em;
+    margin-left: 4px;
+}
+
+.log-entry a.external-link:hover {
+    color: #888;
 }
 
 .log-entry.good { color: #0f0; }

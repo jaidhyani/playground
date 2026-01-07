@@ -97,10 +97,45 @@ function clickTask(taskId) {
 
 window.clickTask = clickTask;
 
+let selectedPR = null;
+
+function openPR(prId) {
+    const pr = gameState.prQueue.find(p => p.id === prId);
+    if (!pr) return;
+
+    selectedPR = pr;
+    const panel = document.getElementById('pr-panel');
+    const titleEl = document.getElementById('pr-title');
+    const detailsEl = document.getElementById('pr-details');
+
+    titleEl.textContent = pr.title;
+
+    let details = `+${pr.codebaseGain} codebase`;
+    if (pr.techDebtGain > 0) details += `, +${pr.techDebtGain} debt`;
+    if (pr.quality < 0.4) details += '\n⚠ May have bugs';
+    detailsEl.textContent = details;
+
+    panel.classList.remove('hidden');
+}
+
+function closePR() {
+    selectedPR = null;
+    document.getElementById('pr-panel').classList.add('hidden');
+}
+
+function acceptPR() {
+    if (selectedPR) {
+        mergePR(selectedPR.id);
+        closePR();
+    }
+}
+
+window.openPR = openPR;
+
 function init() {
     if (!loadGame()) {
         // New game - Anthropic's core view
-        addEvent('<a href="https://www.anthropic.com/news/core-views-on-ai-safety" target="_blank">The impact of AI might be comparable to the industrial and scientific revolutions, but we aren\'t confident it will go well.</a>', 'neutral');
+        addEvent('"The impact of AI might be comparable to the industrial and scientific revolutions, but we aren\'t confident it will go well." <a href="https://www.anthropic.com/news/core-views-on-ai-safety" target="_blank" class="external-link" title="anthropic.com">↗</a>', 'neutral');
     }
 
     gameState.lastTick = Date.now();
@@ -115,6 +150,8 @@ function init() {
     });
     document.getElementById('reset-btn')?.addEventListener('click', resetGame);
     document.getElementById('restart-btn')?.addEventListener('click', resetGame);
+    document.getElementById('pr-accept')?.addEventListener('click', acceptPR);
+    document.getElementById('pr-close')?.addEventListener('click', closePR);
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {

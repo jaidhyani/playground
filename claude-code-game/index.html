@@ -21,9 +21,21 @@
             </div>
         </header>
 
-        <div id="log"></div>
-
-        <div id="buttons"></div>
+        <div id="main-content">
+            <div id="gameplay">
+                <div id="log"></div>
+                <div id="buttons"></div>
+            </div>
+            <div id="pr-panel" class="panel hidden">
+                <div class="panel-header">Pull Request</div>
+                <div id="pr-title" class="pr-title"></div>
+                <div id="pr-details" class="pr-details"></div>
+                <div class="panel-actions">
+                    <button id="pr-accept" class="btn action">merge</button>
+                    <button id="pr-close" class="btn decline">close</button>
+                </div>
+            </div>
+        </div>
 
         <footer id="game-footer">
             <button id="save-btn">save</button>
