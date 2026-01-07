@@ -6,7 +6,7 @@
 
 import { gameState } from './state.js';
 import { generatePR, mergePR } from './prs.js';
-import { addEvent, maybeRandomEvent, checkNarrativeTriggers } from './events.js';
+import { addEvent, checkNarrativeTriggers } from './events.js';
 import { updateDisplay } from './render.js';
 import { saveGame, loadGame, resetGame } from './save.js';
 
@@ -60,9 +60,6 @@ function tick() {
             }
         }
     }
-
-    // Random events
-    maybeRandomEvent();
 
     // Check triggers
     checkNarrativeTriggers();
