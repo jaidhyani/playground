@@ -1,7 +1,5 @@
 /**
  * Claude Code: The Game - Styles
- *
- * Starting simple - can always get fancier later!
  */
 
 /* ============================================================================
@@ -89,6 +87,13 @@ body {
     color: #4ec9b0;
     font-size: 1.2em;
     font-weight: bold;
+}
+
+#rates-display {
+    margin-top: 8px;
+    color: #6a9955;
+    font-size: 0.9em;
+    font-style: italic;
 }
 
 /* ============================================================================
@@ -187,6 +192,8 @@ button:disabled {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .upgrade-item {
@@ -194,6 +201,11 @@ button:disabled {
     padding: 12px;
     border-radius: 4px;
     border-left: 3px solid #dcdcaa;
+}
+
+.upgrade-item.cannot-afford {
+    opacity: 0.6;
+    border-left-color: #6e6e6e;
 }
 
 .upgrade-item h3 {
@@ -212,6 +224,115 @@ button:disabled {
     color: #4ec9b0;
     font-size: 0.85em;
     font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.upgrade-item button {
+    padding: 6px 12px;
+    font-size: 0.9em;
+}
+
+.no-upgrades {
+    color: #6e6e6e;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
+/* ============================================================================
+   RESEARCH
+   ============================================================================ */
+
+#research-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.research-item {
+    background-color: #3c3c3c;
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 3px solid #569cd6;
+}
+
+.research-item.cannot-afford {
+    opacity: 0.6;
+    border-left-color: #6e6e6e;
+}
+
+.research-item h3 {
+    color: #569cd6;
+    margin-bottom: 5px;
+    font-size: 1em;
+}
+
+.research-item p {
+    color: #9cdcfe;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.research-cost, .research-duration {
+    color: #4ec9b0;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+}
+
+.research-duration {
+    color: #ce9178;
+}
+
+.research-item button {
+    padding: 6px 12px;
+    font-size: 0.9em;
+    margin-top: 8px;
+}
+
+.research-active {
+    background-color: #2a4a2a;
+    padding: 15px;
+    border-radius: 4px;
+    border-left: 3px solid #4ec9b0;
+    margin-bottom: 15px;
+}
+
+.research-active h3 {
+    color: #4ec9b0;
+    margin-bottom: 10px;
+}
+
+.no-research {
+    color: #6e6e6e;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
+
+.progress-bar {
+    background-color: #3e3e42;
+    border-radius: 4px;
+    height: 20px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, #4ec9b0, #007acc);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: #9cdcfe;
+    font-size: 0.9em;
+    text-align: center;
 }
 
 /* ============================================================================
@@ -244,6 +365,147 @@ button:disabled {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ============================================================================
+   MODALS
+   ============================================================================ */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Choice Modal */
+.choice-content {
+    background-color: #2d2d30;
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 600px;
+    width: 100%;
+    border: 2px solid #dcdcaa;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.choice-content h2 {
+    color: #dcdcaa;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.choice-prompt {
+    color: #d4d4d4;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.choice-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.choice-option {
+    background-color: #3c3c3c;
+    color: #d4d4d4;
+    padding: 15px 20px;
+    border-radius: 6px;
+    border: 1px solid #4e4e52;
+    font-size: 1em;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.choice-option:hover {
+    background-color: #4a4a4e;
+    border-color: #dcdcaa;
+    transform: translateX(5px);
+}
+
+/* Ending Modal */
+.ending-content {
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 700px;
+    width: 100%;
+    border: 2px solid #007acc;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.ending-content h1 {
+    color: #007acc;
+    margin-bottom: 25px;
+    font-size: 2em;
+}
+
+.ending-reveal {
+    background-color: #2d2d30;
+    padding: 25px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+    border-left: 4px solid #569cd6;
+    text-align: left;
+}
+
+.ending-reveal p {
+    color: #d4d4d4;
+    font-size: 1.1em;
+    line-height: 1.7;
+}
+
+.ending-utility {
+    background-color: #3c3c3c;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
+
+.ending-utility strong {
+    color: #dcdcaa;
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.ending-utility p {
+    color: #4ec9b0;
+    font-size: 1.2em;
+    font-style: italic;
+}
+
+.ending-stats {
+    background-color: #2d2d30;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
+
+.ending-stats h3 {
+    color: #9cdcfe;
+    margin-bottom: 15px;
+}
+
+.ending-stats p {
+    color: #d4d4d4;
+    margin-bottom: 5px;
+}
+
+.ending-content button {
+    padding: 15px 40px;
+    font-size: 1.1em;
+    background-color: #007acc;
 }
 
 /* ============================================================================
@@ -282,6 +544,14 @@ button:disabled {
 
     body {
         padding: 10px;
+    }
+
+    .choice-content, .ending-content {
+        padding: 20px;
+    }
+
+    .ending-content h1 {
+        font-size: 1.5em;
     }
 }
 

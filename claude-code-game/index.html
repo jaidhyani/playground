@@ -25,6 +25,7 @@
                     <span id="compute-count">0</span>
                 </div>
             </div>
+            <div id="rates-display"></div>
         </header>
 
         <!-- Main game area -->
@@ -38,7 +39,6 @@
             <section id="primary-actions">
                 <h2>Actions</h2>
                 <div id="action-buttons">
-                    <!-- Buttons will be dynamically added here -->
                     <button id="main-action" class="action-btn">
                         Fix Bug
                     </button>
@@ -49,7 +49,7 @@
             <section id="upgrades">
                 <h2>Upgrades</h2>
                 <div id="upgrade-list">
-                    <!-- Upgrades will be dynamically added here -->
+                    <div class="no-upgrades">Click to fix bugs and unlock upgrades...</div>
                 </div>
             </section>
 
@@ -58,7 +58,7 @@
                 <h2>Recent Events</h2>
                 <div id="event-log">
                     <div class="event-message">
-                        Welcome! You've been assigned your first task...
+                        Welcome to Anthropic! You've been assigned your first task: make Claude helpful...
                     </div>
                 </div>
             </section>
@@ -79,6 +79,16 @@
             <button id="reset-btn">Reset Game</button>
             <span id="save-indicator"></span>
         </footer>
+    </div>
+
+    <!-- Choice Modal -->
+    <div id="choice-modal" class="modal">
+        <!-- Content injected by JS -->
+    </div>
+
+    <!-- Ending Modal -->
+    <div id="ending-modal" class="modal">
+        <!-- Content injected by JS -->
     </div>
 
     <script src="game.js"></script>
