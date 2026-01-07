@@ -64,11 +64,17 @@ function tick() {
 }
 
 function completeTask(task) {
-    task.progress = 0;
     const quality = 0.5 + Math.random() * 0.3;
     const pr = generatePR(quality, task.name);
     gameState.prQueue.push(pr);
     addEvent(`PR ready: "${pr.title}"`, 'neutral');
+
+    if (task.oneOff) {
+        // Remove one-off tasks after completion
+        gameState.tasks = gameState.tasks.filter(t => t.id !== task.id);
+    } else {
+        task.progress = 0;
+    }
 
     if (gameState.settings.autoMergePRs) {
         mergePR(pr.id);

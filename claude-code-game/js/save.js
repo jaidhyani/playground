@@ -30,11 +30,18 @@ export function loadGame() {
             if (gameState.resources.techDebt === undefined) {
                 gameState.resources.techDebt = 0;
             }
-            if (gameState.focus === undefined) {
-                gameState.focus = null;
-            }
             if (gameState.settings.vibeMode === undefined) {
                 gameState.settings.vibeMode = false;
+            }
+            if (gameState.clickMultiplier === undefined) {
+                gameState.clickMultiplier = 1;
+            }
+            if (gameState.tasks === undefined) {
+                gameState.tasks = [];
+            }
+            // Convert old date strings back to Date objects
+            if (gameState.gameDate && typeof gameState.gameDate === 'string') {
+                gameState.gameDate = new Date(gameState.gameDate);
             }
 
             updateDisplay();
@@ -53,10 +60,6 @@ export function resetGame() {
 
 // Dev tools
 export const dev = {
-    addEnergy: (n = 50) => {
-        gameState.resources.energy = Math.min(100, gameState.resources.energy + n);
-        updateDisplay();
-    },
     addCodebase: (n = 20) => {
         gameState.resources.codebase += n;
         updateDisplay();
@@ -67,6 +70,14 @@ export const dev = {
     },
     addDebt: (n = 10) => {
         gameState.resources.techDebt += n;
+        updateDisplay();
+    },
+    addCredits: (n = 100) => {
+        gameState.resources.apiCredits += n;
+        updateDisplay();
+    },
+    addMoney: (n = 500) => {
+        gameState.resources.money += n;
         updateDisplay();
     },
     state: () => console.log(gameState)

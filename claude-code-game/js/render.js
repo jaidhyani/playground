@@ -165,8 +165,7 @@ export function showGameOver() {
     if (statsEl) {
         statsEl.innerHTML = `
             codebase: ${Math.floor(gameState.resources.codebase)}<br>
-            tech debt: ${Math.floor(gameState.resources.techDebt)}<br>
-            focus: ${gameState.focus || 'none'}
+            tech debt: ${Math.floor(gameState.resources.techDebt)}
         `;
     }
 

@@ -7,50 +7,7 @@ import { addEvent } from './events.js';
 import { updateDisplay } from './render.js';
 
 export const upgradeDefinitions = {
-    // First decision: what are you working on?
-    focus: {
-        id: 'focus',
-        name: 'pick your focus',
-        description: '',
-        cost: {},
-        decisions: [
-            {
-                id: 'mcp',
-                label: 'MCP servers',
-                effect: () => {
-                    gameState.focus = 'mcp';
-                    addEvent("MCP it is. Tool-use is where it's at.", 'neutral');
-                }
-            },
-            {
-                id: 'agents',
-                label: 'agentic workflows',
-                effect: () => {
-                    gameState.focus = 'agents';
-                    addEvent("Agents. Let Claude do the work.", 'neutral');
-                }
-            },
-            {
-                id: 'evals',
-                label: 'evals & benchmarks',
-                effect: () => {
-                    gameState.focus = 'evals';
-                    addEvent("Evals. If you can't measure it...", 'neutral');
-                }
-            },
-            {
-                id: 'infra',
-                label: 'infrastructure',
-                effect: () => {
-                    gameState.focus = 'infra';
-                    addEvent("Infra. Someone has to keep the lights on.", 'neutral');
-                }
-            }
-        ],
-        condition: () => gameState.resources.codebase >= 5 && !gameState.focus && !hasUpgrade('focus')
-    },
-
-    // Vibe coding is unlocked by first ship - see actions.js ship action
+    // Focus removed - task selection handles this now
 
     // Buy API credits when running low (repeatable)
     buyCredits: {

@@ -17,8 +17,9 @@ export const gameState = {
     gameDate: new Date(2025, 0, 6),
 
     // Tasks - each is a clickable progress bar
+    // oneOff: true means task disappears after completion
     tasks: [
-        { id: 'prototype', name: 'Claude Code Prototype', progress: 0, clicksNeeded: 50 }
+        { id: 'prototype', name: 'Claude Code Prototype', progress: 0, clicksNeeded: 50, oneOff: true }
     ],
 
     // Click multiplier (first PR gives random bonus)
@@ -26,9 +27,6 @@ export const gameState = {
 
     // PR queue
     prQueue: [],
-
-    // Focus area (chosen early game)
-    focus: null,  // 'mcp', 'agents', 'evals', 'infra'
 
     // Narrative state
     narrative: {

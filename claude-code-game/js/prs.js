@@ -62,14 +62,12 @@ const prTitles = {
 export function generatePR(quality, taskName = null) {
     prIdCounter++;
 
-    // Use task name as title, or pick from pool
+    // Use task name as title, or pick from general pool
     let title;
     if (taskName) {
         title = taskName;
     } else {
-        const focus = gameState.focus || 'general';
-        const titles = [...prTitles.general, ...(prTitles[focus] || [])];
-        title = titles[Math.floor(Math.random() * titles.length)];
+        title = prTitles.general[Math.floor(Math.random() * prTitles.general.length)];
     }
 
     const hasBug = quality < 0.4 && Math.random() < 0.5;
