@@ -18,6 +18,15 @@ const gameState = {
         codebase: 0        // Quality/size of your work
     },
 
+    // PR queue - vibe coding generates PRs that need review
+    prQueue: [],  // Array of PR objects { id, title, quality, hasBug, codebaseGain }
+
+    // Coding progress - manual coding requires multiple clicks
+    codingProgress: 0,      // Current progress (0-100)
+    codingClicksNeeded: 10, // Clicks to generate a PR (reduced by upgrades)
+    maxCodingSessions: 1,   // How many PRs can be in-progress at once
+    activeCodingSessions: 0, // Currently cooking PRs (for async vibe coding)
+
     // Path-specific resources (appear based on narrative branch)
     pathResources: {
         // Bootstrap path
@@ -51,39 +60,177 @@ const gameState = {
     // Passive effects
     passiveEffects: [],
 
+    // Settings
+    settings: {
+        autoMergePRs: false  // Upgrade to auto-merge PRs
+    },
+
     // Timing
     lastTick: Date.now(),
     tickRate: 1000  // 1 second per tick
 };
 
 // ============================================================================
+// PR GENERATION - Vibe coding creates PRs
+// ============================================================================
+
+const prTitles = {
+    good: [
+        "Add responsive dashboard layout",
+        "Implement user authentication flow",
+        "Create API endpoint for data sync",
+        "Add dark mode support",
+        "Optimize database queries",
+        "Implement caching layer",
+        "Add export to CSV feature",
+        "Create settings page",
+        "Add keyboard shortcuts",
+        "Implement undo/redo system"
+    ],
+    mediocre: [
+        "Fix button alignment",
+        "Update dependencies",
+        "Refactor utils.js",
+        "Add loading spinner",
+        "Fix typo in header",
+        "Update README",
+        "Add console.log for debugging",
+        "Rename variables for clarity",
+        "Move CSS to separate file",
+        "Add TODO comments"
+    ],
+    bad: [
+        "WIP: something",
+        "fix stuff",
+        "asdfasdf",
+        "BROKEN - DO NOT MERGE",
+        "test commit please ignore",
+        "idk what this does but it works",
+        "3am commit",
+        "aaaaaaaaaaa",
+        "revert revert revert",
+        "I'll fix this later"
+    ]
+};
+
+let prIdCounter = 1;
+
+function generatePR(quality) {
+    const titlePool = quality > 0.7 ? prTitles.good :
+                      quality > 0.3 ? prTitles.mediocre : prTitles.bad;
+
+    const hasBug = Math.random() > (0.5 + quality * 0.3); // Better PRs less likely to have bugs
+    const codebaseGain = quality > 0.7 ? Math.floor(8 + Math.random() * 7) :
+                         quality > 0.3 ? Math.floor(3 + Math.random() * 4) :
+                         Math.floor(1 + Math.random() * 2);
+
+    return {
+        id: prIdCounter++,
+        title: titlePool[Math.floor(Math.random() * titlePool.length)],
+        quality: quality,
+        hasBug: hasBug,
+        codebaseGain: codebaseGain,
+        linesAdded: Math.floor(20 + quality * 200 + Math.random() * 100),
+        linesRemoved: Math.floor(5 + quality * 50 + Math.random() * 30)
+    };
+}
+
+function mergePR(prId) {
+    const prIndex = gameState.prQueue.findIndex(pr => pr.id === prId);
+    if (prIndex === -1) return;
+
+    const pr = gameState.prQueue[prIndex];
+    gameState.prQueue.splice(prIndex, 1);
+
+    gameState.resources.codebase += pr.codebaseGain;
+
+    if (pr.hasBug) {
+        gameState.narrative.flags.bugsInCodebase = (gameState.narrative.flags.bugsInCodebase || 0) + 1;
+        // Bug might be discovered later...
+    }
+
+    addEvent(`Merged: "${pr.title}" (+${pr.codebaseGain} codebase)`, pr.quality > 0.5 ? 'success' : 'neutral');
+    updateDisplay();
+}
+
+function rejectPR(prId) {
+    const prIndex = gameState.prQueue.findIndex(pr => pr.id === prId);
+    if (prIndex === -1) return;
+
+    const pr = gameState.prQueue[prIndex];
+    gameState.prQueue.splice(prIndex, 1);
+
+    addEvent(`Rejected: "${pr.title}"`, 'neutral');
+    updateDisplay();
+}
+
+// ============================================================================
 // ACTIONS - What the player can do
 // ============================================================================
 
 const actions = {
+    // Manual coding - requires multiple clicks to generate a PR
+    code: {
+        id: 'code',
+        name: 'Code',
+        description: 'Write code manually. Click multiple times to complete a feature.',
+        cost: { energy: 5 },  // Small energy cost per click
+        execute: () => {
+            // Track clicks for upgrade trigger
+            gameState.narrative.flags.manualCodeClicks = (gameState.narrative.flags.manualCodeClicks || 0) + 1;
+
+            const progressPerClick = 100 / gameState.codingClicksNeeded;
+            gameState.codingProgress += progressPerClick;
+
+            // Check if we've completed a PR
+            if (gameState.codingProgress >= 100) {
+                gameState.codingProgress = 0;
+                const quality = 0.3 + Math.random() * 0.4; // Manual coding is medium quality
+                const pr = generatePR(quality);
+                gameState.prQueue.push(pr);
+
+                addEvent(`Finished coding: "${pr.title}"`, 'neutral');
+
+                if (gameState.settings.autoMergePRs) {
+                    mergePR(pr.id);
+                }
+                checkNarrativeTriggers();
+            }
+            updateDisplay();
+        },
+        available: () => !hasUpgrade('vibeCode'), // Hidden once you unlock vibe coding
+        showProgress: true  // Flag to show progress bar
+    },
+
+    // Vibe coding - one click generates a PR (unlocked via upgrade)
     vibeCode: {
         id: 'vibeCode',
         name: 'Vibe Code',
-        description: 'Start something new. No plan, just vibes. Could be brilliant, could be garbage.',
+        description: 'Start something new. No plan, just vibes. Generates a PR to review.',
         cost: { time: 20, energy: 30 },
         execute: () => {
-            const roll = Math.random();
-            if (roll > 0.7) {
-                // Great outcome
-                gameState.resources.codebase += 15;
-                addEvent("You got into flow state. Something clicked. This might actually be good.", 'success');
-            } else if (roll > 0.3) {
-                // Okay outcome
-                gameState.resources.codebase += 5;
-                addEvent("You made progress. Not your best work, but it's something.", 'neutral');
+            const quality = Math.random();
+
+            // Generate a PR
+            const pr = generatePR(quality);
+            gameState.prQueue.push(pr);
+
+            if (quality > 0.7) {
+                addEvent(`Flow state! Created PR: "${pr.title}"`, 'success');
+            } else if (quality > 0.3) {
+                addEvent(`Made progress. Created PR: "${pr.title}"`, 'neutral');
             } else {
-                // Bad outcome
-                gameState.resources.codebase += 1;
-                addEvent("You stared at the screen for hours. Wrote code. Deleted code. Wrote more code. Meh.", 'negative');
+                addEvent(`Struggled today. Created PR: "${pr.title}"`, 'negative');
             }
+
+            // Auto-merge if setting enabled
+            if (gameState.settings.autoMergePRs) {
+                mergePR(pr.id);
+            }
+
             checkNarrativeTriggers();
         },
-        available: () => true
+        available: () => hasUpgrade('vibeCode') // Only available after upgrade
     },
 
     iterate: {
@@ -232,6 +379,82 @@ const upgradeDefinitions = {
             }
         ],
         condition: () => gameState.narrative.week >= 3 && !hasUpgrade('coffeeSubscription')
+    },
+
+    vibeCode: {
+        id: 'vibeCode',
+        name: 'Vibe Coding',
+        description: 'You\'ve been clicking that code button a lot. Your friend mentions this AI coding tool that\'s "actually good now." You\'re skeptical - you\'ve seen the hallucinations, the bugs, the confidently wrong suggestions. But the promise is tempting: one click, one PR. Let the machine handle the grunt work.',
+        cost: { money: 20 },  // API subscription
+        decisions: [
+            {
+                id: 'embrace',
+                label: 'Embrace the future',
+                effect: () => {
+                    gameState.codingProgress = 0;
+                    gameState.narrative.flags.aiEnthusiast = true;
+                    addEvent("You signed up. The first PR it generates is... surprisingly good? This changes things.", 'success');
+                }
+            },
+            {
+                id: 'cautious',
+                label: 'Try it, but stay vigilant',
+                effect: () => {
+                    gameState.codingProgress = 0;
+                    gameState.narrative.flags.aiCautious = true;
+                    addEvent("You'll use it, but you're reviewing every line. Trust, but verify.", 'neutral');
+                }
+            },
+            {
+                id: 'hybrid',
+                label: 'Use it for boilerplate only',
+                effect: () => {
+                    gameState.codingProgress = 0;
+                    gameState.narrative.flags.aiHybrid = true;
+                    // Hybrid approach: slightly slower but more controlled
+                    gameState.codingClicksNeeded = 5; // Reduce clicks needed for manual
+                    addEvent("You'll let it handle the boring stuff. The real logic stays in your hands.", 'neutral');
+                }
+            }
+        ],
+        condition: () => {
+            const hasCodedManually = gameState.narrative.flags.manualCodeClicks >= 5;
+            return hasCodedManually && !hasUpgrade('vibeCode');
+        }
+    },
+
+    autoMerge: {
+        id: 'autoMerge',
+        name: 'Auto-Merge PRs',
+        description: 'Reviewing every PR is getting tedious. You could set up a CI pipeline that auto-merges when tests pass. It\'d save time, but you\'d lose that hands-on review. What if something slips through?',
+        cost: { time: 15, energy: 20 },
+        decisions: [
+            {
+                id: 'full',
+                label: 'Full auto-merge',
+                effect: () => {
+                    gameState.settings.autoMergePRs = true;
+                    addEvent("Auto-merge enabled. PRs now merge automatically. Speed over safety.", 'neutral');
+                }
+            },
+            {
+                id: 'smart',
+                label: 'Smart auto-merge (high quality only)',
+                effect: () => {
+                    gameState.settings.smartAutoMerge = true;
+                    addEvent("Smart merge enabled. Only clean PRs auto-merge. Questionable ones still need review.", 'success');
+                }
+            },
+            {
+                id: 'batch',
+                label: 'Batch review mode',
+                effect: () => {
+                    gameState.settings.batchReview = true;
+                    addEvent("Batch mode enabled. PRs pile up, then you review them all at once.", 'neutral');
+                }
+            }
+        ],
+        condition: () => gameState.prQueue.length >= 3 && !hasUpgrade('autoMerge')
     },
 
     // ===== POST-SHIP UPGRADES =====
@@ -659,6 +882,7 @@ function executeUpgradeDecision(upgradeId, decisionId) {
 function updateDisplay() {
     renderResources();
     renderActions();
+    renderPRs();
     renderUpgrades();
     renderPathResources();
 }
@@ -734,16 +958,67 @@ function renderActions() {
             return `<span class="cost-item ${hasEnough ? '' : 'insufficient'}">${c} ${r}</span>`;
         }).join('');
 
+        // Show progress bar for manual coding
+        let progressBar = '';
+        if (action.showProgress && gameState.codingProgress > 0) {
+            progressBar = `
+                <div class="coding-progress-container">
+                    <div class="coding-progress-bar" style="width: ${gameState.codingProgress}%"></div>
+                    <span class="coding-progress-text">${Math.floor(gameState.codingProgress)}%</span>
+                </div>
+            `;
+        }
+
         html += `
             <div class="action-card ${canAfford ? '' : 'disabled'}" onclick="${canAfford ? `executeAction('${action.id}')` : ''}">
                 <div class="action-name">${action.name}</div>
                 <div class="action-description">${action.description}</div>
+                ${progressBar}
                 ${costItems ? `<div class="action-cost">${costItems}</div>` : ''}
             </div>
         `;
     }
 
     container.innerHTML = html || '<p class="no-upgrades">No actions available right now.</p>';
+}
+
+function renderPRs() {
+    const container = document.getElementById('pr-list');
+    const countEl = document.getElementById('pr-count');
+    if (!container) return;
+
+    if (countEl) {
+        countEl.textContent = gameState.prQueue.length > 0 ? `(${gameState.prQueue.length})` : '';
+    }
+
+    if (gameState.prQueue.length === 0) {
+        container.innerHTML = '<div class="no-prs">No PRs to review. Vibe code to create some!</div>';
+        return;
+    }
+
+    let html = '';
+
+    for (const pr of gameState.prQueue) {
+        const qualityClass = pr.quality > 0.7 ? 'quality-good' :
+                             pr.quality > 0.3 ? 'quality-medium' : 'quality-bad';
+
+        html += `
+            <div class="pr-card ${qualityClass}">
+                <div class="pr-title">${pr.title}</div>
+                <div class="pr-stats">
+                    <span class="pr-stat added">+${pr.linesAdded}</span>
+                    <span class="pr-stat removed">-${pr.linesRemoved}</span>
+                </div>
+                <div class="pr-gain">+${pr.codebaseGain} codebase</div>
+                <div class="pr-actions">
+                    <button class="pr-merge-btn" onclick="mergePR(${pr.id})">Merge</button>
+                    <button class="pr-reject-btn" onclick="rejectPR(${pr.id})">Reject</button>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
 }
 
 function renderUpgrades() {
