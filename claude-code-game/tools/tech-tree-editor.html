@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tech Tree Editor</title>
+    <title>Tech Tree DAG Editor</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -12,176 +12,165 @@
             color: #e0e0e0;
             margin: 0;
             padding: 20px;
+            overflow: hidden;
         }
-        h1 { margin: 0 0 20px; font-size: 1.5rem; color: #fff; }
+        h1 { margin: 0 0 15px; font-size: 1.4rem; color: #fff; }
 
         .toolbar {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
+            align-items: center;
         }
         button {
             background: #333;
             color: #fff;
             border: 1px solid #555;
-            padding: 8px 16px;
+            padding: 6px 14px;
             cursor: pointer;
             border-radius: 4px;
+            font-size: 0.9rem;
         }
         button:hover { background: #444; }
         button.primary { background: #2a5298; border-color: #3a6ab8; }
         button.primary:hover { background: #3a6ab8; }
+        button.danger { background: #8a2a2a; border-color: #a33; }
+        button.danger:hover { background: #a33; }
+        .toolbar-spacer { flex: 1; }
+        .toolbar-hint { color: #666; font-size: 0.8rem; }
 
         .container {
             display: flex;
-            gap: 20px;
-            height: calc(100vh - 120px);
+            gap: 15px;
+            height: calc(100vh - 100px);
         }
 
-        .tree-view {
+        .graph-container {
             flex: 1;
             background: #222;
             border-radius: 8px;
-            padding: 20px;
-            overflow: auto;
+            overflow: hidden;
             position: relative;
         }
 
-        .phase {
-            margin-bottom: 40px;
-            position: relative;
+        #graph {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
         }
-        .phase-header {
-            font-weight: bold;
-            color: #888;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .phase-unlock {
-            font-weight: normal;
-            color: #666;
-            font-size: 0.7rem;
-        }
+        #graph:active { cursor: grabbing; }
 
-        .tasks {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .task {
-            background: #2a2a2a;
-            border: 2px solid #444;
-            border-radius: 6px;
-            padding: 12px 16px;
+        .node {
             cursor: pointer;
-            min-width: 200px;
-            transition: all 0.15s;
+            transition: filter 0.1s;
         }
-        .task:hover { border-color: #666; background: #333; }
-        .task.selected { border-color: #4a9eff; background: #1a3a5a; }
-        .task.one-off { border-left: 4px solid #f0a030; }
-        .task.drag-over { border-color: #4a9eff; border-style: dashed; }
-        .task.dragging { opacity: 0.5; }
+        .node:hover { filter: brightness(1.2); }
+        .node.selected rect { stroke: #4a9eff; stroke-width: 3; }
+        .node.one-off rect { stroke-dasharray: none; }
+        .node.repeatable rect { stroke-dasharray: 5,3; }
 
-        .phase.drag-over { background: rgba(74, 158, 255, 0.1); }
-        .phase-drop-zone {
-            min-height: 60px;
-            border: 2px dashed transparent;
-            border-radius: 6px;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            font-size: 0.8rem;
+        .edge {
+            stroke: #555;
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
         }
-        .phase-drop-zone.drag-over {
-            border-color: #4a9eff;
-            background: rgba(74, 158, 255, 0.1);
-        }
-
-        .task-name { font-weight: 500; margin-bottom: 4px; }
-        .task-meta {
-            font-size: 0.8rem;
-            color: #888;
-            display: flex;
-            gap: 12px;
-        }
-
-        .connector {
-            position: absolute;
-            height: 2px;
-            background: #444;
-            transform-origin: left center;
+        .edge.highlight {
+            stroke: #4a9eff;
+            stroke-width: 3;
         }
 
         .editor-panel {
-            width: 350px;
+            width: 320px;
             background: #222;
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
         }
         .editor-panel h2 {
-            margin: 0 0 15px;
+            margin: 0 0 12px;
             font-size: 1rem;
             color: #aaa;
         }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+        .form-group { margin-bottom: 12px; }
         label {
             display: block;
             font-size: 0.8rem;
             color: #888;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         input, select, textarea {
             width: 100%;
             background: #333;
             border: 1px solid #555;
             color: #fff;
-            padding: 8px 10px;
+            padding: 6px 8px;
             border-radius: 4px;
             font-family: inherit;
+            font-size: 0.9rem;
         }
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #4a9eff;
         }
-        input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
-        }
+        input[type="checkbox"] { width: auto; margin-right: 6px; }
+        input[type="number"] { width: 80px; }
         .checkbox-label {
             display: flex;
             align-items: center;
             cursor: pointer;
+            font-size: 0.9rem;
         }
+
+        .deps-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .dep-tag {
+            background: #444;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dep-tag button {
+            background: none;
+            border: none;
+            color: #888;
+            padding: 0;
+            font-size: 1rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .dep-tag button:hover { color: #f66; }
+
+        .add-dep-row {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .add-dep-row select { flex: 1; }
+        .add-dep-row button { padding: 4px 10px; }
 
         .editor-actions {
             margin-top: auto;
+            padding-top: 10px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
         .editor-actions button { flex: 1; }
-        button.danger { background: #8a2a2a; border-color: #a33; }
-        button.danger:hover { background: #a33; }
 
         .modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.8);
             display: none;
             align-items: center;
@@ -211,37 +200,53 @@
             justify-content: flex-end;
         }
 
-        .empty-state {
+        .empty-hint {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #555;
             text-align: center;
-            color: #666;
-            padding: 60px 20px;
         }
-        .empty-state p { margin: 10px 0; }
     </style>
 </head>
 <body>
-    <h1>Tech Tree Editor</h1>
+    <h1>Tech Tree DAG Editor</h1>
 
     <div class="toolbar">
         <button onclick="showImportModal()" class="primary">Import</button>
         <button onclick="showExportModal()">Export JS</button>
-        <button onclick="exportJSON()">Export JSON</button>
-        <button onclick="addPhase()">+ Add Phase</button>
+        <button onclick="addNode()">+ Add Node</button>
         <button onclick="loadDefault()">Load Default</button>
+        <button onclick="autoLayout()">Auto Layout</button>
+        <span class="toolbar-spacer"></span>
+        <span class="toolbar-hint">Drag nodes to reposition. Click to edit.</span>
     </div>
 
     <div class="container">
-        <div class="tree-view" id="tree-view">
-            <div class="empty-state">
-                <p>No tech tree loaded</p>
-                <p>Click <strong>Import</strong> to paste tech tree data, or <strong>Load Default</strong></p>
+        <div class="graph-container">
+            <svg id="graph">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7"
+                            refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#555"/>
+                    </marker>
+                    <marker id="arrowhead-highlight" markerWidth="10" markerHeight="7"
+                            refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#4a9eff"/>
+                    </marker>
+                </defs>
+                <g id="edges"></g>
+                <g id="nodes"></g>
+            </svg>
+            <div class="empty-hint" id="empty-hint">
+                Click <strong>Load Default</strong> or <strong>Import</strong> to start
             </div>
         </div>
 
-        <div class="editor-panel" id="editor-panel">
-            <h2>Task Editor</h2>
+        <div class="editor-panel">
+            <h2>Node Editor</h2>
             <div id="editor-content">
-                <p style="color: #666;">Select a task to edit</p>
+                <p style="color: #666;">Select a node to edit</p>
             </div>
         </div>
     </div>
@@ -249,7 +254,7 @@
     <div class="modal" id="import-modal">
         <div class="modal-content">
             <h2>Import Tech Tree</h2>
-            <p style="color: #888; font-size: 0.9rem;">Paste your tech-tree.js content or JSON:</p>
+            <p style="color: #888; font-size: 0.9rem;">Paste tech-tree.js content or JSON:</p>
             <textarea id="import-data" placeholder="export const techTree = { ... }"></textarea>
             <div class="modal-actions">
                 <button onclick="closeModal('import-modal')">Cancel</button>
@@ -264,291 +269,565 @@
             <textarea id="export-data" readonly></textarea>
             <div class="modal-actions">
                 <button onclick="closeModal('export-modal')">Close</button>
-                <button onclick="copyExport()" class="primary">Copy to Clipboard</button>
+                <button onclick="copyExport()" class="primary">Copy</button>
             </div>
         </div>
     </div>
 
     <script>
+        // DAG data: { nodeId: { name, devPoints, oneOff, requires[], message?, x?, y? } }
         let techTree = {};
-        let selectedTask = null;
-        let selectedPhase = null;
+        let selectedNode = null;
+        let nodePositions = {}; // { nodeId: { x, y } }
 
-        // Default tech tree for quick loading
+        // SVG pan/zoom state
+        let viewBox = { x: 0, y: 0, w: 1200, h: 800 };
+        let isPanning = false;
+        let panStart = { x: 0, y: 0 };
+
+        // Node drag state
+        let isDragging = false;
+        let dragNode = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        const NODE_WIDTH = 180;
+        const NODE_HEIGHT = 60;
+        const NODE_PADDING = 40;
+
         const defaultTechTree = {
-            initial: {
-                tasks: [
-                    { id: 'prototype', name: '[Dev] Claude Code Prototype', devPoints: 50, oneOff: true }
-                ],
-                unlockedBy: null
-            },
-            phase1: {
-                tasks: [
-                    { id: 'tool-calling', name: '[Dev] Basic tool calling', devPoints: 35, oneOff: true },
-                    { id: 'error-handling', name: '[Dev] Error handling', devPoints: 25 },
-                    { id: 'streaming', name: '[Dev] Streaming responses', devPoints: 30, oneOff: true }
-                ],
-                unlockedBy: '[Dev] Claude Code Prototype',
+            'prototype': {
+                name: '[Dev] Claude Code Prototype',
+                devPoints: 50,
+                oneOff: true,
+                requires: [],
                 message: null
             },
-            phase2: {
-                tasks: [
-                    { id: 'mcp-spec', name: '[Dev] MCP protocol spec', devPoints: 45, oneOff: true },
-                    { id: 'tool-discovery', name: '[Dev] Tool discovery', devPoints: 30 }
-                ],
-                unlockedBy: '[Dev] Basic tool calling',
+            'tool-calling': {
+                name: '[Dev] Basic tool calling',
+                devPoints: 35,
+                oneOff: true,
+                requires: ['prototype'],
                 message: 'Tool calling working. MCP protocol next.'
             },
-            phase3: {
-                tasks: [
-                    { id: 'mcp-filesystem', name: '[Dev] Filesystem MCP server', devPoints: 40, oneOff: true },
-                    { id: 'mcp-git', name: '[Dev] Git MCP server', devPoints: 40, oneOff: true },
-                    { id: 'server-templates', name: '[Dev] MCP server templates', devPoints: 35 }
-                ],
-                unlockedBy: '[Dev] MCP protocol spec',
+            'error-handling': {
+                name: '[Dev] Error handling',
+                devPoints: 25,
+                oneOff: false,
+                requires: ['prototype']
+            },
+            'streaming': {
+                name: '[Dev] Streaming responses',
+                devPoints: 30,
+                oneOff: true,
+                requires: ['prototype']
+            },
+            'mcp-spec': {
+                name: '[Dev] MCP protocol spec',
+                devPoints: 45,
+                oneOff: true,
+                requires: ['tool-calling'],
                 message: 'MCP spec complete. Server ecosystem unlocked.'
             },
-            phase4: {
-                tasks: [
-                    { id: 'agent-loop', name: '[Dev] Agent loop', devPoints: 50, oneOff: true },
-                    { id: 'context-management', name: '[Dev] Context management', devPoints: 40 },
-                    { id: 'task-decomposition', name: '[Dev] Task decomposition', devPoints: 45, oneOff: true }
-                ],
-                unlockedBy: '[Dev] Filesystem MCP server',
+            'tool-discovery': {
+                name: '[Dev] Tool discovery',
+                devPoints: 30,
+                oneOff: false,
+                requires: ['tool-calling']
+            },
+            'mcp-filesystem': {
+                name: '[Dev] Filesystem MCP server',
+                devPoints: 40,
+                oneOff: true,
+                requires: ['mcp-spec'],
                 message: 'Filesystem access enables agentic workflows.'
             },
-            phase5: {
-                tasks: [
-                    { id: 'eval-framework', name: '[Dev] Eval framework', devPoints: 50, oneOff: true },
-                    { id: 'benchmark-suite', name: '[Dev] Benchmark suite', devPoints: 40 },
-                    { id: 'safety-checks', name: '[Dev] Safety checks', devPoints: 45 }
-                ],
-                unlockedBy: '[Dev] Agent loop',
+            'mcp-git': {
+                name: '[Dev] Git MCP server',
+                devPoints: 40,
+                oneOff: true,
+                requires: ['mcp-spec']
+            },
+            'server-templates': {
+                name: '[Dev] MCP server templates',
+                devPoints: 35,
+                oneOff: false,
+                requires: ['mcp-spec']
+            },
+            'agent-loop': {
+                name: '[Dev] Agent loop',
+                devPoints: 50,
+                oneOff: true,
+                requires: ['mcp-filesystem'],
                 message: 'Agents need evals. Measurement unlocked.'
+            },
+            'context-management': {
+                name: '[Dev] Context management',
+                devPoints: 40,
+                oneOff: false,
+                requires: ['mcp-filesystem']
+            },
+            'task-decomposition': {
+                name: '[Dev] Task decomposition',
+                devPoints: 45,
+                oneOff: true,
+                requires: ['mcp-filesystem', 'agent-loop']
+            },
+            'eval-framework': {
+                name: '[Dev] Eval framework',
+                devPoints: 50,
+                oneOff: true,
+                requires: ['agent-loop']
+            },
+            'benchmark-suite': {
+                name: '[Dev] Benchmark suite',
+                devPoints: 40,
+                oneOff: false,
+                requires: ['agent-loop']
+            },
+            'safety-checks': {
+                name: '[Dev] Safety checks',
+                devPoints: 45,
+                oneOff: false,
+                requires: ['agent-loop', 'eval-framework']
             }
         };
 
         function loadDefault() {
             techTree = JSON.parse(JSON.stringify(defaultTechTree));
+            autoLayout();
+        }
+
+        // Calculate depth of each node (longest path from root)
+        function calculateDepths() {
+            const depths = {};
+            const visited = new Set();
+
+            function getDepth(nodeId) {
+                if (depths[nodeId] !== undefined) return depths[nodeId];
+                if (visited.has(nodeId)) return 0; // cycle protection
+                visited.add(nodeId);
+
+                const node = techTree[nodeId];
+                if (!node || node.requires.length === 0) {
+                    depths[nodeId] = 0;
+                    return 0;
+                }
+
+                const maxParentDepth = Math.max(...node.requires.map(getDepth));
+                depths[nodeId] = maxParentDepth + 1;
+                return depths[nodeId];
+            }
+
+            for (const nodeId of Object.keys(techTree)) {
+                getDepth(nodeId);
+            }
+
+            return depths;
+        }
+
+        function autoLayout() {
+            const depths = calculateDepths();
+
+            // Group nodes by depth
+            const levels = {};
+            for (const [nodeId, depth] of Object.entries(depths)) {
+                if (!levels[depth]) levels[depth] = [];
+                levels[depth].push(nodeId);
+            }
+
+            // Position nodes
+            const startX = 50;
+            const startY = 50;
+            const levelGap = NODE_WIDTH + NODE_PADDING * 2;
+            const nodeGap = NODE_HEIGHT + NODE_PADDING;
+
+            for (const [depth, nodes] of Object.entries(levels)) {
+                const x = startX + parseInt(depth) * levelGap;
+                nodes.forEach((nodeId, index) => {
+                    nodePositions[nodeId] = {
+                        x: x,
+                        y: startY + index * nodeGap
+                    };
+                });
+            }
+
             render();
         }
 
         function render() {
-            const container = document.getElementById('tree-view');
+            const svg = document.getElementById('graph');
+            const nodesG = document.getElementById('nodes');
+            const edgesG = document.getElementById('edges');
 
-            if (Object.keys(techTree).length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <p>No tech tree loaded</p>
-                        <p>Click <strong>Import</strong> to paste tech tree data, or <strong>Load Default</strong></p>
-                    </div>
-                `;
-                return;
+            document.getElementById('empty-hint').style.display =
+                Object.keys(techTree).length === 0 ? 'block' : 'none';
+
+            // Update viewBox
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+
+            // Clear existing
+            nodesG.innerHTML = '';
+            edgesG.innerHTML = '';
+
+            // Draw edges first
+            for (const [nodeId, node] of Object.entries(techTree)) {
+                const pos = nodePositions[nodeId];
+                if (!pos) continue;
+
+                for (const reqId of node.requires) {
+                    const reqPos = nodePositions[reqId];
+                    if (!reqPos) continue;
+
+                    const isHighlight = selectedNode === nodeId || selectedNode === reqId;
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+                    // Curved path from right of parent to left of child
+                    const x1 = reqPos.x + NODE_WIDTH;
+                    const y1 = reqPos.y + NODE_HEIGHT / 2;
+                    const x2 = pos.x;
+                    const y2 = pos.y + NODE_HEIGHT / 2;
+                    const cx = (x1 + x2) / 2;
+
+                    path.setAttribute('d', `M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}`);
+                    path.setAttribute('class', `edge${isHighlight ? ' highlight' : ''}`);
+                    if (isHighlight) {
+                        path.style.markerEnd = 'url(#arrowhead-highlight)';
+                    }
+                    edgesG.appendChild(path);
+                }
             }
 
-            let html = '';
+            // Draw nodes
+            for (const [nodeId, node] of Object.entries(techTree)) {
+                const pos = nodePositions[nodeId] || { x: 100, y: 100 };
+                const isSelected = selectedNode === nodeId;
 
-            for (const [phaseId, phase] of Object.entries(techTree)) {
-                const unlockText = phase.unlockedBy
-                    ? `unlocked by: ${phase.unlockedBy}`
-                    : 'starting phase';
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', `node${isSelected ? ' selected' : ''} ${node.oneOff ? 'one-off' : 'repeatable'}`);
+                g.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+                g.setAttribute('data-id', nodeId);
 
-                const phaseKeys = Object.keys(techTree);
-                const phaseIndex = phaseKeys.indexOf(phaseId);
-                const canMoveUp = phaseIndex > 0;
-                const canMoveDown = phaseIndex < phaseKeys.length - 1;
+                // Background rect
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('width', NODE_WIDTH);
+                rect.setAttribute('height', NODE_HEIGHT);
+                rect.setAttribute('rx', 6);
+                rect.setAttribute('fill', node.oneOff ? '#2a3a2a' : '#2a2a3a');
+                rect.setAttribute('stroke', '#555');
+                rect.setAttribute('stroke-width', 2);
+                g.appendChild(rect);
 
-                html += `
-                    <div class="phase" data-phase="${phaseId}"
-                         ondragover="handlePhaseDragOver(event, '${phaseId}')"
-                         ondragleave="handlePhaseDragLeave(event)"
-                         ondrop="handlePhaseDrop(event, '${phaseId}')">
-                        <div class="phase-header">
-                            <span>${phaseId}</span>
-                            <span class="phase-unlock">${unlockText}</span>
-                            <button onclick="addTask('${phaseId}')" style="padding: 2px 8px; font-size: 0.75rem;">+ task</button>
-                            <button onclick="editPhase('${phaseId}')" style="padding: 2px 8px; font-size: 0.75rem;">edit</button>
-                            ${canMoveUp ? `<button onclick="movePhase('${phaseId}', -1)" style="padding: 2px 8px; font-size: 0.75rem;">&#9650;</button>` : ''}
-                            ${canMoveDown ? `<button onclick="movePhase('${phaseId}', 1)" style="padding: 2px 8px; font-size: 0.75rem;">&#9660;</button>` : ''}
-                            <button onclick="deletePhase('${phaseId}')" style="padding: 2px 8px; font-size: 0.75rem;" class="danger">&#10005;</button>
-                        </div>
-                        <div class="tasks">
-                `;
+                // Node ID (smaller, top)
+                const idText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                idText.setAttribute('x', 10);
+                idText.setAttribute('y', 18);
+                idText.setAttribute('fill', '#888');
+                idText.setAttribute('font-size', '11');
+                idText.textContent = nodeId;
+                g.appendChild(idText);
 
-                phase.tasks.forEach((task, taskIndex) => {
-                    const isSelected = selectedTask?.id === task.id && selectedPhase === phaseId;
-                    const oneOffClass = task.oneOff ? 'one-off' : '';
-                    const selectedClass = isSelected ? 'selected' : '';
+                // Node name (truncated)
+                const nameText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                nameText.setAttribute('x', 10);
+                nameText.setAttribute('y', 38);
+                nameText.setAttribute('fill', '#fff');
+                nameText.setAttribute('font-size', '12');
+                const displayName = node.name.length > 22 ? node.name.slice(0, 20) + '...' : node.name;
+                nameText.textContent = displayName;
+                g.appendChild(nameText);
 
-                    html += `
-                        <div class="task ${oneOffClass} ${selectedClass}"
-                             draggable="true"
-                             ondragstart="handleDragStart(event, '${phaseId}', '${task.id}')"
-                             ondragend="handleDragEnd(event)"
-                             ondragover="handleDragOver(event)"
-                             ondragleave="handleDragLeave(event)"
-                             ondrop="handleDrop(event, '${phaseId}', ${taskIndex})"
-                             onclick="selectTask('${phaseId}', '${task.id}')">
-                            <div class="task-name">${task.name}</div>
-                            <div class="task-meta">
-                                <span>${task.devPoints} pts</span>
-                                ${task.oneOff ? '<span>one-off</span>' : '<span>repeatable</span>'}
-                            </div>
-                        </div>
-                    `;
-                });
+                // Dev points
+                const ptsText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                ptsText.setAttribute('x', 10);
+                ptsText.setAttribute('y', 52);
+                ptsText.setAttribute('fill', '#888');
+                ptsText.setAttribute('font-size', '10');
+                ptsText.textContent = `${node.devPoints} pts`;
+                g.appendChild(ptsText);
 
-                // Drop zone for empty phases or end of list
-                html += `
-                        </div>
-                        <div class="phase-drop-zone"
-                             ondragover="handleDropZoneDragOver(event)"
-                             ondragleave="handleDropZoneDragLeave(event)"
-                             ondrop="handleDrop(event, '${phaseId}', ${phase.tasks.length})">
-                            ${phase.tasks.length === 0 ? 'Drop tasks here' : ''}
-                        </div>
-                    </div>
-                `;
+                nodesG.appendChild(g);
             }
 
-            container.innerHTML = html;
+            // Add event listeners
+            nodesG.querySelectorAll('.node').forEach(node => {
+                node.addEventListener('mousedown', onNodeMouseDown);
+                node.addEventListener('click', onNodeClick);
+            });
         }
 
-        function selectTask(phaseId, taskId) {
-            const phase = techTree[phaseId];
-            const task = phase.tasks.find(t => t.id === taskId);
+        function onNodeClick(e) {
+            if (isDragging) return; // Don't select if we were dragging
+            const nodeId = e.currentTarget.getAttribute('data-id');
+            selectNode(nodeId);
+        }
 
-            selectedPhase = phaseId;
-            selectedTask = task;
+        function onNodeMouseDown(e) {
+            const nodeId = e.currentTarget.getAttribute('data-id');
+            const pos = nodePositions[nodeId];
+            if (!pos) return;
 
-            renderEditor();
+            isDragging = false;
+            dragNode = nodeId;
+
+            const svg = document.getElementById('graph');
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+            dragOffset.x = svgP.x - pos.x;
+            dragOffset.y = svgP.y - pos.y;
+
+            e.stopPropagation();
+        }
+
+        function selectNode(nodeId) {
+            selectedNode = nodeId;
             render();
+            renderEditor();
         }
 
         function renderEditor() {
             const panel = document.getElementById('editor-content');
 
-            if (!selectedTask) {
-                panel.innerHTML = '<p style="color: #666;">Select a task to edit</p>';
+            if (!selectedNode || !techTree[selectedNode]) {
+                panel.innerHTML = '<p style="color: #666;">Select a node to edit</p>';
                 return;
             }
 
-            // Get all task names for unlock dropdown
-            const allTaskNames = [];
-            for (const phase of Object.values(techTree)) {
-                for (const task of phase.tasks) {
-                    allTaskNames.push(task.name);
-                }
-            }
+            const node = techTree[selectedNode];
+
+            // Build list of potential dependencies (all nodes except self and dependents)
+            const dependents = getDependents(selectedNode);
+            const availableDeps = Object.keys(techTree).filter(id =>
+                id !== selectedNode &&
+                !node.requires.includes(id) &&
+                !dependents.includes(id)
+            );
 
             panel.innerHTML = `
                 <div class="form-group">
-                    <label>Task ID</label>
-                    <input type="text" id="edit-id" value="${selectedTask.id}">
+                    <label>Node ID</label>
+                    <input type="text" id="edit-id" value="${selectedNode}">
                 </div>
                 <div class="form-group">
                     <label>Name</label>
-                    <input type="text" id="edit-name" value="${selectedTask.name}">
+                    <input type="text" id="edit-name" value="${node.name}">
                 </div>
                 <div class="form-group">
-                    <label>Dev Points Required</label>
-                    <input type="number" id="edit-points" value="${selectedTask.devPoints}" min="1">
+                    <label>Dev Points</label>
+                    <input type="number" id="edit-points" value="${node.devPoints}" min="1">
                 </div>
                 <div class="form-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="edit-oneoff" ${selectedTask.oneOff ? 'checked' : ''}>
-                        One-off task (disappears after completion)
+                        <input type="checkbox" id="edit-oneoff" ${node.oneOff ? 'checked' : ''}>
+                        One-off (disappears after completion)
                     </label>
                 </div>
+                <div class="form-group">
+                    <label>Message (on completion)</label>
+                    <input type="text" id="edit-message" value="${node.message || ''}" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>Dependencies</label>
+                    <div class="deps-list">
+                        ${node.requires.map(dep => `
+                            <span class="dep-tag">
+                                ${dep}
+                                <button onclick="removeDep('${dep}')">&times;</button>
+                            </span>
+                        `).join('')}
+                        ${node.requires.length === 0 ? '<span style="color:#666;font-size:0.85rem">None (root node)</span>' : ''}
+                    </div>
+                    ${availableDeps.length > 0 ? `
+                        <div class="add-dep-row">
+                            <select id="add-dep-select">
+                                <option value="">Add dependency...</option>
+                                ${availableDeps.map(id => `<option value="${id}">${id}</option>`).join('')}
+                            </select>
+                            <button onclick="addDep()">Add</button>
+                        </div>
+                    ` : ''}
+                </div>
                 <div class="editor-actions">
-                    <button onclick="saveTask()">Save</button>
-                    <button onclick="deleteTask()" class="danger">Delete</button>
+                    <button onclick="saveNode()">Save</button>
+                    <button onclick="deleteNode()" class="danger">Delete</button>
                 </div>
             `;
         }
 
-        function saveTask() {
-            if (!selectedTask || !selectedPhase) return;
-
-            const phase = techTree[selectedPhase];
-            const taskIndex = phase.tasks.findIndex(t => t.id === selectedTask.id);
-            if (taskIndex === -1) return;
-
-            const oldName = selectedTask.name;
-
-            selectedTask.id = document.getElementById('edit-id').value;
-            selectedTask.name = document.getElementById('edit-name').value;
-            selectedTask.devPoints = parseInt(document.getElementById('edit-points').value) || 1;
-            selectedTask.oneOff = document.getElementById('edit-oneoff').checked;
-
-            // Update any phases that unlock from this task's old name
-            if (oldName !== selectedTask.name) {
-                for (const phase of Object.values(techTree)) {
-                    if (phase.unlockedBy === oldName) {
-                        phase.unlockedBy = selectedTask.name;
-                    }
+        // Get all nodes that depend on this node (directly or indirectly)
+        function getDependents(nodeId, visited = new Set()) {
+            const dependents = [];
+            for (const [id, node] of Object.entries(techTree)) {
+                if (node.requires.includes(nodeId) && !visited.has(id)) {
+                    visited.add(id);
+                    dependents.push(id);
+                    dependents.push(...getDependents(id, visited));
                 }
             }
+            return dependents;
+        }
+
+        function addDep() {
+            const select = document.getElementById('add-dep-select');
+            const depId = select.value;
+            if (!depId || !selectedNode) return;
+
+            techTree[selectedNode].requires.push(depId);
+            render();
+            renderEditor();
+        }
+
+        function removeDep(depId) {
+            if (!selectedNode) return;
+            techTree[selectedNode].requires = techTree[selectedNode].requires.filter(d => d !== depId);
+            render();
+            renderEditor();
+        }
+
+        function saveNode() {
+            if (!selectedNode) return;
+
+            const newId = document.getElementById('edit-id').value.trim();
+            const node = techTree[selectedNode];
+
+            node.name = document.getElementById('edit-name').value;
+            node.devPoints = parseInt(document.getElementById('edit-points').value) || 1;
+            node.oneOff = document.getElementById('edit-oneoff').checked;
+            node.message = document.getElementById('edit-message').value || null;
+
+            // Handle ID change
+            if (newId !== selectedNode && newId) {
+                // Update all references
+                for (const n of Object.values(techTree)) {
+                    n.requires = n.requires.map(r => r === selectedNode ? newId : r);
+                }
+
+                // Move node
+                techTree[newId] = node;
+                delete techTree[selectedNode];
+
+                // Move position
+                nodePositions[newId] = nodePositions[selectedNode];
+                delete nodePositions[selectedNode];
+
+                selectedNode = newId;
+            }
 
             render();
             renderEditor();
         }
 
-        function deleteTask() {
-            if (!selectedTask || !selectedPhase) return;
-            if (!confirm(`Delete task "${selectedTask.name}"?`)) return;
+        function deleteNode() {
+            if (!selectedNode) return;
 
-            const phase = techTree[selectedPhase];
-            phase.tasks = phase.tasks.filter(t => t.id !== selectedTask.id);
+            const deps = getDependents(selectedNode);
+            if (deps.length > 0) {
+                if (!confirm(`This node has ${deps.length} dependent(s). Delete anyway?\n\nDependents: ${deps.join(', ')}`)) {
+                    return;
+                }
+                // Remove from all dependents' requires
+                for (const depId of deps) {
+                    techTree[depId].requires = techTree[depId].requires.filter(r => r !== selectedNode);
+                }
+            } else if (!confirm(`Delete node "${selectedNode}"?`)) {
+                return;
+            }
 
-            selectedTask = null;
+            delete techTree[selectedNode];
+            delete nodePositions[selectedNode];
+            selectedNode = null;
+
             render();
             renderEditor();
         }
 
-        function addTask(phaseId) {
-            const phase = techTree[phaseId];
-            const newId = `task-${Date.now()}`;
-
-            phase.tasks.push({
-                id: newId,
+        function addNode() {
+            const id = `node-${Date.now()}`;
+            techTree[id] = {
                 name: 'New Task',
                 devPoints: 30,
-                oneOff: false
-            });
-
-            selectTask(phaseId, newId);
-        }
-
-        function editPhase(phaseId) {
-            const phase = techTree[phaseId];
-            const newUnlock = prompt('Unlocked by (task name, or empty for none):', phase.unlockedBy || '');
-
-            if (newUnlock !== null) {
-                phase.unlockedBy = newUnlock || null;
-            }
-
-            const newMessage = prompt('Phase message (shown on unlock):', phase.message || '');
-            if (newMessage !== null) {
-                phase.message = newMessage || null;
-            }
-
-            render();
-        }
-
-        function addPhase() {
-            const phaseId = prompt('Phase ID (e.g., phase6):');
-            if (!phaseId) return;
-
-            techTree[phaseId] = {
-                tasks: [],
-                unlockedBy: null,
+                oneOff: false,
+                requires: [],
                 message: null
             };
 
-            render();
+            // Position near center of current view
+            nodePositions[id] = {
+                x: viewBox.x + viewBox.w / 2 - NODE_WIDTH / 2,
+                y: viewBox.y + viewBox.h / 2 - NODE_HEIGHT / 2
+            };
+
+            selectNode(id);
         }
 
+        // SVG pan handlers
+        const svg = document.getElementById('graph');
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.target === svg || e.target.tagName === 'path') {
+                isPanning = true;
+                panStart.x = e.clientX;
+                panStart.y = e.clientY;
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                const dx = (e.clientX - panStart.x) * (viewBox.w / svg.clientWidth);
+                const dy = (e.clientY - panStart.y) * (viewBox.h / svg.clientHeight);
+                viewBox.x -= dx;
+                viewBox.y -= dy;
+                panStart.x = e.clientX;
+                panStart.y = e.clientY;
+                svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+            }
+
+            if (dragNode) {
+                isDragging = true;
+                const pt = svg.createSVGPoint();
+                pt.x = e.clientX;
+                pt.y = e.clientY;
+                const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+                nodePositions[dragNode] = {
+                    x: svgP.x - dragOffset.x,
+                    y: svgP.y - dragOffset.y
+                };
+                render();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isPanning = false;
+            if (dragNode && !isDragging) {
+                // It was a click, not a drag
+            }
+            dragNode = null;
+            setTimeout(() => { isDragging = false; }, 10);
+        });
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const scale = e.deltaY > 0 ? 1.1 : 0.9;
+
+            const rect = svg.getBoundingClientRect();
+            const mx = (e.clientX - rect.left) / rect.width;
+            const my = (e.clientY - rect.top) / rect.height;
+
+            const newW = viewBox.w * scale;
+            const newH = viewBox.h * scale;
+
+            viewBox.x += (viewBox.w - newW) * mx;
+            viewBox.y += (viewBox.h - newH) * my;
+            viewBox.w = newW;
+            viewBox.h = newH;
+
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+        });
+
+        // Import/Export
         function showImportModal() {
             document.getElementById('import-modal').classList.add('open');
             document.getElementById('import-data').value = '';
@@ -569,223 +848,109 @@
             const data = document.getElementById('import-data').value.trim();
 
             try {
-                // Try parsing as JSON first
                 if (data.startsWith('{')) {
                     techTree = JSON.parse(data);
                 } else {
-                    // Try extracting from JS module format
-                    const match = data.match(/export\s+const\s+techTree\s*=\s*(\{[\s\S]*\});?/);
+                    const match = data.match(/export\s+const\s+techTree\s*=\s*(\{[\s\S]*?\});?\s*(?:\/\*\*|export|$)/);
                     if (match) {
-                        // Use Function to safely evaluate the object literal
                         techTree = (new Function('return ' + match[1]))();
                     } else {
-                        throw new Error('Could not parse tech tree data');
+                        throw new Error('Could not parse tech tree');
                     }
                 }
 
                 closeModal('import-modal');
-                selectedTask = null;
-                selectedPhase = null;
-                render();
-                renderEditor();
+                selectedNode = null;
+                autoLayout();
             } catch (e) {
-                alert('Error parsing data: ' + e.message);
+                alert('Error: ' + e.message);
             }
         }
 
         function generateJS() {
             let js = `/**
- * Tech Tree - The progression of Claude Code development
+ * Tech Tree - DAG of Claude Code development tasks
  *
- * Each phase unlocks after completing a key task from the previous phase.
- * Tasks with oneOff: true disappear after completion.
+ * Each node is a task with dependencies (requires array).
+ * Tasks become available when all their dependencies are completed.
+ * oneOff tasks disappear after completion; others can be repeated.
  */
 
 export const techTree = {\n`;
 
-            const phases = Object.entries(techTree);
-            phases.forEach(([phaseId, phase], phaseIndex) => {
-                js += `    // ${phaseId}\n`;
-                js += `    ${phaseId}: {\n`;
-                js += `        tasks: [\n`;
-
-                phase.tasks.forEach((task, taskIndex) => {
-                    const parts = [`id: '${task.id}'`, `name: '${task.name}'`, `devPoints: ${task.devPoints}`];
-                    if (task.oneOff) parts.push('oneOff: true');
-
-                    const comma = taskIndex < phase.tasks.length - 1 ? ',' : '';
-                    js += `            { ${parts.join(', ')} }${comma}\n`;
-                });
-
-                js += `        ],\n`;
-                js += `        unlockedBy: ${phase.unlockedBy ? `'${phase.unlockedBy}'` : 'null'}`;
-
-                if (phase.message !== undefined) {
-                    js += `,\n        message: ${phase.message ? `'${phase.message}'` : 'null'}`;
+            const entries = Object.entries(techTree);
+            entries.forEach(([id, node], index) => {
+                js += `    '${id}': {\n`;
+                js += `        name: '${node.name.replace(/'/g, "\\'")}',\n`;
+                js += `        devPoints: ${node.devPoints},\n`;
+                js += `        oneOff: ${node.oneOff},\n`;
+                js += `        requires: [${node.requires.map(r => `'${r}'`).join(', ')}]`;
+                if (node.message) {
+                    js += `,\n        message: '${node.message.replace(/'/g, "\\'")}'`;
                 }
-
-                const phaseComma = phaseIndex < phases.length - 1 ? ',' : '';
-                js += `\n    }${phaseComma}\n\n`;
+                js += `\n    }${index < entries.length - 1 ? ',' : ''}\n`;
             });
 
             js += `};
 
 /**
- * Get the phase that should unlock when a PR with this title is merged
+ * Get tasks that are available given a set of completed task IDs
  */
-export function getPhaseUnlockedBy(prTitle) {
-    for (const [phaseId, phase] of Object.entries(techTree)) {
-        if (phase.unlockedBy === prTitle) {
-            return { phaseId, phase };
+export function getAvailableTasks(completedTaskIds) {
+    const completed = new Set(completedTaskIds);
+    const available = [];
+
+    for (const [taskId, task] of Object.entries(techTree)) {
+        if (task.oneOff && completed.has(taskId)) continue;
+        const requirementsMet = task.requires.every(reqId => completed.has(reqId));
+        if (requirementsMet) {
+            available.push({ id: taskId, ...task });
         }
     }
-    return null;
+
+    return available;
+}
+
+export function getTask(taskId) {
+    const task = techTree[taskId];
+    if (!task) return null;
+    return { id: taskId, ...task };
+}
+
+export function getDependents(taskId) {
+    const dependents = [];
+    for (const [id, task] of Object.entries(techTree)) {
+        if (task.requires.includes(taskId)) {
+            dependents.push({ id, ...task });
+        }
+    }
+    return dependents;
+}
+
+export function getStartingTasks() {
+    return getAvailableTasks([]);
 }
 `;
-
             return js;
-        }
-
-        function exportJSON() {
-            const json = JSON.stringify(techTree, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'tech-tree.json';
-            a.click();
-            URL.revokeObjectURL(url);
         }
 
         function copyExport() {
             const textarea = document.getElementById('export-data');
             textarea.select();
             document.execCommand('copy');
-            alert('Copied to clipboard!');
+            alert('Copied!');
         }
 
-        // Drag and drop state
-        let dragData = null;
-
-        function handleDragStart(event, phaseId, taskId) {
-            dragData = { phaseId, taskId };
-            event.target.classList.add('dragging');
-            event.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleDragEnd(event) {
-            event.target.classList.remove('dragging');
-            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-            dragData = null;
-        }
-
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.target.closest('.task')?.classList.add('drag-over');
-        }
-
-        function handleDragLeave(event) {
-            event.target.closest('.task')?.classList.remove('drag-over');
-        }
-
-        function handleDrop(event, targetPhaseId, targetIndex) {
-            event.preventDefault();
-            event.stopPropagation();
-            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-
-            if (!dragData) return;
-
-            const { phaseId: sourcePhaseId, taskId } = dragData;
-            const sourcePhase = techTree[sourcePhaseId];
-            const targetPhase = techTree[targetPhaseId];
-
-            const taskIndex = sourcePhase.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex === -1) return;
-
-            const [task] = sourcePhase.tasks.splice(taskIndex, 1);
-
-            // Adjust target index if moving within same phase and source was before target
-            let adjustedIndex = targetIndex;
-            if (sourcePhaseId === targetPhaseId && taskIndex < targetIndex) {
-                adjustedIndex--;
-            }
-
-            targetPhase.tasks.splice(adjustedIndex, 0, task);
-
-            // Update selection if we moved the selected task
-            if (selectedTask?.id === taskId) {
-                selectedPhase = targetPhaseId;
-            }
-
-            render();
-        }
-
-        function handleDropZoneDragOver(event) {
-            event.preventDefault();
-            event.target.classList.add('drag-over');
-        }
-
-        function handleDropZoneDragLeave(event) {
-            event.target.classList.remove('drag-over');
-        }
-
-        function handlePhaseDragOver(event, phaseId) {
-            event.preventDefault();
-        }
-
-        function handlePhaseDragLeave(event) {
-            // Handled by specific handlers
-        }
-
-        function handlePhaseDrop(event, phaseId) {
-            // Only handle if dropped on phase itself, not on a task
-            if (event.target.closest('.task') || event.target.closest('.phase-drop-zone')) return;
-            handleDrop(event, phaseId, techTree[phaseId].tasks.length);
-        }
-
-        function movePhase(phaseId, direction) {
-            const entries = Object.entries(techTree);
-            const index = entries.findIndex(([id]) => id === phaseId);
-
-            if (index === -1) return;
-
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= entries.length) return;
-
-            // Swap positions
-            [entries[index], entries[newIndex]] = [entries[newIndex], entries[index]];
-
-            // Rebuild techTree with new order
-            techTree = Object.fromEntries(entries);
-            render();
-        }
-
-        function deletePhase(phaseId) {
-            const phase = techTree[phaseId];
-            const taskCount = phase.tasks.length;
-
-            const msg = taskCount > 0
-                ? `Delete phase "${phaseId}" and its ${taskCount} task(s)?`
-                : `Delete empty phase "${phaseId}"?`;
-
-            if (!confirm(msg)) return;
-
-            delete techTree[phaseId];
-
-            if (selectedPhase === phaseId) {
-                selectedPhase = null;
-                selectedTask = null;
-                renderEditor();
-            }
-
-            render();
-        }
-
-        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeModal('import-modal');
                 closeModal('export-modal');
+                selectedNode = null;
+                render();
+                renderEditor();
+            }
+            if (e.key === 'Delete' && selectedNode) {
+                deleteNode();
             }
         });
 

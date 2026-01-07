@@ -9,7 +9,7 @@ import { generatePR, mergePR } from './prs.js';
 import { addEvent, checkNarrativeTriggers } from './events.js';
 import { updateDisplay } from './render.js';
 import { saveGame, loadGame, resetGame } from './save.js';
-import { techTree } from './tech-tree.js';
+import { getStartingTasks, getAvailableTasks, getTask } from './tech-tree.js';
 
 function gameLoop() {
     const now = Date.now();
@@ -65,20 +65,39 @@ function tick() {
 
 function completeTask(task) {
     const quality = 0.5 + Math.random() * 0.3;
-    const pr = generatePR(quality, task.name);
+    const pr = generatePR(quality, task.id, task.name);
     gameState.prQueue.push(pr);
     addEvent(`PR ready: "${pr.title}"`, 'neutral');
 
-    if (task.oneOff) {
-        // Remove one-off tasks after completion
-        gameState.tasks = gameState.tasks.filter(t => t.id !== task.id);
-    } else {
-        task.progress = 0;
+    // Track completion for DAG progression
+    if (!gameState.completedTasks.includes(task.id)) {
+        gameState.completedTasks.push(task.id);
     }
+
+    // Refresh available tasks based on DAG
+    refreshAvailableTasks();
 
     if (gameState.settings.autoMergePRs) {
         mergePR(pr.id);
     }
+}
+
+function refreshAvailableTasks() {
+    const available = getAvailableTasks(gameState.completedTasks);
+
+    // Keep progress for tasks still in progress
+    const progressMap = {};
+    for (const task of gameState.tasks) {
+        if (task.progress > 0) {
+            progressMap[task.id] = task.progress;
+        }
+    }
+
+    // Update tasks list
+    gameState.tasks = available.map(task => ({
+        ...task,
+        progress: progressMap[task.id] || 0
+    }));
 }
 
 function clickTask(taskId) {
@@ -134,12 +153,16 @@ window.openPR = openPR;
 
 function init() {
     if (!loadGame()) {
-        // New game - initialize tasks from tech tree
-        for (const task of techTree.initial.tasks) {
+        // New game - initialize with starting tasks from DAG
+        const startingTasks = getStartingTasks();
+        for (const task of startingTasks) {
             gameState.tasks.push({ ...task, progress: 0 });
         }
         // Anthropic's core view
         addEvent('"The impact of AI might be comparable to the industrial and scientific revolutions, but we aren\'t confident it will go well." <a href="https://www.anthropic.com/news/core-views-on-ai-safety" target="_blank" class="external-link" title="anthropic.com">↗</a>', 'neutral');
+    } else {
+        // Loaded game - refresh available tasks based on completed
+        refreshAvailableTasks();
     }
 
     gameState.lastTick = Date.now();

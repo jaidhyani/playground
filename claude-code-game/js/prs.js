@@ -5,7 +5,7 @@
 import { gameState } from './state.js';
 import { addEvent, checkNarrativeTriggers } from './events.js';
 import { updateDisplay } from './render.js';
-import { getPhaseUnlockedBy } from './tech-tree.js';
+import { getTask } from './tech-tree.js';
 
 let prIdCounter = 0;
 
@@ -60,7 +60,7 @@ const prTitles = {
     ]
 };
 
-export function generatePR(quality, taskName = null) {
+export function generatePR(quality, taskId = null, taskName = null) {
     prIdCounter++;
 
     // Use task name as title, or pick from general pool
@@ -74,10 +74,11 @@ export function generatePR(quality, taskName = null) {
     const hasBug = quality < 0.4 && Math.random() < 0.5;
     const codebaseGain = Math.floor(3 + quality * 7);
     const techDebtGain = quality < 0.5 ? Math.floor((0.5 - quality) * 6) : 0;
-    const isPrototype = title === 'Claude Code Prototype';
+    const isPrototype = taskId === 'prototype';
 
     return {
         id: prIdCounter,
+        taskId,
         title,
         quality,
         hasBug,
@@ -97,25 +98,17 @@ export function mergePR(prId) {
     gameState.resources.codebase += pr.codebaseGain;
     gameState.resources.techDebt += pr.techDebtGain;
 
-    // Check if this PR unlocks a new phase
-    const unlock = getPhaseUnlockedBy(pr.title);
+    // Get task info for message
+    const task = pr.taskId ? getTask(pr.taskId) : null;
 
     // First prototype merge gives dev multiplier boost
     if (pr.isPrototype && gameState.clickMultiplier === 1) {
         const multiplier = 1.1 + Math.random() * 0.2; // 1.1x to 1.3x
         gameState.clickMultiplier = Math.round(multiplier * 10) / 10;
         addEvent(`Merged "${pr.title}". Dev multiplier: ${gameState.clickMultiplier}x`, 'success');
-    }
-
-    // Unlock new phase if applicable
-    if (unlock && !gameState.narrative.flags[unlock.phaseId]) {
-        gameState.narrative.flags[unlock.phaseId] = true;
-        for (const task of unlock.phase.tasks) {
-            gameState.tasks.push({ ...task, progress: 0 });
-        }
-        if (unlock.phase.message) {
-            addEvent(unlock.phase.message, 'success');
-        }
+    } else if (task?.message) {
+        // Show task's unlock message
+        addEvent(task.message, 'success');
     } else if (pr.hasBug) {
         addEvent(`Merged "${pr.title}". Bug found. Proactive identification needed.`, 'warning');
         gameState.resources.trust = Math.max(0, gameState.resources.trust - 3);

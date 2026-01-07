@@ -39,6 +39,9 @@ export function loadGame() {
             if (gameState.tasks === undefined) {
                 gameState.tasks = [];
             }
+            if (gameState.completedTasks === undefined) {
+                gameState.completedTasks = [];
+            }
             // Convert old date strings back to Date objects
             if (gameState.gameDate && typeof gameState.gameDate === 'string') {
                 gameState.gameDate = new Date(gameState.gameDate);

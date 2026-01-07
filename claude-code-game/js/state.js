@@ -20,6 +20,9 @@ export const gameState = {
     // Initialized from tech-tree.js on new game
     tasks: [],
 
+    // Completed task IDs (for DAG progression)
+    completedTasks: [],
+
     // Click multiplier (first PR gives random bonus)
     clickMultiplier: 1,
 
