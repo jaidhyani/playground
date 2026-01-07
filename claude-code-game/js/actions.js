@@ -21,7 +21,9 @@ export const actions = {
             if (gameState.codingProgress >= 100) {
                 gameState.codingProgress = 0;
                 const quality = 0.4 + Math.random() * 0.3;
-                const pr = generatePR(quality);
+                const isFirst = !gameState.narrative.flags.firstPRCreated;
+                const pr = generatePR(quality, isFirst);
+                gameState.narrative.flags.firstPRCreated = true;
                 gameState.prQueue.push(pr);
                 addEvent(`PR ready: "${pr.title}"`, 'neutral');
 
@@ -35,36 +37,7 @@ export const actions = {
         available: () => !gameState.settings.vibeMode
     },
 
-    vibe: {
-        id: 'vibe',
-        name: 'vibe code',
-        cost: { energy: 15 },
-        execute: () => {
-            let quality = 0.3 + Math.random() * 0.5;
-
-            // Focus area bonus
-            if (gameState.focus) {
-                quality = Math.min(1, quality + 0.1);
-            }
-
-            const pr = generatePR(quality);
-            gameState.prQueue.push(pr);
-
-            if (quality > 0.7) {
-                addEvent(`Flow state. PR: "${pr.title}"`, 'success');
-            } else if (quality > 0.4) {
-                addEvent(`PR generated: "${pr.title}"`, 'neutral');
-            } else {
-                addEvent(`Messy PR: "${pr.title}"`, 'warning');
-            }
-
-            if (gameState.settings.autoMergePRs) {
-                mergePR(pr.id);
-            }
-            checkNarrativeTriggers();
-        },
-        available: () => gameState.settings.vibeMode
-    },
+    // Vibe coding is now an autoclicker - see main.js tick()
 
     refactor: {
         id: 'refactor',
@@ -121,6 +94,7 @@ export const actions = {
                 return;
             }
 
+            const isFirstShip = !gameState.narrative.flags.hasShipped;
             gameState.narrative.flags.hasShipped = true;
             const quality = gameState.resources.codebase;
             const debtPenalty = gameState.resources.techDebt * 3;
@@ -135,6 +109,12 @@ export const actions = {
                 gameState.narrative.flags.goodShip = true;
             } else {
                 addEvent("Shipped. Mixed reception.", 'neutral');
+            }
+
+            // First ship unlocks vibe coding (autoclicker)
+            if (isFirstShip) {
+                gameState.settings.vibeMode = true;
+                addEvent("Vibe coding unlocked. Claude writes code automatically.", 'success');
             }
 
             gameState.narrative.flags.shipCount = (gameState.narrative.flags.shipCount || 0) + 1;

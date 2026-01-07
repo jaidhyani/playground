@@ -17,7 +17,7 @@ export const gameState = {
 
     // Coding progress - manual coding requires multiple clicks
     codingProgress: 0,
-    codingClicksNeeded: 5,
+    codingClicksNeeded: 20,  // Takes effort - makes vibe coding feel valuable
 
     // Focus area (chosen early game)
     focus: null,  // 'mcp', 'agents', 'evals', 'infra'

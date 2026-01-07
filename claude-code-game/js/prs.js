@@ -59,17 +59,25 @@ const prTitles = {
     ]
 };
 
-export function generatePR(quality) {
-    const focus = gameState.focus || 'general';
-    const titles = [...prTitles.general, ...(prTitles[focus] || [])];
-    const title = titles[Math.floor(Math.random() * titles.length)];
+export function generatePR(quality, isFirstPR = false) {
+    prIdCounter++;
+
+    // First PR is always "Claude Code Prototype"
+    let title;
+    if (isFirstPR || prIdCounter === 1) {
+        title = "Claude Code Prototype";
+    } else {
+        const focus = gameState.focus || 'general';
+        const titles = [...prTitles.general, ...(prTitles[focus] || [])];
+        title = titles[Math.floor(Math.random() * titles.length)];
+    }
 
     const hasBug = quality < 0.4 && Math.random() < 0.5;
     const codebaseGain = Math.floor(3 + quality * 7);
     const techDebtGain = quality < 0.5 ? Math.floor((0.5 - quality) * 6) : 0;
 
     return {
-        id: ++prIdCounter,
+        id: prIdCounter,
         title,
         quality,
         hasBug,

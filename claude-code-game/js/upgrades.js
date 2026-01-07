@@ -50,35 +50,7 @@ export const upgradeDefinitions = {
         condition: () => gameState.resources.codebase >= 5 && !gameState.focus && !hasUpgrade('focus')
     },
 
-    // Unlock vibe coding
-    vibeMode: {
-        id: 'vibeMode',
-        name: 'vibe coding',
-        description: '',
-        cost: {},
-        decisions: [
-            {
-                id: 'enable',
-                label: 'let Claude write the code',
-                effect: () => {
-                    gameState.settings.vibeMode = true;
-                    gameState.codingProgress = 0;
-                    addEvent("Vibe mode on. You prompt, Claude codes.", 'success');
-                }
-            },
-            {
-                id: 'skip',
-                label: 'keep writing it yourself',
-                effect: () => {
-                    addEvent("Old school. Respectable.", 'neutral');
-                }
-            }
-        ],
-        condition: () => {
-            const clicks = gameState.narrative.flags.manualCodeClicks || 0;
-            return clicks >= 3 && !hasUpgrade('vibeMode');
-        }
-    },
+    // Vibe coding is unlocked by first ship - see actions.js ship action
 
     // Auto-merge decision
     autoMerge: {

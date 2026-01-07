@@ -1,8 +1,19 @@
 # Claude Code Game - Project Context
 
+**Current Version: 0.3.0**
+
 ## What This Is
 
 An incremental game inspired by Universal Paperclips. You play as an engineer at Anthropic working on Claude Code.
+
+## Versioning
+
+We use semantic versioning for clean record-keeping:
+- **Major** (X.0.0): Fundamental game changes
+- **Minor** (0.X.0): New features, mechanics changes
+- **Patch** (0.0.X): Bug fixes, balance tweaks
+
+Changelog is additive - never delete old entries. See `CHANGELOG.md`.
 
 ## Core Design Principles
 

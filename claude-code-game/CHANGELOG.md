@@ -1,8 +1,12 @@
 # Changelog
 
+All notable changes to Universal Paperclaudes will be documented in this file.
+
 ## [Unreleased]
 
-### Changed - Major Revamp
+## [0.3.0] - Anthropic Employee Premise
+
+### Changed
 - **New premise**: You're an Anthropic engineer, not an indie dev
 - Resources: energy, codebase, techDebt, trust (removed money, stars, reputation)
 - Focus areas: MCP servers, agents, evals, infrastructure
@@ -28,18 +32,33 @@
 
 ## [0.2.0] - Terminal Aesthetic
 
+### Changed
 - Complete UI overhaul: terminal aesthetic, flat button layout
 - Log at top, no labels on sections
 - PRs now appear as merge buttons
+- Removed separate Actions/PRs/Opportunities sections
 - Removed "Week" system - now pseudo real-time
-- Energy regenerates continuously
-- Actions only cost energy
-- Terse language throughout
+- Energy regenerates continuously, money drains for rent
+- Actions only cost energy (removed time costs)
+- Simplified starting experience: only "code" button available initially
+- Vibe coding upgrade is now single "Enable" button (no multiple choices)
+- More terse language throughout
 
-## [0.1.0] - Initial prototype
+### Removed
+- Time resource
+- Week counter
+- Ergonomics/coffee upgrades (tangential to Claude Code theme)
+- Section headers and labels
+
+### Added
+- Real-time tick system for passive effects
+- Continuous rent drain
+
+## [0.1.0] - Initial Prototype
 
 - Basic incremental game mechanics
 - Code/Vibe Code/Freelance/Ship actions
 - PR review system
 - Upgrade/decision system
 - Multiple narrative paths
+- Win conditions: sustainable revenue, 2000 stars, acquisition

@@ -5,6 +5,7 @@
  */
 
 import { gameState } from './state.js';
+import { generatePR, mergePR } from './prs.js';
 import { addEvent, maybeRandomEvent, checkNarrativeTriggers } from './events.js';
 import { updateDisplay } from './render.js';
 import { saveGame, loadGame, resetGame } from './save.js';
@@ -30,6 +31,26 @@ function tick() {
     // Tech debt slows energy regen
     if (gameState.resources.techDebt > 10) {
         gameState.resources.energy = Math.min(100, gameState.resources.energy - 0.1);
+    }
+
+    // Vibe coding autoclicker - Claude writes code automatically
+    if (gameState.settings.vibeMode && gameState.resources.energy >= 2) {
+        gameState.resources.energy -= 2;
+
+        const progressPerTick = 100 / (gameState.codingClicksNeeded * 2);
+        gameState.codingProgress += progressPerTick;
+
+        if (gameState.codingProgress >= 100) {
+            gameState.codingProgress = 0;
+            const quality = 0.5 + Math.random() * 0.3;
+            const pr = generatePR(quality);
+            gameState.prQueue.push(pr);
+            addEvent(`Claude wrote: "${pr.title}"`, 'neutral');
+
+            if (gameState.settings.autoMergePRs) {
+                mergePR(pr.id);
+            }
+        }
     }
 
     // Random events
@@ -68,9 +89,6 @@ function init() {
             case 'c':
                 if (typeof executeAction === 'function') executeAction('code');
                 break;
-            case 'v':
-                if (typeof executeAction === 'function') executeAction('vibe');
-                break;
             case 'r':
                 if (typeof executeAction === 'function') executeAction('rest');
                 break;
@@ -95,7 +113,7 @@ function init() {
 
     updateDisplay();
     console.log('Universal Paperclaudes');
-    console.log('Keys: C-code, V-vibe, R-rest, D-refactor, S-ship, M-merge');
+    console.log('Keys: C-code, R-rest, D-refactor, S-ship, M-merge');
 }
 
 if (document.readyState === 'loading') {
