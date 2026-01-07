@@ -100,11 +100,11 @@ export function mergePR(prId) {
     // Check if this PR unlocks a new phase
     const unlock = getPhaseUnlockedBy(pr.title);
 
-    // First prototype merge gives random click multiplier
+    // First prototype merge gives dev multiplier boost
     if (pr.isPrototype && gameState.clickMultiplier === 1) {
-        const multiplier = 1.5 + Math.random() * 1.5; // 1.5x to 3x
+        const multiplier = 1.1 + Math.random() * 0.2; // 1.1x to 1.3x
         gameState.clickMultiplier = Math.round(multiplier * 10) / 10;
-        addEvent(`Merged "${pr.title}". Capability boost: ${gameState.clickMultiplier}x`, 'success');
+        addEvent(`Merged "${pr.title}". Dev multiplier: ${gameState.clickMultiplier}x`, 'success');
     }
 
     // Unlock new phase if applicable

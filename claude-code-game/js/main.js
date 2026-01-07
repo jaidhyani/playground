@@ -48,12 +48,11 @@ function tick() {
     if (gameState.settings.vibeMode && gameState.resources.apiCredits >= 1 && gameState.tasks.length > 0) {
         gameState.resources.apiCredits -= 1;
 
-        // Work on first available task
+        // Work on first available task (vibe coding is slower than manual)
         const task = gameState.tasks[0];
-        const progressPerTick = (100 / task.clicksNeeded) * gameState.clickMultiplier * 0.5;
-        task.progress += progressPerTick;
+        task.progress += gameState.clickMultiplier * 0.5;
 
-        if (task.progress >= 100) {
+        if (task.progress >= task.devPoints) {
             completeTask(task);
         }
     }
@@ -86,10 +85,10 @@ function clickTask(taskId) {
     const task = gameState.tasks.find(t => t.id === taskId);
     if (!task) return;
 
-    const progressPerClick = (100 / task.clicksNeeded) * gameState.clickMultiplier;
-    task.progress += progressPerClick;
+    // Each click adds multiplier points toward the task's devPoints requirement
+    task.progress += gameState.clickMultiplier;
 
-    if (task.progress >= 100) {
+    if (task.progress >= task.devPoints) {
         completeTask(task);
     }
 
