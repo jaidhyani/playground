@@ -1,5 +1,6 @@
 /**
  * Claude Code: The Game - Styles
+ * An indie developer narrative experience
  */
 
 /* ============================================================================
@@ -13,12 +14,11 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-                 'Helvetica Neue', Arial, sans-serif;
-    background-color: #1e1e1e;
-    color: #d4d4d4;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #0f0f0f;
+    color: #e0e0e0;
     line-height: 1.6;
-    padding: 20px;
+    min-height: 100vh;
 }
 
 /* ============================================================================
@@ -26,37 +26,60 @@ body {
    ============================================================================ */
 
 #game-container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    background-color: #252526;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 #game-header {
-    background-color: #2d2d30;
-    padding: 20px;
-    border-bottom: 2px solid #007acc;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    padding: 20px 30px;
+    border-bottom: 1px solid #2a2a4a;
+}
+
+#header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 #game-header h1 {
-    color: #007acc;
-    margin-bottom: 15px;
-    font-size: 1.8em;
+    color: #7b68ee;
+    font-size: 1.5em;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+#week-display {
+    background: #2a2a4a;
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: #a0a0c0;
+    font-weight: 500;
+}
+
+#week-display #week {
+    color: #7b68ee;
+    font-weight: 700;
 }
 
 #game-main {
-    padding: 20px;
+    flex: 1;
+    padding: 25px 30px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-rows: auto 1fr;
+    gap: 25px;
+    background: #0f0f0f;
 }
 
 #game-footer {
-    background-color: #2d2d30;
-    padding: 15px 20px;
-    border-top: 1px solid #3e3e42;
+    background: #1a1a2e;
+    padding: 15px 30px;
+    border-top: 1px solid #2a2a4a;
     display: flex;
     gap: 10px;
     align-items: center;
@@ -68,49 +91,75 @@ body {
 
 #resources {
     display: flex;
-    gap: 30px;
+    gap: 25px;
     flex-wrap: wrap;
 }
 
 .resource {
     display: flex;
-    gap: 8px;
     align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.resource-icon {
+    font-size: 1.3em;
 }
 
 .resource-label {
-    color: #9cdcfe;
+    color: #808090;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.resource-value {
+    color: #e0e0e0;
+    font-size: 1.1em;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
-.resource span:last-child {
-    color: #4ec9b0;
-    font-size: 1.2em;
-    font-weight: bold;
+/* Resource-specific colors */
+.resource[data-resource="money"] .resource-value { color: #4ade80; }
+.resource[data-resource="time"] .resource-value { color: #60a5fa; }
+.resource[data-resource="energy"] .resource-value { color: #fbbf24; }
+.resource[data-resource="codebase"] .resource-value { color: #a78bfa; }
+
+/* Path-specific resources */
+#path-resources {
+    margin-top: 15px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
-#rates-display {
-    margin-top: 8px;
-    color: #6a9955;
-    font-size: 0.9em;
-    font-style: italic;
+#path-resources:empty {
+    display: none;
 }
 
-/* ============================================================================
-   PHASE INDICATOR
-   ============================================================================ */
-
-#phase-indicator {
-    grid-column: 1 / -1;
-    background-color: #3c3c3c;
-    padding: 12px;
-    border-radius: 4px;
-    border-left: 4px solid #007acc;
+.path-resource {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(123, 104, 238, 0.1);
+    border: 1px solid rgba(123, 104, 238, 0.2);
+    border-radius: 6px;
 }
 
-#current-phase {
-    color: #dcdcaa;
-    font-weight: 500;
+.path-resource-label {
+    color: #9090b0;
+    font-size: 0.8em;
+    text-transform: uppercase;
+}
+
+.path-resource-value {
+    color: #b0a0f0;
+    font-weight: 600;
 }
 
 /* ============================================================================
@@ -118,220 +167,208 @@ body {
    ============================================================================ */
 
 section {
-    background-color: #2d2d30;
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px solid #3e3e42;
+    background: #1a1a2e;
+    border-radius: 12px;
+    border: 1px solid #2a2a4a;
+    overflow: hidden;
 }
 
 section h2 {
-    color: #4ec9b0;
-    margin-bottom: 15px;
-    font-size: 1.2em;
-    border-bottom: 1px solid #3e3e42;
-    padding-bottom: 8px;
+    color: #a0a0c0;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid #2a2a4a;
 }
 
-#primary-actions {
+#actions-section {
     grid-column: 1 / -1;
 }
 
+#upgrades-section {
+    grid-row: 2;
+}
+
+#events-section {
+    grid-row: 2;
+}
+
 /* ============================================================================
-   BUTTONS
+   ACTIONS
    ============================================================================ */
 
-button {
-    background-color: #007acc;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 500;
-    transition: background-color 0.2s, transform 0.1s;
-}
-
-button:hover {
-    background-color: #005a9e;
-}
-
-button:active {
-    transform: translateY(1px);
-}
-
-button:disabled {
-    background-color: #3e3e42;
-    color: #6e6e6e;
-    cursor: not-allowed;
-}
-
-.action-btn {
-    font-size: 1.2em;
-    padding: 15px 30px;
-    background-color: #4ec9b0;
-    color: #1e1e1e;
-}
-
-.action-btn:hover {
-    background-color: #3ea88c;
-}
-
-#action-buttons {
+#actions-list {
+    padding: 15px;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.action-card {
+    flex: 1;
+    min-width: 180px;
+    background: #252540;
+    border: 1px solid #3a3a5a;
+    border-radius: 10px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-card:hover {
+    background: #2a2a50;
+    border-color: #7b68ee;
+    transform: translateY(-2px);
+}
+
+.action-card:active {
+    transform: translateY(0);
+}
+
+.action-card.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.action-name {
+    color: #e0e0e0;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 1.05em;
+}
+
+.action-description {
+    color: #808090;
+    font-size: 0.85em;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.action-cost {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.cost-item {
+    font-size: 0.8em;
+    color: #a0a0c0;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.cost-item.insufficient {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
 }
 
 /* ============================================================================
    UPGRADES
    ============================================================================ */
 
-#upgrade-list {
+#upgrades-list {
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.upgrade-item {
-    background-color: #3c3c3c;
-    padding: 12px;
-    border-radius: 4px;
-    border-left: 3px solid #dcdcaa;
-}
-
-.upgrade-item.cannot-afford {
-    opacity: 0.6;
-    border-left-color: #6e6e6e;
-}
-
-.upgrade-item h3 {
-    color: #dcdcaa;
-    margin-bottom: 5px;
-    font-size: 1em;
-}
-
-.upgrade-item p {
-    color: #9cdcfe;
-    font-size: 0.9em;
-    margin-bottom: 8px;
-}
-
-.upgrade-cost {
-    color: #4ec9b0;
-    font-size: 0.85em;
-    font-weight: bold;
-    margin-bottom: 8px;
-}
-
-.upgrade-item button {
-    padding: 6px 12px;
-    font-size: 0.9em;
-}
-
-.no-upgrades {
-    color: #6e6e6e;
-    font-style: italic;
-    padding: 20px;
-    text-align: center;
-}
-
-/* ============================================================================
-   RESEARCH
-   ============================================================================ */
-
-#research-options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    gap: 15px;
     max-height: 400px;
     overflow-y: auto;
 }
 
-.research-item {
-    background-color: #3c3c3c;
-    padding: 12px;
-    border-radius: 4px;
-    border-left: 3px solid #569cd6;
+.upgrade-card {
+    background: #252540;
+    border: 1px solid #3a3a5a;
+    border-radius: 10px;
+    padding: 18px;
+    transition: all 0.2s ease;
 }
 
-.research-item.cannot-afford {
-    opacity: 0.6;
-    border-left-color: #6e6e6e;
+.upgrade-card:hover {
+    border-color: #5a5a7a;
 }
 
-.research-item h3 {
-    color: #569cd6;
-    margin-bottom: 5px;
-    font-size: 1em;
+.upgrade-name {
+    color: #dcdcaa;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 1.1em;
 }
 
-.research-item p {
-    color: #9cdcfe;
+.upgrade-description {
+    color: #b0b0c0;
     font-size: 0.9em;
-    margin-bottom: 8px;
-}
-
-.research-cost, .research-duration {
-    color: #4ec9b0;
-    font-size: 0.85em;
-    margin-bottom: 4px;
-}
-
-.research-duration {
-    color: #ce9178;
-}
-
-.research-item button {
-    padding: 6px 12px;
-    font-size: 0.9em;
-    margin-top: 8px;
-}
-
-.research-active {
-    background-color: #2a4a2a;
-    padding: 15px;
-    border-radius: 4px;
-    border-left: 3px solid #4ec9b0;
+    line-height: 1.6;
     margin-bottom: 15px;
 }
 
-.research-active h3 {
-    color: #4ec9b0;
-    margin-bottom: 10px;
+.upgrade-cost {
+    color: #4ade80;
+    font-size: 0.85em;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: rgba(74, 222, 128, 0.1);
+    border-radius: 6px;
+    display: inline-block;
 }
 
-.no-research {
-    color: #6e6e6e;
-    font-style: italic;
-    padding: 20px;
-    text-align: center;
+.upgrade-cost.recurring {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
 }
 
-/* ============================================================================
-   PROGRESS BAR
-   ============================================================================ */
-
-.progress-bar {
-    background-color: #3e3e42;
-    border-radius: 4px;
-    height: 20px;
-    overflow: hidden;
-    margin-bottom: 8px;
+.upgrade-decisions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.progress-fill {
-    background: linear-gradient(90deg, #4ec9b0, #007acc);
-    height: 100%;
-    transition: width 0.3s ease;
-}
-
-.progress-text {
-    color: #9cdcfe;
+.decision-btn {
+    background: #3a3a5a;
+    border: 1px solid #4a4a6a;
+    color: #e0e0e0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
     font-size: 0.9em;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+
+.decision-btn:hover {
+    background: #4a4a6a;
+    border-color: #7b68ee;
+}
+
+.decision-btn.primary {
+    background: linear-gradient(135deg, #7b68ee 0%, #6a5acd 100%);
+    border-color: #7b68ee;
+}
+
+.decision-btn.primary:hover {
+    background: linear-gradient(135deg, #8a78ff 0%, #7b68ee 100%);
+}
+
+.decision-btn.decline {
+    background: transparent;
+    border-color: #4a4a6a;
+    color: #909090;
+}
+
+.decision-btn.decline:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.no-upgrades {
+    color: #606070;
+    font-style: italic;
+    padding: 30px;
     text-align: center;
 }
 
@@ -339,36 +376,59 @@ button:disabled {
    EVENTS
    ============================================================================ */
 
-#event-log {
-    max-height: 200px;
+#events-list {
+    padding: 15px;
+    max-height: 400px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
 .event-message {
-    background-color: #3c3c3c;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border-left: 3px solid #569cd6;
+    background: #252540;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #7b68ee;
     font-size: 0.9em;
-    animation: fadeIn 0.3s ease-in;
+    line-height: 1.5;
+    animation: slideIn 0.3s ease-out;
 }
 
-@keyframes fadeIn {
+.event-message.good {
+    border-left-color: #4ade80;
+    background: rgba(74, 222, 128, 0.05);
+}
+
+.event-message.bad {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.event-message.warning {
+    border-left-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.05);
+}
+
+.event-message.milestone {
+    border-left-color: #a78bfa;
+    background: rgba(167, 139, 250, 0.08);
+    font-weight: 500;
+}
+
+@keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(-5px);
+        transform: translateX(-10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
     }
 }
 
 /* ============================================================================
-   MODALS
+   MODAL
    ============================================================================ */
 
 .modal {
@@ -378,134 +438,56 @@ button:disabled {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     z-index: 1000;
     justify-content: center;
     align-items: center;
     padding: 20px;
 }
 
-/* Choice Modal */
-.choice-content {
-    background-color: #2d2d30;
-    border-radius: 8px;
-    padding: 30px;
-    max-width: 600px;
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 500px;
     width: 100%;
-    border: 2px solid #dcdcaa;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    border: 1px solid #3a3a5a;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-.choice-content h2 {
-    color: #dcdcaa;
+.modal-content h2 {
+    color: #ef4444;
     margin-bottom: 20px;
-    font-size: 1.5em;
+    font-size: 1.8em;
 }
 
-.choice-prompt {
-    color: #d4d4d4;
-    margin-bottom: 25px;
+.modal-content p {
+    color: #b0b0c0;
+    margin-bottom: 30px;
     font-size: 1.1em;
     line-height: 1.6;
 }
 
-.choice-options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.choice-option {
-    background-color: #3c3c3c;
-    color: #d4d4d4;
-    padding: 15px 20px;
-    border-radius: 6px;
-    border: 1px solid #4e4e52;
+.modal-content button {
+    background: linear-gradient(135deg, #7b68ee 0%, #6a5acd 100%);
+    color: white;
+    border: none;
+    padding: 14px 35px;
+    border-radius: 8px;
     font-size: 1em;
-    text-align: left;
+    font-weight: 600;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
-.choice-option:hover {
-    background-color: #4a4a4e;
-    border-color: #dcdcaa;
-    transform: translateX(5px);
-}
-
-/* Ending Modal */
-.ending-content {
-    background-color: #1e1e1e;
-    border-radius: 8px;
-    padding: 40px;
-    max-width: 700px;
-    width: 100%;
-    border: 2px solid #007acc;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    text-align: center;
-}
-
-.ending-content h1 {
-    color: #007acc;
-    margin-bottom: 25px;
-    font-size: 2em;
-}
-
-.ending-reveal {
-    background-color: #2d2d30;
-    padding: 25px;
-    border-radius: 6px;
-    margin-bottom: 25px;
-    border-left: 4px solid #569cd6;
-    text-align: left;
-}
-
-.ending-reveal p {
-    color: #d4d4d4;
-    font-size: 1.1em;
-    line-height: 1.7;
-}
-
-.ending-utility {
-    background-color: #3c3c3c;
-    padding: 20px;
-    border-radius: 6px;
-    margin-bottom: 25px;
-}
-
-.ending-utility strong {
-    color: #dcdcaa;
-    display: block;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-}
-
-.ending-utility p {
-    color: #4ec9b0;
-    font-size: 1.2em;
-    font-style: italic;
-}
-
-.ending-stats {
-    background-color: #2d2d30;
-    padding: 20px;
-    border-radius: 6px;
-    margin-bottom: 25px;
-}
-
-.ending-stats h3 {
-    color: #9cdcfe;
-    margin-bottom: 15px;
-}
-
-.ending-stats p {
-    color: #d4d4d4;
-    margin-bottom: 5px;
-}
-
-.ending-content button {
-    padding: 15px 40px;
-    font-size: 1.1em;
-    background-color: #007acc;
+.modal-content button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(123, 104, 238, 0.3);
 }
 
 /* ============================================================================
@@ -513,28 +495,50 @@ button:disabled {
    ============================================================================ */
 
 #game-footer button {
-    background-color: #3e3e42;
-    font-size: 0.9em;
-    padding: 8px 15px;
+    background: #2a2a4a;
+    border: 1px solid #3a3a5a;
+    color: #a0a0c0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.15s;
 }
 
 #game-footer button:hover {
-    background-color: #4e4e52;
+    background: #3a3a5a;
+    color: #e0e0e0;
 }
 
 #save-indicator {
-    color: #4ec9b0;
-    font-size: 0.9em;
+    color: #4ade80;
+    font-size: 0.85em;
+}
+
+#dev-hint {
     margin-left: auto;
+    color: #505060;
+    font-size: 0.75em;
+    font-family: monospace;
 }
 
 /* ============================================================================
    RESPONSIVE
    ============================================================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
     #game-main {
         grid-template-columns: 1fr;
+        padding: 15px;
+    }
+
+    #actions-section {
+        grid-column: 1;
+    }
+
+    #upgrades-section,
+    #events-section {
+        grid-row: auto;
     }
 
     #resources {
@@ -542,36 +546,65 @@ button:disabled {
         gap: 10px;
     }
 
-    body {
-        padding: 10px;
+    .resource {
+        justify-content: space-between;
     }
 
-    .choice-content, .ending-content {
-        padding: 20px;
+    #game-header {
+        padding: 15px 20px;
     }
 
-    .ending-content h1 {
-        font-size: 1.5em;
+    #header-top {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .action-card {
+        min-width: 100%;
     }
 }
 
 /* ============================================================================
-   SCROLLBAR STYLING
+   SCROLLBAR
    ============================================================================ */
 
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #2d2d30;
+    background: #1a1a2e;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #3e3e42;
-    border-radius: 4px;
+    background: #3a3a5a;
+    border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #4e4e52;
+    background: #4a4a6a;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.resource-value.changing {
+    animation: pulse 0.3s ease-out;
+}
+
+/* Low resource warnings */
+.resource[data-resource="money"].low .resource-value {
+    color: #ef4444;
+    animation: pulse 1s infinite;
+}
+
+.resource[data-resource="energy"].low .resource-value {
+    color: #fbbf24;
 }

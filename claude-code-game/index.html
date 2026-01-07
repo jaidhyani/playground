@@ -10,85 +10,82 @@
     <div id="game-container">
         <!-- Header with main metrics -->
         <header id="game-header">
-            <h1>Claude Code: The Game</h1>
+            <div id="header-top">
+                <h1>Claude Code: The Game</h1>
+                <div id="week-display">Week <span id="week">1</span></div>
+            </div>
             <div id="resources">
-                <div class="resource">
-                    <span class="resource-label">Utility:</span>
-                    <span id="utility-count">0</span>
+                <div class="resource" data-resource="money">
+                    <span class="resource-icon">💵</span>
+                    <span class="resource-label">Money</span>
+                    <span class="resource-value">$<span id="money">500</span></span>
                 </div>
-                <div class="resource">
-                    <span class="resource-label">Money:</span>
-                    <span id="money-count">$0</span>
+                <div class="resource" data-resource="time">
+                    <span class="resource-icon">⏰</span>
+                    <span class="resource-label">Time</span>
+                    <span class="resource-value"><span id="time">100</span>%</span>
                 </div>
-                <div class="resource">
-                    <span class="resource-label">Compute:</span>
-                    <span id="compute-count">0</span>
+                <div class="resource" data-resource="energy">
+                    <span class="resource-icon">⚡</span>
+                    <span class="resource-label">Energy</span>
+                    <span class="resource-value"><span id="energy">100</span>%</span>
+                </div>
+                <div class="resource" data-resource="codebase">
+                    <span class="resource-icon">📦</span>
+                    <span class="resource-label">Codebase</span>
+                    <span class="resource-value"><span id="codebase">0</span></span>
                 </div>
             </div>
-            <div id="rates-display"></div>
+            <!-- Path-specific resources appear here dynamically -->
+            <div id="path-resources"></div>
         </header>
 
         <!-- Main game area -->
         <main id="game-main">
-            <!-- Phase indicator (will change as game progresses) -->
-            <div id="phase-indicator">
-                <span id="current-phase">Early Game: The Mundane Phase</span>
-            </div>
-
-            <!-- Primary action area -->
-            <section id="primary-actions">
-                <h2>Actions</h2>
-                <div id="action-buttons">
-                    <button id="main-action" class="action-btn">
-                        Fix Bug
-                    </button>
+            <!-- Actions area -->
+            <section id="actions-section">
+                <h2>What will you do this week?</h2>
+                <div id="actions-list">
+                    <!-- Actions will be rendered here by JS -->
                 </div>
             </section>
 
             <!-- Upgrades area -->
-            <section id="upgrades">
-                <h2>Upgrades</h2>
-                <div id="upgrade-list">
-                    <div class="no-upgrades">Click to fix bugs and unlock upgrades...</div>
+            <section id="upgrades-section">
+                <h2>Opportunities</h2>
+                <div id="upgrades-list">
+                    <div class="no-upgrades">Keep working and opportunities will appear...</div>
                 </div>
             </section>
 
             <!-- Events/narrative area -->
-            <section id="events">
-                <h2>Recent Events</h2>
-                <div id="event-log">
+            <section id="events-section">
+                <h2>What's Happening</h2>
+                <div id="events-list">
                     <div class="event-message">
-                        Welcome to Anthropic! You've been assigned your first task: make Claude helpful...
+                        You're an indie developer working from your apartment. Rent is due at the end of each month. Time to build something.
                     </div>
-                </div>
-            </section>
-
-            <!-- Research/iteration area (unlocks in mid-game) -->
-            <section id="research" style="display: none;">
-                <h2>Research & Development</h2>
-                <div id="research-options">
-                    <!-- Research options will appear here -->
                 </div>
             </section>
         </main>
 
         <!-- Footer with meta controls -->
         <footer id="game-footer">
-            <button id="save-btn">Save Game</button>
-            <button id="load-btn">Load Game</button>
-            <button id="reset-btn">Reset Game</button>
+            <button id="save-btn">Save</button>
+            <button id="load-btn">Load</button>
+            <button id="reset-btn">Reset</button>
             <span id="save-indicator"></span>
+            <span id="dev-hint">Open console for dev tools (window.dev)</span>
         </footer>
     </div>
 
-    <!-- Choice Modal -->
-    <div id="choice-modal" class="modal">
-        <!-- Content injected by JS -->
-    </div>
-
-    <!-- Ending Modal -->
-    <div id="ending-modal" class="modal">
-        <!-- Content injected by JS -->
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="game-over-title">Game Over</h2>
+            <p id="game-over-message"></p>
+            <button id="restart-btn">Try Again</button>
+        </div>
     </div>
 
     <script src="game.js"></script>
