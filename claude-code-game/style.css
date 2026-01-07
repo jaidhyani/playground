@@ -1,12 +1,3 @@
-/**
- * Claude Code: The Game - Styles
- * An indie developer narrative experience
- */
-
-/* ============================================================================
-   RESET & BASICS
-   ============================================================================ */
-
 * {
     margin: 0;
     padding: 0;
@@ -14,584 +5,120 @@
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background-color: #0f0f0f;
-    color: #e0e0e0;
-    line-height: 1.6;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    background: #000;
+    color: #0f0;
+    font-size: 14px;
+    line-height: 1.4;
     min-height: 100vh;
 }
-
-/* ============================================================================
-   LAYOUT
-   ============================================================================ */
 
 #game-container {
-    max-width: 1100px;
+    max-width: 700px;
     margin: 0 auto;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    padding: 20px;
 }
 
-#game-header {
-    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-    padding: 20px 30px;
-    border-bottom: 1px solid #2a2a4a;
-}
-
-#header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
+/* Header */
 #game-header h1 {
-    color: #7b68ee;
-    font-size: 1.5em;
-    font-weight: 600;
-    letter-spacing: -0.5px;
+    font-size: 1.1em;
+    font-weight: normal;
+    margin-bottom: 10px;
 }
-
-#week-display {
-    background: #2a2a4a;
-    padding: 8px 16px;
-    border-radius: 20px;
-    color: #a0a0c0;
-    font-weight: 500;
-}
-
-#week-display #week {
-    color: #7b68ee;
-    font-weight: 700;
-}
-
-#game-main {
-    flex: 1;
-    padding: 25px 30px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 25px;
-    background: #0f0f0f;
-}
-
-#game-footer {
-    background: #1a1a2e;
-    padding: 15px 30px;
-    border-top: 1px solid #2a2a4a;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-/* ============================================================================
-   RESOURCES
-   ============================================================================ */
 
 #resources {
     display: flex;
-    gap: 25px;
+    gap: 20px;
     flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #333;
 }
 
 .resource {
+    color: #0f0;
+}
+
+.resource[data-resource="money"] { color: #0f0; }
+.resource[data-resource="energy"] { color: #ff0; }
+.resource[data-resource="codebase"] { color: #0af; }
+.resource[data-resource="techDebt"] { color: #f00; }
+.resource[data-resource="reputation"] { color: #f80; }
+.resource[data-resource="githubStars"] { color: #ff0; }
+
+/* Log */
+#log {
+    margin-bottom: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.log-entry {
+    color: #888;
+    padding: 2px 0;
+}
+
+.log-entry.good { color: #0f0; }
+.log-entry.bad { color: #f00; }
+.log-entry.warning { color: #ff0; }
+
+/* Buttons area */
+#buttons {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.resource-icon {
-    font-size: 1.3em;
-}
-
-.resource-label {
-    color: #808090;
-    font-size: 0.85em;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.resource-value {
-    color: #e0e0e0;
-    font-size: 1.1em;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-}
-
-/* Resource-specific colors */
-.resource[data-resource="money"] .resource-value { color: #4ade80; }
-.resource[data-resource="time"] .resource-value { color: #60a5fa; }
-.resource[data-resource="energy"] .resource-value { color: #fbbf24; }
-.resource[data-resource="codebase"] .resource-value { color: #a78bfa; }
-.resource[data-resource="techDebt"] .resource-value { color: #ef4444; }
-.resource[data-resource="reputation"] .resource-value { color: #fcd34d; }
-
-/* Negative resources have a warning style */
-.resource-negative {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-/* Path-specific resources */
-#path-resources {
-    margin-top: 15px;
-    display: flex;
-    gap: 20px;
     flex-wrap: wrap;
-}
-
-#path-resources:empty {
-    display: none;
-}
-
-.path-resource {
-    display: flex;
-    align-items: center;
     gap: 8px;
+}
+
+.btn {
+    background: transparent;
+    border: 1px solid #333;
+    color: #0f0;
     padding: 8px 14px;
-    background: rgba(123, 104, 238, 0.1);
-    border: 1px solid rgba(123, 104, 238, 0.2);
-    border-radius: 6px;
-}
-
-.path-resource-label {
-    color: #9090b0;
-    font-size: 0.8em;
-    text-transform: uppercase;
-}
-
-.path-resource-value {
-    color: #b0a0f0;
-    font-weight: 600;
-}
-
-/* ============================================================================
-   SECTIONS
-   ============================================================================ */
-
-section {
-    background: #1a1a2e;
-    border-radius: 12px;
-    border: 1px solid #2a2a4a;
-    overflow: hidden;
-}
-
-section h2 {
-    color: #a0a0c0;
-    font-size: 0.9em;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 15px 20px;
-    background: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid #2a2a4a;
-}
-
-#actions-section {
-    grid-column: 1 / -1;
-}
-
-#pr-section {
-    grid-column: 1 / -1;
-}
-
-#upgrades-section {
-    grid-row: 3;
-}
-
-#events-section {
-    grid-row: 3;
-}
-
-/* ============================================================================
-   ACTIONS
-   ============================================================================ */
-
-#actions-list {
-    padding: 15px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.action-card {
-    flex: 1;
-    min-width: 180px;
-    background: #252540;
-    border: 1px solid #3a3a5a;
-    border-radius: 10px;
-    padding: 18px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-family: inherit;
+    font-size: 0.9em;
 }
 
-.action-card:hover {
-    background: #2a2a50;
-    border-color: #7b68ee;
-    transform: translateY(-2px);
+.btn:hover {
+    border-color: #0f0;
 }
 
-.action-card:active {
-    transform: translateY(0);
-}
-
-.action-card.disabled {
-    opacity: 0.4;
+.btn:disabled {
+    opacity: 0.3;
     cursor: not-allowed;
-    pointer-events: none;
 }
 
-.action-name {
-    color: #e0e0e0;
-    font-weight: 600;
-    margin-bottom: 8px;
-    font-size: 1.05em;
-}
+.btn.action { border-color: #0f0; color: #0f0; }
+.btn.pr { border-color: #0af; color: #0af; }
+.btn.pr.risky { border-color: #f80; color: #f80; }
+.btn.upgrade { border-color: #ff0; color: #ff0; }
+.btn.decline { border-color: #444; color: #666; }
 
-.action-description {
-    color: #808090;
-    font-size: 0.85em;
-    margin-bottom: 12px;
-    line-height: 1.5;
-}
-
-.action-cost {
+/* Footer */
+#game-footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #333;
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.cost-item {
-    font-size: 0.8em;
-    color: #a0a0c0;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 4px 10px;
-    border-radius: 4px;
-}
-
-.cost-item.insufficient {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-}
-
-/* Coding progress bar */
-.coding-progress-container {
-    position: relative;
-    height: 20px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-    margin: 10px 0;
-    overflow: hidden;
-}
-
-.coding-progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #7b68ee, #a78bfa);
-    border-radius: 10px;
-    transition: width 0.1s ease-out;
-}
-
-.coding-progress-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.75em;
-    font-weight: 600;
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* ============================================================================
-   PR QUEUE
-   ============================================================================ */
-
-#pr-list {
-    padding: 15px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-#pr-count {
-    font-size: 0.8em;
-    color: #7b68ee;
-    margin-left: 5px;
-}
-
-.pr-card {
-    flex: 1;
-    min-width: 200px;
-    max-width: 300px;
-    background: #252540;
-    border: 1px solid #3a3a5a;
-    border-radius: 10px;
-    padding: 15px;
-    animation: slideUp 0.3s ease-out;
-}
-
-.pr-card.quality-good {
-    border-left: 3px solid #4ade80;
-}
-
-.pr-card.quality-medium {
-    border-left: 3px solid #fbbf24;
-}
-
-.pr-card.quality-bad {
-    border-left: 3px solid #ef4444;
-}
-
-.pr-title {
-    color: #e0e0e0;
-    font-weight: 600;
-    font-size: 0.95em;
-    margin-bottom: 8px;
-    font-family: 'Monaco', 'Consolas', monospace;
-}
-
-.pr-stats {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 10px;
-    font-size: 0.8em;
-}
-
-.pr-stat {
-    color: #808090;
-}
-
-.pr-stat.added {
-    color: #4ade80;
-}
-
-.pr-stat.removed {
-    color: #ef4444;
-}
-
-.pr-gain {
-    color: #a78bfa;
-    font-size: 0.85em;
-    margin-bottom: 12px;
-}
-
-.pr-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.pr-merge-btn {
-    flex: 1;
-    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
-    border: none;
-    color: #0f0f0f;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85em;
-    font-weight: 600;
-    transition: all 0.15s;
-}
-
-.pr-merge-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(74, 222, 128, 0.3);
-}
-
-.pr-reject-btn {
-    background: transparent;
-    border: 1px solid #4a4a6a;
-    color: #808090;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85em;
-    transition: all 0.15s;
-}
-
-.pr-reject-btn:hover {
-    border-color: #ef4444;
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.no-prs {
-    color: #606070;
-    font-style: italic;
-    padding: 20px;
-    text-align: center;
-    width: 100%;
-}
-
-/* ============================================================================
-   UPGRADES
-   ============================================================================ */
-
-#upgrades-list {
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.upgrade-card {
-    background: #252540;
-    border: 1px solid #3a3a5a;
-    border-radius: 10px;
-    padding: 18px;
-    transition: all 0.2s ease;
-}
-
-.upgrade-card:hover {
-    border-color: #5a5a7a;
-}
-
-.upgrade-name {
-    color: #dcdcaa;
-    font-weight: 600;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-}
-
-.upgrade-description {
-    color: #b0b0c0;
-    font-size: 0.9em;
-    line-height: 1.6;
-    margin-bottom: 15px;
-}
-
-.upgrade-cost {
-    color: #4ade80;
-    font-size: 0.85em;
-    margin-bottom: 15px;
-    padding: 8px 12px;
-    background: rgba(74, 222, 128, 0.1);
-    border-radius: 6px;
-    display: inline-block;
-}
-
-.upgrade-cost.recurring {
-    color: #fbbf24;
-    background: rgba(251, 191, 36, 0.1);
-}
-
-.upgrade-decisions {
-    display: flex;
-    flex-direction: column;
     gap: 10px;
 }
 
-.decision-btn {
-    background: #3a3a5a;
-    border: 1px solid #4a4a6a;
-    color: #e0e0e0;
-    padding: 12px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9em;
-    text-align: left;
-    transition: all 0.15s ease;
-}
-
-.decision-btn:hover {
-    background: #4a4a6a;
-    border-color: #7b68ee;
-}
-
-.decision-btn.primary {
-    background: linear-gradient(135deg, #7b68ee 0%, #6a5acd 100%);
-    border-color: #7b68ee;
-}
-
-.decision-btn.primary:hover {
-    background: linear-gradient(135deg, #8a78ff 0%, #7b68ee 100%);
-}
-
-.decision-btn.decline {
+#game-footer button {
     background: transparent;
-    border-color: #4a4a6a;
-    color: #909090;
+    border: 1px solid #333;
+    color: #666;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.8em;
 }
 
-.decision-btn.decline:hover {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: #ef4444;
-    color: #ef4444;
+#game-footer button:hover {
+    border-color: #0f0;
+    color: #0f0;
 }
 
-.no-upgrades {
-    color: #606070;
-    font-style: italic;
-    padding: 30px;
-    text-align: center;
-}
-
-/* ============================================================================
-   EVENTS
-   ============================================================================ */
-
-#events-list {
-    padding: 15px;
-    max-height: 400px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.event-message {
-    background: #252540;
-    padding: 14px 16px;
-    border-radius: 8px;
-    border-left: 3px solid #7b68ee;
-    font-size: 0.9em;
-    line-height: 1.5;
-    animation: slideIn 0.3s ease-out;
-}
-
-.event-message.good {
-    border-left-color: #4ade80;
-    background: rgba(74, 222, 128, 0.05);
-}
-
-.event-message.bad {
-    border-left-color: #ef4444;
-    background: rgba(239, 68, 68, 0.05);
-}
-
-.event-message.warning {
-    border-left-color: #fbbf24;
-    background: rgba(251, 191, 36, 0.05);
-}
-
-.event-message.milestone {
-    border-left-color: #a78bfa;
-    background: rgba(167, 139, 250, 0.08);
-    font-weight: 500;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* ============================================================================
-   MODAL
-   ============================================================================ */
-
+/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -599,229 +126,47 @@ section h2 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.95);
     z-index: 1000;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-}
-
-.modal.active {
-    display: flex;
 }
 
 .modal-content {
-    background: #1a1a2e;
-    border-radius: 16px;
-    padding: 40px;
-    max-width: 500px;
-    width: 100%;
+    border: 1px solid #333;
+    padding: 30px;
+    max-width: 400px;
     text-align: center;
-    border: 1px solid #3a3a5a;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-.modal-content h2 {
-    color: #ef4444;
+.game-over-title {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    font-weight: normal;
+}
+
+.game-over-message {
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.game-over-stats {
+    text-align: left;
     margin-bottom: 20px;
-    font-size: 1.8em;
-}
-
-.modal-content p {
-    color: #b0b0c0;
-    margin-bottom: 30px;
-    font-size: 1.1em;
-    line-height: 1.6;
+    color: #666;
+    font-size: 0.9em;
 }
 
 .modal-content button {
-    background: linear-gradient(135deg, #7b68ee 0%, #6a5acd 100%);
-    color: white;
-    border: none;
-    padding: 14px 35px;
-    border-radius: 8px;
-    font-size: 1em;
-    font-weight: 600;
+    background: transparent;
+    border: 1px solid #0f0;
+    color: #0f0;
+    padding: 8px 20px;
     cursor: pointer;
-    transition: all 0.2s;
+    font-family: inherit;
 }
 
-.modal-content button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(123, 104, 238, 0.3);
-}
-
-/* ============================================================================
-   FOOTER CONTROLS
-   ============================================================================ */
-
-#game-footer button {
-    background: #2a2a4a;
-    border: 1px solid #3a3a5a;
-    color: #a0a0c0;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 0.85em;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-#game-footer button:hover {
-    background: #3a3a5a;
-    color: #e0e0e0;
-}
-
-#save-indicator {
-    color: #4ade80;
-    font-size: 0.85em;
-}
-
-#dev-hint {
-    margin-left: auto;
-    color: #505060;
-    font-size: 0.75em;
-    font-family: monospace;
-}
-
-/* ============================================================================
-   RESPONSIVE
-   ============================================================================ */
-
-@media (max-width: 800px) {
-    #game-main {
-        grid-template-columns: 1fr;
-        padding: 15px;
-    }
-
-    #actions-section {
-        grid-column: 1;
-    }
-
-    #upgrades-section,
-    #events-section {
-        grid-row: auto;
-    }
-
-    #resources {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .resource {
-        justify-content: space-between;
-    }
-
-    #game-header {
-        padding: 15px 20px;
-    }
-
-    #header-top {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
-    }
-
-    .action-card {
-        min-width: 100%;
-    }
-}
-
-/* ============================================================================
-   SCROLLBAR
-   ============================================================================ */
-
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: #1a1a2e;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #3a3a5a;
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #4a4a6a;
-}
-
-/* ============================================================================
-   ANIMATIONS
-   ============================================================================ */
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.resource-value.changing {
-    animation: pulse 0.3s ease-out;
-}
-
-/* Low resource warnings */
-.resource[data-resource="money"].low .resource-value {
-    color: #ef4444;
-    animation: pulse 1s infinite;
-}
-
-.resource[data-resource="energy"].low .resource-value {
-    color: #fbbf24;
-}
-
-/* Resource change flash effect */
-.resource-value.flash-up {
-    animation: flashGreen 0.5s ease-out;
-}
-
-.resource-value.flash-down {
-    animation: flashRed 0.5s ease-out;
-}
-
-@keyframes flashGreen {
-    0% { color: #4ade80; transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-@keyframes flashRed {
-    0% { color: #ef4444; transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-/* Action card click feedback */
-.action-card.clicked {
-    animation: cardClick 0.15s ease-out;
-}
-
-@keyframes cardClick {
-    0% { transform: scale(1); }
-    50% { transform: scale(0.97); }
-    100% { transform: scale(1); }
-}
-
-/* Week transition highlight */
-.week-advance {
-    animation: weekPulse 0.6s ease-out;
-}
-
-@keyframes weekPulse {
-    0% { background: #7b68ee; color: white; }
-    100% { background: #2a2a4a; }
-}
-
-/* Upgrade card entrance */
-.upgrade-card {
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #333; }

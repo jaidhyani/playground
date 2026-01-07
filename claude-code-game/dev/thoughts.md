@@ -17,3 +17,9 @@ game may start with just a "coding" button you need to mash X times to generate 
 Early on you're limited to how many coding agents you can run concurrently (e.g. it would be great to be developing many PRs at once, but you only get the one session at a time). Upgrades include the number of concurrent sessions, how long it takes a session to produce a PR, and the quality of the resulting PRs.
 
 When you start running into industrial hardware limitations in mid-game we start to see some options branching off from our traditional wheelhouse for things like mining minerals, researching lithography - feel free to get into the specifics of SOTA hardware manufacturing, especially GPUs and memory
+
+Maybe we should just start the player as an Anthropic employee to streamline the experience. This can simplify the early phases (get enough work done to keep your job/get promoted, income is somewhat steady and predictable) and make later phases where you're more deeply involved in iterating on Claude/Claude Code itself more cohesive. This will require reworking a ton of early-game content.
+
+When designing the game we should always keep in mind the player's likely model of how things work, what their choices are, and what those choices mean. We should make it seamless for the user to pick up what's going on by introducing mechanics naturalistically in ways that make it obvious how new options/features/mechanics work.
+
+Not all ideas are good ideas. Good game design means occasionally rejecting an idea that's not working, or questioning if a given idea is actually contributing to what you want the game to be. Think about the experience of the user at every step.
