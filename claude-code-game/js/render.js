@@ -32,6 +32,24 @@ export function renderResources() {
     // Trust
     const trustEl = document.getElementById('trust');
     if (trustEl) trustEl.textContent = Math.floor(gameState.resources.trust);
+
+    // API Credits (shown after vibe coding unlocks)
+    const apiCreditsEl = document.getElementById('apiCredits');
+    const apiCreditsDisplay = document.getElementById('api-credits-display');
+    if (apiCreditsEl) apiCreditsEl.textContent = Math.floor(gameState.resources.apiCredits);
+    if (apiCreditsDisplay) {
+        apiCreditsDisplay.style.display = gameState.settings.vibeMode ? 'inline' : 'none';
+    }
+
+    // Money (shown when low on credits or payday happens)
+    const moneyEl = document.getElementById('money');
+    const moneyDisplay = document.getElementById('money-display');
+    if (moneyEl) moneyEl.textContent = Math.floor(gameState.resources.money);
+    if (moneyDisplay) {
+        const showMoney = gameState.narrative.flags.moneyRevealed ||
+            (gameState.settings.vibeMode && gameState.resources.apiCredits < 50);
+        moneyDisplay.style.display = showMoney ? 'inline' : 'none';
+    }
 }
 
 export function renderLog() {
@@ -60,7 +78,16 @@ export function renderButtons() {
         const canAfford = canAffordAction(action);
         const costText = action.cost?.energy ? ` (${action.cost.energy} energy)` : '';
 
-        html += `<button class="btn action" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">${action.name}${costText}</button>`;
+        // Code action gets a progress bar
+        if (action.id === 'code') {
+            const progress = Math.floor(gameState.codingProgress);
+            html += `<button class="btn action progress-btn" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">
+                <span class="progress-fill" style="width:${progress}%"></span>
+                <span class="progress-text">${action.name} ${progress}%${costText}</span>
+            </button>`;
+        } else {
+            html += `<button class="btn action" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">${action.name}${costText}</button>`;
+        }
     }
 
     // PRs as merge buttons

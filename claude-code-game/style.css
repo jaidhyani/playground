@@ -43,6 +43,8 @@ body {
 .resource[data-resource="codebase"] { color: #0af; }
 .resource[data-resource="techDebt"] { color: #f00; }
 .resource[data-resource="trust"] { color: #0f0; }
+.resource[data-resource="apiCredits"] { color: #f0f; }
+.resource[data-resource="money"] { color: #0f0; }
 
 /* Log */
 #log {
@@ -87,6 +89,28 @@ body {
 }
 
 .btn.action { border-color: #0f0; color: #0f0; }
+
+/* Progress bar button */
+.btn.progress-btn {
+    position: relative;
+    overflow: hidden;
+    min-width: 160px;
+}
+
+.btn.progress-btn .progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(0, 255, 0, 0.2);
+    transition: width 0.1s ease-out;
+}
+
+.btn.progress-btn .progress-text {
+    position: relative;
+    z-index: 1;
+}
+
 .btn.pr { border-color: #0af; color: #0af; }
 .btn.pr.risky { border-color: #f80; color: #f80; }
 .btn.upgrade { border-color: #ff0; color: #ff0; }

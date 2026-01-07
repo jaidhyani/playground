@@ -9,7 +9,9 @@ export const gameState = {
         energy: 100,       // Focus/motivation (0-100). Goes to 0 = burnout
         codebase: 0,       // Quality/size of Claude Code
         techDebt: 0,       // Accumulated shortcuts (slows future work)
-        trust: 50          // Internal autonomy (0-100). Affects what you can do
+        trust: 50,         // Internal autonomy (0-100). Affects what you can do
+        apiCredits: 0,     // For vibe coding. Revealed when vibe unlocks
+        money: 0           // To buy API credits. Revealed when credits run low
     },
 
     // PR queue - vibe coding generates PRs that need review

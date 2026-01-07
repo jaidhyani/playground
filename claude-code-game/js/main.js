@@ -33,9 +33,17 @@ function tick() {
         gameState.resources.energy = Math.min(100, gameState.resources.energy - 0.1);
     }
 
-    // Vibe coding autoclicker - Claude writes code automatically
-    if (gameState.settings.vibeMode && gameState.resources.energy >= 2) {
-        gameState.resources.energy -= 2;
+    // Payday every 60 ticks (~1 minute)
+    if (gameState.narrative.ticksPlayed % 60 === 0 && gameState.narrative.ticksPlayed > 0) {
+        gameState.resources.money += 500;
+        gameState.narrative.flags.moneyRevealed = true;
+        addEvent("Payday. +$500", 'success');
+    }
+
+    // Vibe coding autoclicker - Claude writes code automatically (costs API credits)
+    const vibeActive = gameState.settings.vibeMode && gameState.resources.apiCredits >= 1;
+    if (vibeActive) {
+        gameState.resources.apiCredits -= 1;
 
         const progressPerTick = 100 / (gameState.codingClicksNeeded * 2);
         gameState.codingProgress += progressPerTick;

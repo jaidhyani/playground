@@ -114,7 +114,8 @@ export const actions = {
             // First ship unlocks vibe coding (autoclicker)
             if (isFirstShip) {
                 gameState.settings.vibeMode = true;
-                addEvent("Vibe coding unlocked. Claude writes code automatically.", 'success');
+                gameState.resources.apiCredits = 100;
+                addEvent("Vibe coding unlocked. 100 free API credits.", 'success');
             }
 
             gameState.narrative.flags.shipCount = (gameState.narrative.flags.shipCount || 0) + 1;

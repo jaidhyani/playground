@@ -52,6 +52,42 @@ export const upgradeDefinitions = {
 
     // Vibe coding is unlocked by first ship - see actions.js ship action
 
+    // Buy API credits when running low (repeatable)
+    buyCredits: {
+        id: 'buyCredits',
+        name: 'low on API credits',
+        description: '',
+        cost: {},
+        repeatable: true,
+        decisions: [
+            {
+                id: 'buy100',
+                label: 'buy 100 credits ($50)',
+                effect: () => {
+                    if (gameState.resources.money >= 50) {
+                        gameState.resources.money -= 50;
+                        gameState.resources.apiCredits += 100;
+                        addEvent("Bought 100 API credits.", 'neutral');
+                    }
+                }
+            },
+            {
+                id: 'buy500',
+                label: 'buy 500 credits ($200)',
+                effect: () => {
+                    if (gameState.resources.money >= 200) {
+                        gameState.resources.money -= 200;
+                        gameState.resources.apiCredits += 500;
+                        addEvent("Bought 500 API credits. Bulk discount.", 'success');
+                    }
+                }
+            }
+        ],
+        condition: () => gameState.settings.vibeMode &&
+            gameState.resources.apiCredits < 20 &&
+            gameState.resources.money >= 50
+    },
+
     // Auto-merge decision
     autoMerge: {
         id: 'autoMerge',
@@ -154,10 +190,14 @@ export function executeUpgradeDecision(upgradeId, decisionId) {
     }
 
     decision.effect();
-    gameState.upgrades.push(upgradeId);
 
-    if (isDecline) {
-        gameState.declinedUpgrades.push(upgradeId);
+    // Don't track repeatable upgrades
+    if (!upgrade.repeatable) {
+        gameState.upgrades.push(upgradeId);
+
+        if (isDecline) {
+            gameState.declinedUpgrades.push(upgradeId);
+        }
     }
 
     updateDisplay();
