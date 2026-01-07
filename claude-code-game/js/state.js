@@ -17,10 +17,8 @@ export const gameState = {
     gameDate: new Date(2025, 0, 6),
 
     // Tasks - each is a clickable progress bar
-    // oneOff: true means task disappears after completion
-    tasks: [
-        { id: 'prototype', name: 'Claude Code Prototype', progress: 0, clicksNeeded: 50, oneOff: true }
-    ],
+    // Initialized from tech-tree.js on new game
+    tasks: [],
 
     // Click multiplier (first PR gives random bonus)
     clickMultiplier: 1,

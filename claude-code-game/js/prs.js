@@ -5,6 +5,7 @@
 import { gameState } from './state.js';
 import { addEvent, checkNarrativeTriggers } from './events.js';
 import { updateDisplay } from './render.js';
+import { getPhaseUnlockedBy } from './tech-tree.js';
 
 let prIdCounter = 0;
 
@@ -96,35 +97,25 @@ export function mergePR(prId) {
     gameState.resources.codebase += pr.codebaseGain;
     gameState.resources.techDebt += pr.techDebtGain;
 
-    // First prototype merge gives random click multiplier and unlocks new tasks
+    // Check if this PR unlocks a new phase
+    const unlock = getPhaseUnlockedBy(pr.title);
+
+    // First prototype merge gives random click multiplier
     if (pr.isPrototype && gameState.clickMultiplier === 1) {
         const multiplier = 1.5 + Math.random() * 1.5; // 1.5x to 3x
         gameState.clickMultiplier = Math.round(multiplier * 10) / 10;
         addEvent(`Merged "${pr.title}". Capability boost: ${gameState.clickMultiplier}x`, 'success');
+    }
 
-        // Phase 1: Basic tool infrastructure (before MCP)
-        gameState.tasks.push(
-            { id: 'tool-calling', name: 'Basic tool calling', progress: 0, clicksNeeded: 35, oneOff: true, unlocks: 'phase2' },
-            { id: 'error-handling', name: 'Error handling', progress: 0, clicksNeeded: 25 },
-            { id: 'streaming', name: 'Streaming responses', progress: 0, clicksNeeded: 30, oneOff: true }
-        );
-    } else if (pr.title === 'Basic tool calling' && !gameState.narrative.flags.phase2) {
-        gameState.narrative.flags.phase2 = true;
-        // Phase 2: MCP protocol before servers
-        gameState.tasks.push(
-            { id: 'mcp-spec', name: 'MCP protocol spec', progress: 0, clicksNeeded: 45, oneOff: true, unlocks: 'phase3' },
-            { id: 'tool-discovery', name: 'Tool discovery', progress: 0, clicksNeeded: 30 }
-        );
-        addEvent("Tool calling working. MCP protocol next.", 'success');
-    } else if (pr.title === 'MCP protocol spec' && !gameState.narrative.flags.phase3) {
-        gameState.narrative.flags.phase3 = true;
-        // Phase 3: MCP servers now possible
-        gameState.tasks.push(
-            { id: 'mcp-filesystem', name: 'Filesystem MCP server', progress: 0, clicksNeeded: 40, oneOff: true },
-            { id: 'mcp-git', name: 'Git MCP server', progress: 0, clicksNeeded: 40, oneOff: true },
-            { id: 'server-templates', name: 'MCP server templates', progress: 0, clicksNeeded: 35 }
-        );
-        addEvent("MCP spec complete. Server ecosystem unlocked.", 'success');
+    // Unlock new phase if applicable
+    if (unlock && !gameState.narrative.flags[unlock.phaseId]) {
+        gameState.narrative.flags[unlock.phaseId] = true;
+        for (const task of unlock.phase.tasks) {
+            gameState.tasks.push({ ...task, progress: 0 });
+        }
+        if (unlock.phase.message) {
+            addEvent(unlock.phase.message, 'success');
+        }
     } else if (pr.hasBug) {
         addEvent(`Merged "${pr.title}". Bug found. Proactive identification needed.`, 'warning');
         gameState.resources.trust = Math.max(0, gameState.resources.trust - 3);

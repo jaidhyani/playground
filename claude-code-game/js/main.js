@@ -9,6 +9,7 @@ import { generatePR, mergePR } from './prs.js';
 import { addEvent, checkNarrativeTriggers } from './events.js';
 import { updateDisplay } from './render.js';
 import { saveGame, loadGame, resetGame } from './save.js';
+import { techTree } from './tech-tree.js';
 
 function gameLoop() {
     const now = Date.now();
@@ -134,7 +135,11 @@ window.openPR = openPR;
 
 function init() {
     if (!loadGame()) {
-        // New game - Anthropic's core view
+        // New game - initialize tasks from tech tree
+        for (const task of techTree.initial.tasks) {
+            gameState.tasks.push({ ...task, progress: 0 });
+        }
+        // Anthropic's core view
         addEvent('"The impact of AI might be comparable to the industrial and scientific revolutions, but we aren\'t confident it will go well." <a href="https://www.anthropic.com/news/core-views-on-ai-safety" target="_blank" class="external-link" title="anthropic.com">↗</a>', 'neutral');
     }
 
