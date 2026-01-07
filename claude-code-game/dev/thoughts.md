@@ -10,4 +10,4 @@ hardware should be a major constraint once you're functionally in charge of Anth
 
 Don't forget the jokes and subtle references
 
-During early game, 
+During early game, We could have vibe coding generate PRs, which we can then accept or reject. Accepting is (almost?) always the right move, one of the early upgrades is auto-accept. This also makes the first gameplay loop more dynamic and interesting (money + time -> PRs -> product (and maybe other things?) -> money)
