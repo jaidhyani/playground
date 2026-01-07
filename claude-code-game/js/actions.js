@@ -27,21 +27,21 @@ export const actions = {
             const effectiveQuality = Math.max(0, quality - debtPenalty);
 
             if (gameState.resources.techDebt > 10) {
-                addEvent("Shipped. Users found bugs immediately.", 'warning');
+                addEvent("Shipped. Identified harms post-deployment.", 'warning');
                 gameState.resources.trust = Math.max(0, gameState.resources.trust - 10);
             } else if (effectiveQuality >= 50) {
-                addEvent("Shipped. Users happy. Slack is calm.", 'success');
+                addEvent("Shipped. Safe and beneficial.", 'success');
                 gameState.resources.trust = Math.min(100, gameState.resources.trust + 5);
                 gameState.narrative.flags.goodShip = true;
             } else {
-                addEvent("Shipped. Mixed reception.", 'neutral');
+                addEvent("Shipped. Measuring impact.", 'neutral');
             }
 
             // First ship unlocks vibe coding (autoclicker)
             if (isFirstShip) {
                 gameState.settings.vibeMode = true;
                 gameState.resources.apiCredits = 100;
-                addEvent("Vibe coding unlocked. 100 free API credits.", 'success');
+                addEvent("Claude can write code autonomously now. 100 API credits.", 'success');
             }
 
             gameState.narrative.flags.shipCount = (gameState.narrative.flags.shipCount || 0) + 1;

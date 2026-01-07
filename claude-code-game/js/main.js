@@ -99,8 +99,9 @@ window.clickTask = clickTask;
 
 function init() {
     if (!loadGame()) {
-        // New game
-        addEvent("First day on Claude Code. Time to ship.", 'neutral');
+        // New game - Anthropic's core view
+        addEvent('<a href="https://www.anthropic.com/news/core-views-on-ai-safety" target="_blank">The impact of AI might be comparable to the industrial and scientific revolutions.</a>', 'neutral');
+        addEvent("We aren't confident it will go well.", 'neutral');
     }
 
     gameState.lastTick = Date.now();

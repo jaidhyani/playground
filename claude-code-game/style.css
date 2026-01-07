@@ -59,6 +59,15 @@ body {
     padding: 2px 0;
 }
 
+.log-entry a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+.log-entry a:hover {
+    color: #0f0;
+}
+
 .log-entry.good { color: #0f0; }
 .log-entry.bad { color: #f00; }
 .log-entry.warning { color: #ff0; }

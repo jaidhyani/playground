@@ -100,12 +100,12 @@ export function mergePR(prId) {
     if (pr.isPrototype && gameState.clickMultiplier === 1) {
         const multiplier = 1.5 + Math.random() * 1.5; // 1.5x to 3x
         gameState.clickMultiplier = Math.round(multiplier * 10) / 10;
-        addEvent(`Merged "${pr.title}". Click multiplier: ${gameState.clickMultiplier}x`, 'success');
+        addEvent(`Merged "${pr.title}". Capability boost: ${gameState.clickMultiplier}x`, 'success');
     } else if (pr.hasBug) {
-        addEvent(`Merged "${pr.title}". Bug found in prod.`, 'warning');
+        addEvent(`Merged "${pr.title}". Bug found. Proactive identification needed.`, 'warning');
         gameState.resources.trust = Math.max(0, gameState.resources.trust - 3);
     } else if (pr.quality > 0.7) {
-        addEvent(`Merged "${pr.title}". Clean.`, 'success');
+        addEvent(`Merged "${pr.title}". Aligned with expectations.`, 'success');
     } else {
         addEvent(`Merged "${pr.title}".`, 'neutral');
     }

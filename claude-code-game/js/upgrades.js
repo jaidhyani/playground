@@ -57,14 +57,14 @@ export const upgradeDefinitions = {
                 label: 'auto-merge everything',
                 effect: () => {
                     gameState.settings.autoMergePRs = true;
-                    addEvent("Auto-merge on. YOLO.", 'neutral');
+                    addEvent("Auto-merge on. Scaling faster.", 'neutral');
                 }
             },
             {
                 id: 'manual',
                 label: 'keep reviewing manually',
                 effect: () => {
-                    addEvent("Manual review. Slower but safer.", 'success');
+                    addEvent("Manual review. Scalable oversight.", 'success');
                 }
             }
         ],
@@ -84,7 +84,7 @@ export const upgradeDefinitions = {
                 effect: () => {
                     gameState.resources.codebase += 15;
                     gameState.resources.techDebt += 8;
-                    addEvent("Shipped it. Tech debt accruing.", 'warning');
+                    addEvent("Shipped. Plans are useless, planning is indispensable.", 'warning');
                 }
             },
             {
@@ -93,7 +93,7 @@ export const upgradeDefinitions = {
                 effect: () => {
                     gameState.resources.codebase += 8;
                     gameState.resources.trust += 5;
-                    addEvent("Took the time. Clean implementation.", 'success');
+                    addEvent("Process-oriented. Aligned implementation.", 'success');
                 }
             }
         ],
@@ -112,7 +112,7 @@ export const upgradeDefinitions = {
                 label: 'take on bigger scope',
                 effect: () => {
                     gameState.resources.trust += 10;
-                    addEvent("More responsibility. More rope.", 'success');
+                    addEvent("Frontier work. The stakes are high.", 'success');
                 }
             }
         ],

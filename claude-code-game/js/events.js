@@ -26,29 +26,29 @@ export function checkNarrativeTriggers() {
     // Tech debt warning
     if (techDebt >= 15 && !flags.debtWarning) {
         flags.debtWarning = true;
-        addEvent("Tech debt accumulating. Velocity slowing.", 'warning');
+        addEvent("Technical debt accumulating. Scalable oversight getting harder.", 'warning');
     }
 
     // Trust milestones
     if (trust >= 75 && !flags.highTrust) {
         flags.highTrust = true;
-        addEvent("Leadership gives you more autonomy.", 'success');
+        addEvent("Earned autonomy. Show, don't tell.", 'success');
     }
 
     if (trust <= 25 && !flags.lowTrust) {
         flags.lowTrust = true;
-        addEvent("More oversight. More check-ins.", 'warning');
+        addEvent("More oversight. Planning is indispensable.", 'warning');
     }
 
     // Codebase milestones
     if (codebase >= 50 && !flags.codebase50) {
         flags.codebase50 = true;
-        addEvent("Claude Code growing. Users noticing.", 'success');
+        addEvent("Claude Code growing. Responsible scaling in action.", 'success');
     }
 
     if (codebase >= 100 && !flags.codebase100) {
         flags.codebase100 = true;
-        addEvent("Major milestone. Claude Code is substantial now.", 'success');
+        addEvent("Major milestone. The frontier moves forward.", 'success');
     }
 
     // Game over conditions
