@@ -1,75 +1,50 @@
 /**
  * Game State - Central state object for Universal Paperclaudes
+ * You're an engineer at Anthropic working on Claude Code
  */
 
 export const gameState = {
     // Core resources
     resources: {
-        money: 500,        // Dollars - drains over time for rent
-        energy: 100,       // Motivation/focus (regenerates over time)
-        codebase: 0,       // Quality/size of your work
-        techDebt: 0,       // Accumulated shortcuts and hacks (bad!)
-        reputation: 0,     // Your standing in the dev community (0-100)
-        githubStars: 0     // Vanity metric that unlocks opportunities
+        energy: 100,       // Focus/motivation (0-100). Goes to 0 = burnout
+        codebase: 0,       // Quality/size of Claude Code
+        techDebt: 0,       // Accumulated shortcuts (slows future work)
+        trust: 50          // Internal autonomy (0-100). Affects what you can do
     },
-
-    // Current trending tech (affects PR quality bonuses)
-    trendingTech: null,    // Set during gameplay: 'ai', 'web3', 'vr', 'mobile', 'devtools'
-    projectTech: null,     // What tech your project uses
-
-    // Competitor state - adds tension mid-game
-    competitor: null,      // { name, stars, momentum, tech }
 
     // PR queue - vibe coding generates PRs that need review
-    prQueue: [],  // Array of PR objects { id, title, quality, hasBug, codebaseGain }
+    prQueue: [],
 
     // Coding progress - manual coding requires multiple clicks
-    codingProgress: 0,      // Current progress (0-100)
-    codingClicksNeeded: 10, // Clicks to generate a PR (reduced by upgrades)
-    maxCodingSessions: 1,   // How many PRs can be in-progress at once
-    activeCodingSessions: 0, // Currently cooking PRs (for async vibe coding)
+    codingProgress: 0,
+    codingClicksNeeded: 5,
 
-    // Path-specific resources (appear based on narrative branch)
-    pathResources: {
-        // Bootstrap path
-        userTrust: null,      // How much users believe in you
-        craftMastery: null,   // Your personal skill level
-
-        // Growth path
-        runway: null,         // Months of funding left
-        teamMorale: null,     // How your team is doing
-        marketPosition: null, // Competitive standing
-
-        // AI path
-        aiCapability: null,   // What your AI tools can do
-        oversight: null,      // How well you understand what's happening
-        dependency: null      // How reliant you are on AI
-    },
+    // Focus area (chosen early game)
+    focus: null,  // 'mcp', 'agents', 'evals', 'infra'
 
     // Narrative state
     narrative: {
-        branch: 'start',           // Current narrative branch
-        events: [],                // Log of what's happened
-        flags: {},                 // Story flags for conditional content
-        ticksPlayed: 0,            // Total ticks for time tracking
-        rentPerTick: 0.5           // ~$30/minute at 1000ms tick = ~$1800/hour playtime
+        events: [],
+        flags: {},
+        ticksPlayed: 0
     },
 
-    // Completed/active upgrades
+    // Completed upgrades/decisions
     upgrades: [],
-    declinedUpgrades: [],  // Declining has consequences too
+    declinedUpgrades: [],
 
-    // Passive effects
+    // Passive effects (from decisions)
     passiveEffects: [],
 
     // Settings
     settings: {
-        autoMergePRs: false  // Upgrade to auto-merge PRs
+        autoMergePRs: false,
+        vibeMode: false
     },
 
     // Timing
     lastTick: Date.now(),
-    tickRate: 1000  // 1 second per tick
+    tickRate: 1000
 };
 
 export function hasUpgrade(id) {

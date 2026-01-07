@@ -39,12 +39,10 @@ body {
     color: #0f0;
 }
 
-.resource[data-resource="money"] { color: #0f0; }
 .resource[data-resource="energy"] { color: #ff0; }
 .resource[data-resource="codebase"] { color: #0af; }
 .resource[data-resource="techDebt"] { color: #f00; }
-.resource[data-resource="reputation"] { color: #f80; }
-.resource[data-resource="githubStars"] { color: #ff0; }
+.resource[data-resource="trust"] { color: #0f0; }
 
 /* Log */
 #log {
@@ -93,6 +91,12 @@ body {
 .btn.pr.risky { border-color: #f80; color: #f80; }
 .btn.upgrade { border-color: #ff0; color: #ff0; }
 .btn.decline { border-color: #444; color: #666; }
+
+/* Upgrade context labels */
+.upgrade-label {
+    color: #888;
+    margin-right: 4px;
+}
 
 /* Footer */
 #game-footer {

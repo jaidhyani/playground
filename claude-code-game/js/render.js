@@ -13,30 +13,25 @@ export function updateDisplay() {
 }
 
 export function renderResources() {
-    const resources = ['money', 'energy', 'codebase', 'techDebt', 'reputation', 'githubStars'];
+    // Energy
+    const energyEl = document.getElementById('energy');
+    if (energyEl) energyEl.textContent = Math.floor(gameState.resources.energy);
 
-    resources.forEach(key => {
-        const el = document.getElementById(key);
-        if (!el) return;
-        const val = key === 'codebase' ? gameState.resources[key].toFixed(0) : Math.floor(gameState.resources[key]);
-        el.textContent = val;
-    });
+    // Codebase
+    const codebaseEl = document.getElementById('codebase');
+    if (codebaseEl) codebaseEl.textContent = Math.floor(gameState.resources.codebase);
 
-    // Show/hide conditional resources
+    // Tech Debt (conditional)
+    const techDebtEl = document.getElementById('techDebt');
     const techDebtDisplay = document.getElementById('tech-debt-display');
+    if (techDebtEl) techDebtEl.textContent = Math.floor(gameState.resources.techDebt);
     if (techDebtDisplay) {
         techDebtDisplay.style.display = gameState.resources.techDebt > 0 ? 'inline' : 'none';
     }
 
-    const reputationDisplay = document.getElementById('reputation-display');
-    if (reputationDisplay) {
-        reputationDisplay.style.display = gameState.resources.reputation > 0 ? 'inline' : 'none';
-    }
-
-    const starsDisplay = document.getElementById('stars-display');
-    if (starsDisplay) {
-        starsDisplay.style.display = gameState.resources.githubStars > 0 ? 'inline' : 'none';
-    }
+    // Trust
+    const trustEl = document.getElementById('trust');
+    if (trustEl) trustEl.textContent = Math.floor(gameState.resources.trust);
 }
 
 export function renderLog() {
@@ -44,7 +39,7 @@ export function renderLog() {
     if (!container) return;
 
     const html = gameState.narrative.events.slice(0, 8).map(e => {
-        const typeClass = e.type === 'success' || e.type === 'positive' ? 'good' :
+        const typeClass = e.type === 'success' ? 'good' :
                          e.type === 'negative' ? 'bad' :
                          e.type === 'warning' ? 'warning' : '';
         return `<div class="log-entry ${typeClass}">${e.message}</div>`;
@@ -63,7 +58,7 @@ export function renderButtons() {
     for (const action of Object.values(actions)) {
         if (!action.available()) continue;
         const canAfford = canAffordAction(action);
-        const costText = action.cost?.energy ? ` (${action.cost.energy})` : '';
+        const costText = action.cost?.energy ? ` (${action.cost.energy} energy)` : '';
 
         html += `<button class="btn action" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">${action.name}${costText}</button>`;
     }
@@ -75,13 +70,18 @@ export function renderButtons() {
         html += `<button class="btn pr ${isRisky ? 'risky' : ''}" onclick="mergePR(${pr.id})">${label}</button>`;
     }
 
-    // Upgrades
+    // Upgrades/Decisions
     for (const upgrade of Object.values(upgradeDefinitions)) {
         if (!upgrade.condition()) continue;
         const canAfford = canAffordUpgrade(upgrade);
 
+        // Show upgrade name as context
+        if (upgrade.decisions.length > 1) {
+            html += `<span class="upgrade-label">${upgrade.name}:</span> `;
+        }
+
         for (const decision of upgrade.decisions) {
-            const isDecline = ['skip', 'reject', 'noTracking'].includes(decision.id);
+            const isDecline = ['skip', 'manual'].includes(decision.id);
             const disabled = !canAfford && !isDecline;
             const btnClass = isDecline ? 'decline' : 'upgrade';
 
@@ -105,42 +105,35 @@ export function showGameOver() {
     const statsEl = modal.querySelector('.game-over-stats');
 
     const ending = gameState.narrative.flags.ending;
-    const reason = gameState.narrative.flags.gameOverReason;
 
     if (titleEl) {
-        if (ending === 'sustainable') {
-            titleEl.textContent = 'sustainable';
-            titleEl.style.color = '#0f0';
-        } else if (ending === 'stardom') {
-            titleEl.textContent = 'stardom';
-            titleEl.style.color = '#ff0';
-        } else if (ending === 'sold') {
-            titleEl.textContent = 'acquired';
-            titleEl.style.color = '#0af';
-        } else {
-            titleEl.textContent = 'bankrupt';
+        if (ending === 'burnout') {
+            titleEl.textContent = 'burnout';
+            titleEl.style.color = '#f80';
+        } else if (ending === 'fired') {
+            titleEl.textContent = 'let go';
             titleEl.style.color = '#f00';
+        } else {
+            titleEl.textContent = 'the end';
+            titleEl.style.color = '#0f0';
         }
     }
 
     if (messageEl) {
-        if (ending === 'sustainable') {
-            messageEl.textContent = "Revenue covers costs. You're free.";
-        } else if (ending === 'stardom') {
-            messageEl.textContent = "2000 stars. You made it.";
-        } else if (ending === 'sold') {
-            messageEl.textContent = "The check cleared.";
+        if (ending === 'burnout') {
+            messageEl.textContent = "Pushed too hard. Rest up.";
+        } else if (ending === 'fired') {
+            messageEl.textContent = "Trust hit zero. Time to move on.";
         } else {
-            messageEl.textContent = "Out of money.";
+            messageEl.textContent = "Game over.";
         }
     }
 
     if (statsEl) {
-        const weeklyIncome = gameState.passiveEffects.reduce((sum, e) => sum + (e.weeklyIncome || 0), 0);
         statsEl.innerHTML = `
             codebase: ${Math.floor(gameState.resources.codebase)}<br>
-            stars: ${gameState.resources.githubStars}<br>
-            revenue: $${weeklyIncome}/wk
+            tech debt: ${Math.floor(gameState.resources.techDebt)}<br>
+            focus: ${gameState.focus || 'none'}
         `;
     }
 
