@@ -96,11 +96,18 @@ export function mergePR(prId) {
     gameState.resources.codebase += pr.codebaseGain;
     gameState.resources.techDebt += pr.techDebtGain;
 
-    // First prototype merge gives random click multiplier
+    // First prototype merge gives random click multiplier and unlocks new tasks
     if (pr.isPrototype && gameState.clickMultiplier === 1) {
         const multiplier = 1.5 + Math.random() * 1.5; // 1.5x to 3x
         gameState.clickMultiplier = Math.round(multiplier * 10) / 10;
         addEvent(`Merged "${pr.title}". Capability boost: ${gameState.clickMultiplier}x`, 'success');
+
+        // Add initial task pool after prototype
+        gameState.tasks.push(
+            { id: 'mcp-filesystem', name: 'Filesystem MCP server', progress: 0, clicksNeeded: 40, oneOff: true },
+            { id: 'error-messages', name: 'Improve error messages', progress: 0, clicksNeeded: 30 },
+            { id: 'tool-validation', name: 'Tool parameter validation', progress: 0, clicksNeeded: 35 }
+        );
     } else if (pr.hasBug) {
         addEvent(`Merged "${pr.title}". Bug found. Proactive identification needed.`, 'warning');
         gameState.resources.trust = Math.max(0, gameState.resources.trust - 3);
