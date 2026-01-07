@@ -1,5 +1,5 @@
 /**
- * Claude Code: The Game
+ * Universal Paperclaudes
  *
  * An incremental game about an indie developer navigating the rise of AI.
  * Choices branch the narrative - there are no "phases", only consequences.
@@ -432,18 +432,102 @@ const actions = {
             // Shipping is a big deal
             gameState.narrative.flags.hasShipped = true;
             const quality = gameState.resources.codebase;
+            const techDebtPenalty = gameState.resources.techDebt * 2;
+            const effectiveQuality = Math.max(0, quality - techDebtPenalty);
 
-            if (quality >= 80) {
-                addEvent("You shipped. People noticed. This might be the start of something.", 'success');
+            // Calculate initial users based on quality and reputation
+            const repBonus = 1 + (gameState.resources.reputation / 50);
+            let initialUsers = Math.floor(effectiveQuality * repBonus / 10);
+
+            // Tech debt affects launch negatively
+            if (gameState.resources.techDebt > 10) {
+                addEvent("Launch day! But... there are bugs. A lot of bugs. Users are reporting crashes.", 'warning');
+                initialUsers = Math.floor(initialUsers * 0.5);
+            }
+
+            gameState.narrative.flags.users = initialUsers;
+
+            if (effectiveQuality >= 70) {
+                addEvent(`You shipped! ${initialUsers} people signed up on day one. This might be the start of something.`, 'success');
                 gameState.narrative.flags.successfulLaunch = true;
-            } else if (quality >= 50) {
-                addEvent("You shipped. A few people tried it. The feedback was... mixed but useful.", 'neutral');
+                gameState.resources.reputation += 5;
+                // Start passive income
+                gameState.passiveEffects.push({
+                    id: 'productRevenue',
+                    description: 'Product revenue',
+                    weeklyIncome: Math.floor(initialUsers * 0.5)
+                });
+            } else if (effectiveQuality >= 40) {
+                addEvent(`You shipped. ${initialUsers} people tried it. The feedback is mixed but useful.`, 'neutral');
+                gameState.resources.reputation += 2;
+                gameState.passiveEffects.push({
+                    id: 'productRevenue',
+                    description: 'Product revenue',
+                    weeklyIncome: Math.floor(initialUsers * 0.3)
+                });
             } else {
-                addEvent("You shipped. Crickets. Maybe three downloads. It stings, but at least it's out there.", 'negative');
+                addEvent(`You shipped. ${initialUsers || 'A handful of'} downloads. Crickets. It stings.`, 'negative');
+                gameState.resources.reputation += 1;
             }
             checkNarrativeTriggers();
         },
         available: () => gameState.resources.codebase >= 30 && !gameState.narrative.flags.hasShipped
+    },
+
+    // Post-ship actions
+    market: {
+        id: 'market',
+        name: 'Market',
+        description: 'Promote your product. Ads, content, outreach.',
+        cost: { time: 20, energy: 25, money: 50 },
+        execute: () => {
+            const currentUsers = gameState.narrative.flags.users || 0;
+            const repBonus = 1 + (gameState.resources.reputation / 100);
+            const newUsers = Math.floor((5 + Math.random() * 15) * repBonus);
+
+            gameState.narrative.flags.users = currentUsers + newUsers;
+            gameState.resources.reputation += 1;
+
+            // Update passive income
+            const revenueEffect = gameState.passiveEffects.find(e => e.id === 'productRevenue');
+            if (revenueEffect) {
+                revenueEffect.weeklyIncome = Math.floor(gameState.narrative.flags.users * 0.4);
+            }
+
+            const messages = [
+                `Posted on Product Hunt. ${newUsers} new users!`,
+                `Ran a small ad campaign. ${newUsers} signups.`,
+                `A tweet went mini-viral. ${newUsers} people checked it out.`,
+                `Wrote a "Show HN" post. ${newUsers} curious devs signed up.`
+            ];
+            addEvent(messages[Math.floor(Math.random() * messages.length)], 'success');
+            checkNarrativeTriggers();
+        },
+        available: () => gameState.narrative.flags.hasShipped
+    },
+
+    support: {
+        id: 'support',
+        name: 'Customer Support',
+        description: 'Answer emails, fix user issues, build relationships.',
+        cost: { time: 15, energy: 20 },
+        execute: () => {
+            const users = gameState.narrative.flags.users || 0;
+            const issueCount = Math.floor(1 + Math.random() * (users / 10));
+
+            // Good support builds reputation and reduces churn
+            gameState.resources.reputation += 2;
+
+            // Small chance of feature request leading to codebase improvement
+            if (Math.random() > 0.7) {
+                gameState.resources.codebase += 2;
+                addEvent(`Answered ${issueCount} support tickets. One user's feedback gave you a great idea!`, 'success');
+            } else {
+                addEvent(`Handled ${issueCount} support requests. Users appreciate the personal touch.`, 'neutral');
+            }
+            checkNarrativeTriggers();
+        },
+        available: () => gameState.narrative.flags.hasShipped && (gameState.narrative.flags.users || 0) > 5
     }
 };
 
@@ -802,6 +886,18 @@ function tick() {
 function advanceWeek() {
     gameState.narrative.week++;
     gameState.resources.time = 100; // Reset weekly time
+
+    // Process weekly passive income
+    let weeklyIncome = 0;
+    for (const effect of gameState.passiveEffects) {
+        if (effect.weeklyIncome) {
+            weeklyIncome += effect.weeklyIncome;
+        }
+    }
+    if (weeklyIncome > 0) {
+        gameState.resources.money += weeklyIncome;
+        addEvent(`Product revenue: +$${weeklyIncome}`, 'success');
+    }
 
     // Deduct rent every 4 weeks
     if (gameState.narrative.week % 4 === 0) {
