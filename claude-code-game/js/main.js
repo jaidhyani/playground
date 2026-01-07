@@ -100,8 +100,7 @@ window.clickTask = clickTask;
 function init() {
     if (!loadGame()) {
         // New game - Anthropic's core view
-        addEvent('<a href="https://www.anthropic.com/news/core-views-on-ai-safety" target="_blank">The impact of AI might be comparable to the industrial and scientific revolutions.</a>', 'neutral');
-        addEvent("We aren't confident it will go well.", 'neutral');
+        addEvent('<a href="https://www.anthropic.com/news/core-views-on-ai-safety" target="_blank">The impact of AI might be comparable to the industrial and scientific revolutions, but we aren\'t confident it will go well.</a>', 'neutral');
     }
 
     gameState.lastTick = Date.now();
