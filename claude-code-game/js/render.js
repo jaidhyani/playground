@@ -65,15 +65,23 @@ export function renderResources() {
     }
 }
 
+function formatDate(date) {
+    const d = date || gameState.gameDate;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
 export function renderLog() {
     const container = document.getElementById('log');
     if (!container) return;
 
-    const html = gameState.narrative.events.slice(0, 8).map(e => {
+    const html = gameState.narrative.events.slice(0, 12).map(e => {
         const typeClass = e.type === 'success' ? 'good' :
                          e.type === 'negative' ? 'bad' :
                          e.type === 'warning' ? 'warning' : '';
-        return `<div class="log-entry ${typeClass}">${e.message}</div>`;
+        const dateStr = e.date ? formatDate(new Date(e.date)) : '';
+        const prefix = dateStr ? `<span class="log-date">${dateStr}</span> ` : '';
+        return `<div class="log-entry ${typeClass}">${prefix}${e.message}</div>`;
     }).join('');
 
     container.innerHTML = html;

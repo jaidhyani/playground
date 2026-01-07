@@ -9,10 +9,11 @@ export function addEvent(message, type = 'neutral') {
     gameState.narrative.events.unshift({
         message,
         type,
-        tick: gameState.narrative.ticksPlayed
+        tick: gameState.narrative.ticksPlayed,
+        date: gameState.gameDate ? new Date(gameState.gameDate) : null
     });
 
-    if (gameState.narrative.events.length > 20) {
+    if (gameState.narrative.events.length > 30) {
         gameState.narrative.events.pop();
     }
 

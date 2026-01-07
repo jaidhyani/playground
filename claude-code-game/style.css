@@ -47,35 +47,29 @@ body {
 .resource[data-resource="apiCredits"] { color: #f0f; }
 .resource[data-resource="money"] { color: #0f0; }
 
-/* Main area - side by side */
-#main-area {
-    display: flex;
-    gap: 20px;
-    min-height: 200px;
+/* Log - fixed height scrollable box */
+#log {
+    height: 120px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #333;
 }
 
 /* Buttons area */
 #buttons {
-    flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 8px;
-    align-items: flex-start;
-}
-
-/* Log */
-#log {
-    width: 280px;
-    flex-shrink: 0;
-    max-height: 200px;
-    overflow-y: auto;
-    border-left: 1px solid #333;
-    padding-left: 20px;
 }
 
 .log-entry {
     color: #888;
     padding: 2px 0;
+}
+
+.log-date {
+    color: #555;
 }
 
 .log-entry a {
@@ -88,8 +82,11 @@ body {
 }
 
 .log-entry.good { color: #0f0; }
+.log-entry.good .log-date { color: #070; }
 .log-entry.bad { color: #f00; }
+.log-entry.bad .log-date { color: #700; }
 .log-entry.warning { color: #ff0; }
+.log-entry.warning .log-date { color: #770; }
 
 
 .btn {
