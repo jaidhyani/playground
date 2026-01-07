@@ -6,7 +6,6 @@
 export const gameState = {
     // Core resources
     resources: {
-        energy: 100,       // Focus/motivation (0-100). Goes to 0 = burnout
         codebase: 0,       // Quality/size of Claude Code
         techDebt: 0,       // Accumulated shortcuts (slows future work)
         trust: 50,         // Internal autonomy (0-100). Affects what you can do
@@ -14,12 +13,19 @@ export const gameState = {
         money: 0           // To buy API credits. Revealed when credits run low
     },
 
-    // PR queue - vibe coding generates PRs that need review
-    prQueue: [],
+    // Game date (starts Monday Jan 6, 2025)
+    gameDate: new Date(2025, 0, 6),
 
-    // Coding progress - manual coding requires multiple clicks
-    codingProgress: 0,
-    codingClicksNeeded: 20,  // Takes effort - makes vibe coding feel valuable
+    // Tasks - each is a clickable progress bar
+    tasks: [
+        { id: 'prototype', name: 'Claude Code Prototype', progress: 0, clicksNeeded: 50 }
+    ],
+
+    // Click multiplier (first PR gives random bonus)
+    clickMultiplier: 1,
+
+    // PR queue
+    prQueue: [],
 
     // Focus area (chosen early game)
     focus: null,  // 'mcp', 'agents', 'evals', 'infra'

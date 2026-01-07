@@ -13,9 +13,14 @@ export function updateDisplay() {
 }
 
 export function renderResources() {
-    // Energy
-    const energyEl = document.getElementById('energy');
-    if (energyEl) energyEl.textContent = Math.floor(gameState.resources.energy);
+    // Date
+    const dateEl = document.getElementById('game-date');
+    if (dateEl) {
+        const d = gameState.gameDate;
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        dateEl.textContent = `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+    }
 
     // Codebase
     const codebaseEl = document.getElementById('codebase');
@@ -32,6 +37,14 @@ export function renderResources() {
     // Trust
     const trustEl = document.getElementById('trust');
     if (trustEl) trustEl.textContent = Math.floor(gameState.resources.trust);
+
+    // Click multiplier (shown after first PR merged)
+    const multiplierEl = document.getElementById('multiplier');
+    const multiplierDisplay = document.getElementById('multiplier-display');
+    if (multiplierEl) multiplierEl.textContent = gameState.clickMultiplier.toFixed(1) + 'x';
+    if (multiplierDisplay) {
+        multiplierDisplay.style.display = gameState.clickMultiplier > 1 ? 'inline' : 'none';
+    }
 
     // API Credits (shown after vibe coding unlocks)
     const apiCreditsEl = document.getElementById('apiCredits');
@@ -72,22 +85,20 @@ export function renderButtons() {
 
     let html = '';
 
-    // Actions
+    // Tasks as clickable progress bars
+    for (const task of gameState.tasks) {
+        const progress = Math.floor(task.progress);
+        html += `<button class="btn task progress-btn" onclick="clickTask('${task.id}')">
+            <span class="progress-fill" style="width:${progress}%"></span>
+            <span class="progress-text">${task.name} ${progress}%</span>
+        </button>`;
+    }
+
+    // Actions (non-task)
     for (const action of Object.values(actions)) {
         if (!action.available()) continue;
         const canAfford = canAffordAction(action);
-        const costText = action.cost?.energy ? ` (${action.cost.energy} energy)` : '';
-
-        // Code action gets a progress bar
-        if (action.id === 'code') {
-            const progress = Math.floor(gameState.codingProgress);
-            html += `<button class="btn action progress-btn" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">
-                <span class="progress-fill" style="width:${progress}%"></span>
-                <span class="progress-text">${action.name} ${progress}%${costText}</span>
-            </button>`;
-        } else {
-            html += `<button class="btn action" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">${action.name}${costText}</button>`;
-        }
+        html += `<button class="btn action" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">${action.name}</button>`;
     }
 
     // PRs as merge buttons
@@ -134,10 +145,7 @@ export function showGameOver() {
     const ending = gameState.narrative.flags.ending;
 
     if (titleEl) {
-        if (ending === 'burnout') {
-            titleEl.textContent = 'burnout';
-            titleEl.style.color = '#f80';
-        } else if (ending === 'fired') {
+        if (ending === 'fired') {
             titleEl.textContent = 'let go';
             titleEl.style.color = '#f00';
         } else {
@@ -147,9 +155,7 @@ export function showGameOver() {
     }
 
     if (messageEl) {
-        if (ending === 'burnout') {
-            messageEl.textContent = "Pushed too hard. Rest up.";
-        } else if (ending === 'fired') {
+        if (ending === 'fired') {
             messageEl.textContent = "Trust hit zero. Time to move on.";
         } else {
             messageEl.textContent = "Game over.";

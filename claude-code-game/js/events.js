@@ -20,21 +20,8 @@ export function addEvent(message, type = 'neutral') {
 }
 
 export function checkNarrativeTriggers() {
-    const { codebase, techDebt, trust, energy } = gameState.resources;
+    const { codebase, techDebt, trust } = gameState.resources;
     const flags = gameState.narrative.flags;
-
-    // Burnout
-    if (energy <= 0 && !flags.burnedOut) {
-        flags.burnedOut = true;
-        addEvent("Burnout. Taking a few days.", 'negative');
-        gameState.resources.energy = 20;
-        gameState.resources.trust = Math.max(0, trust - 10);
-    }
-
-    // Reset burnout flag when recovered
-    if (energy > 50 && flags.burnedOut) {
-        flags.burnedOut = false;
-    }
 
     // Tech debt warning
     if (techDebt >= 15 && !flags.debtWarning) {
@@ -73,10 +60,7 @@ export function checkNarrativeTriggers() {
 export function triggerGameOver(reason) {
     gameState.narrative.flags.gameOverReason = reason;
 
-    if (reason === 'burnout') {
-        gameState.narrative.flags.ending = 'burnout';
-        addEvent("Complete burnout. Medical leave.", 'negative');
-    } else if (reason === 'fired') {
+    if (reason === 'fired') {
         gameState.narrative.flags.ending = 'fired';
         addEvent("Trust gone. Exit interview scheduled.", 'negative');
     }

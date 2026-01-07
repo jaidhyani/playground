@@ -119,7 +119,7 @@ export const upgradeDefinitions = {
         id: 'architectureChoice',
         name: 'architecture decision',
         description: '',
-        cost: { energy: 20 },
+        cost: {},
         decisions: [
             {
                 id: 'fast',

@@ -59,13 +59,13 @@ const prTitles = {
     ]
 };
 
-export function generatePR(quality, isFirstPR = false) {
+export function generatePR(quality, taskName = null) {
     prIdCounter++;
 
-    // First PR is always "Claude Code Prototype"
+    // Use task name as title, or pick from pool
     let title;
-    if (isFirstPR || prIdCounter === 1) {
-        title = "Claude Code Prototype";
+    if (taskName) {
+        title = taskName;
     } else {
         const focus = gameState.focus || 'general';
         const titles = [...prTitles.general, ...(prTitles[focus] || [])];
@@ -75,6 +75,7 @@ export function generatePR(quality, isFirstPR = false) {
     const hasBug = quality < 0.4 && Math.random() < 0.5;
     const codebaseGain = Math.floor(3 + quality * 7);
     const techDebtGain = quality < 0.5 ? Math.floor((0.5 - quality) * 6) : 0;
+    const isPrototype = title === 'Claude Code Prototype';
 
     return {
         id: prIdCounter,
@@ -82,7 +83,8 @@ export function generatePR(quality, isFirstPR = false) {
         quality,
         hasBug,
         codebaseGain,
-        techDebtGain
+        techDebtGain,
+        isPrototype
     };
 }
 
@@ -96,7 +98,12 @@ export function mergePR(prId) {
     gameState.resources.codebase += pr.codebaseGain;
     gameState.resources.techDebt += pr.techDebtGain;
 
-    if (pr.hasBug) {
+    // First prototype merge gives random click multiplier
+    if (pr.isPrototype && gameState.clickMultiplier === 1) {
+        const multiplier = 1.5 + Math.random() * 1.5; // 1.5x to 3x
+        gameState.clickMultiplier = Math.round(multiplier * 10) / 10;
+        addEvent(`Merged "${pr.title}". Click multiplier: ${gameState.clickMultiplier}x`, 'success');
+    } else if (pr.hasBug) {
         addEvent(`Merged "${pr.title}". Bug found in prod.`, 'warning');
         gameState.resources.trust = Math.max(0, gameState.resources.trust - 3);
     } else if (pr.quality > 0.7) {

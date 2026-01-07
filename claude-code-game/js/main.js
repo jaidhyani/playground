@@ -25,39 +25,35 @@ function gameLoop() {
 function tick() {
     gameState.narrative.ticksPlayed++;
 
-    // Energy regenerates slowly
-    gameState.resources.energy = Math.min(100, gameState.resources.energy + 0.3);
+    // Advance date every 3 ticks (3 seconds = 1 day)
+    if (gameState.narrative.ticksPlayed % 3 === 0) {
+        const prevDate = new Date(gameState.gameDate);
+        gameState.gameDate = new Date(gameState.gameDate.getTime() + 24 * 60 * 60 * 1000);
 
-    // Tech debt slows energy regen
-    if (gameState.resources.techDebt > 10) {
-        gameState.resources.energy = Math.min(100, gameState.resources.energy - 0.1);
-    }
+        // Payday on every other Friday (weeks 2, 4, 6, etc from start)
+        const dayOfWeek = gameState.gameDate.getDay();
+        const daysSinceStart = Math.floor((gameState.gameDate - new Date(2025, 0, 6)) / (24 * 60 * 60 * 1000));
+        const weekNumber = Math.floor(daysSinceStart / 7);
+        const isPayWeek = weekNumber % 2 === 1;
 
-    // Payday every 60 ticks (~1 minute)
-    if (gameState.narrative.ticksPlayed % 60 === 0 && gameState.narrative.ticksPlayed > 0) {
-        gameState.resources.money += 500;
-        gameState.narrative.flags.moneyRevealed = true;
-        addEvent("Payday. +$500", 'success');
+        if (dayOfWeek === 5 && isPayWeek && prevDate.getDay() !== 5) {
+            gameState.resources.money += 500;
+            gameState.narrative.flags.moneyRevealed = true;
+            addEvent("Payday. +$500", 'success');
+        }
     }
 
     // Vibe coding autoclicker - Claude writes code automatically (costs API credits)
-    const vibeActive = gameState.settings.vibeMode && gameState.resources.apiCredits >= 1;
-    if (vibeActive) {
+    if (gameState.settings.vibeMode && gameState.resources.apiCredits >= 1 && gameState.tasks.length > 0) {
         gameState.resources.apiCredits -= 1;
 
-        const progressPerTick = 100 / (gameState.codingClicksNeeded * 2);
-        gameState.codingProgress += progressPerTick;
+        // Work on first available task
+        const task = gameState.tasks[0];
+        const progressPerTick = (100 / task.clicksNeeded) * gameState.clickMultiplier * 0.5;
+        task.progress += progressPerTick;
 
-        if (gameState.codingProgress >= 100) {
-            gameState.codingProgress = 0;
-            const quality = 0.5 + Math.random() * 0.3;
-            const pr = generatePR(quality);
-            gameState.prQueue.push(pr);
-            addEvent(`Claude wrote: "${pr.title}"`, 'neutral');
-
-            if (gameState.settings.autoMergePRs) {
-                mergePR(pr.id);
-            }
+        if (task.progress >= 100) {
+            completeTask(task);
         }
     }
 
@@ -66,6 +62,34 @@ function tick() {
 
     updateDisplay();
 }
+
+function completeTask(task) {
+    task.progress = 0;
+    const quality = 0.5 + Math.random() * 0.3;
+    const pr = generatePR(quality, task.name);
+    gameState.prQueue.push(pr);
+    addEvent(`PR ready: "${pr.title}"`, 'neutral');
+
+    if (gameState.settings.autoMergePRs) {
+        mergePR(pr.id);
+    }
+}
+
+function clickTask(taskId) {
+    const task = gameState.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const progressPerClick = (100 / task.clicksNeeded) * gameState.clickMultiplier;
+    task.progress += progressPerClick;
+
+    if (task.progress >= 100) {
+        completeTask(task);
+    }
+
+    updateDisplay();
+}
+
+window.clickTask = clickTask;
 
 function init() {
     if (!loadGame()) {
@@ -91,14 +115,13 @@ function init() {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
         switch(e.key.toLowerCase()) {
+            case ' ':
             case 'c':
-                if (typeof executeAction === 'function') executeAction('code');
-                break;
-            case 'r':
-                if (typeof executeAction === 'function') executeAction('rest');
-                break;
-            case 'd':
-                if (typeof executeAction === 'function') executeAction('refactor');
+                // Click first task
+                if (gameState.tasks.length > 0) {
+                    e.preventDefault();
+                    clickTask(gameState.tasks[0].id);
+                }
                 break;
             case 's':
                 if (e.ctrlKey || e.metaKey) {
@@ -118,7 +141,7 @@ function init() {
 
     updateDisplay();
     console.log('Universal Paperclaudes');
-    console.log('Keys: C-code, R-rest, D-refactor, S-ship, M-merge');
+    console.log('Keys: Space/C-click task, S-ship, M-merge');
 }
 
 if (document.readyState === 'loading') {

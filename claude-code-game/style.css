@@ -39,10 +39,11 @@ body {
     color: #0f0;
 }
 
-.resource[data-resource="energy"] { color: #ff0; }
+.resource[data-resource="date"] { color: #888; }
 .resource[data-resource="codebase"] { color: #0af; }
 .resource[data-resource="techDebt"] { color: #f00; }
 .resource[data-resource="trust"] { color: #0f0; }
+.resource[data-resource="multiplier"] { color: #ff0; }
 .resource[data-resource="apiCredits"] { color: #f0f; }
 .resource[data-resource="money"] { color: #0f0; }
 
@@ -89,6 +90,7 @@ body {
 }
 
 .btn.action { border-color: #0f0; color: #0f0; }
+.btn.task { border-color: #0af; color: #0af; }
 
 /* Progress bar button */
 .btn.progress-btn {
@@ -102,7 +104,7 @@ body {
     left: 0;
     top: 0;
     bottom: 0;
-    background: rgba(0, 255, 0, 0.2);
+    background: rgba(0, 170, 255, 0.2);
     transition: width 0.1s ease-out;
 }
 
