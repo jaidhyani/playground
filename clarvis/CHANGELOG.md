@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.26.0] - 2026-01-09
+
+### Added
+- Auto-archive inactive sessions via `AUTO_ARCHIVE_HOURS` environment variable
+- Sessions inactive longer than threshold automatically move to archived section
+- Running sessions are never auto-archived
+- Periodic check runs at configurable intervals (max every hour)
+
 ## [0.25.0] - 2026-01-09
 
 ### Added

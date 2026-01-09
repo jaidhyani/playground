@@ -3,15 +3,16 @@ import { readFile, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { fileURLToPath } from 'url';
 
-import { initWebSocket } from './ws-hub.js';
+import { initWebSocket, broadcastAll } from './ws-hub.js';
 import { handleApiRequest } from './api.js';
-import { initSessions } from './sessions.js';
+import { initSessions, autoArchiveInactiveSessions } from './sessions.js';
 import { initAuth, getToken } from './auth.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
 const PORT = process.env.PORT || 3000;
 const AUTH_ENABLED = process.env.AUTH === 'true';
+const AUTO_ARCHIVE_HOURS = parseFloat(process.env.AUTO_ARCHIVE_HOURS) || 0;
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -94,6 +95,24 @@ async function start() {
   }
 
   await initSessions(cwd);
+
+  // Set up auto-archive if configured
+  if (AUTO_ARCHIVE_HOURS > 0) {
+    const thresholdMs = AUTO_ARCHIVE_HOURS * 60 * 60 * 1000;
+    const checkIntervalMs = Math.min(thresholdMs / 4, 60 * 60 * 1000); // Check at most every hour
+
+    setInterval(async () => {
+      const archivedIds = await autoArchiveInactiveSessions(thresholdMs);
+      for (const id of archivedIds) {
+        broadcastAll({ type: 'session:archived', sessionId: id, payload: { archived: true } });
+      }
+      if (archivedIds.length > 0) {
+        console.log(`Auto-archived ${archivedIds.length} inactive session(s)`);
+      }
+    }, checkIntervalMs);
+
+    console.log(`Auto-archive enabled: sessions inactive for ${AUTO_ARCHIVE_HOURS}h will be archived`);
+  }
 
   server.listen(PORT, () => {
     console.log(`Clarvis running at http://localhost:${PORT}`);

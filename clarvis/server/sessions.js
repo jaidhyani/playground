@@ -255,3 +255,26 @@ export async function archiveSession(id, archived = true) {
   await saveSession(session);
   return session;
 }
+
+// Auto-archive sessions inactive for longer than threshold
+// Returns array of session IDs that were archived
+export async function autoArchiveInactiveSessions(thresholdMs) {
+  if (!thresholdMs || thresholdMs <= 0) return [];
+
+  const now = Date.now();
+  const archived = [];
+
+  for (const session of sessions.values()) {
+    // Skip already archived or currently running sessions
+    if (session.archived || session.status === 'running') continue;
+
+    const inactiveTime = now - session.lastActivity;
+    if (inactiveTime > thresholdMs) {
+      session.archived = true;
+      await saveSession(session);
+      archived.push(session.id);
+    }
+  }
+
+  return archived;
+}
