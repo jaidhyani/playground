@@ -5,7 +5,8 @@ import {
   deleteSession,
   runPrompt,
   interruptSession,
-  addUserMessage
+  addUserMessage,
+  forkSession
 } from './sessions.js';
 import { broadcast, broadcastAll } from './ws-hub.js';
 import { createPermissionHandler, handlePermissionResponse } from './permissions.js';
@@ -74,6 +75,18 @@ export async function handleApiRequest(req, res, parsedUrl) {
     const id = interruptMatch[1];
     const success = interruptSession(id);
     return sendJson(res, 200, { success });
+  }
+
+  const forkMatch = path.match(/^\/api\/sessions\/([^/]+)\/fork$/);
+  if (forkMatch && method === 'POST') {
+    const id = forkMatch[1];
+    try {
+      const forked = await forkSession(id);
+      broadcastAll({ type: 'session:created', session: summarizeSession(forked) });
+      return sendJson(res, 201, summarizeSession(forked));
+    } catch (error) {
+      return sendJson(res, 404, { error: error.message });
+    }
   }
 
   const permissionMatch = path.match(/^\/api\/permission\/([^/]+)$/);

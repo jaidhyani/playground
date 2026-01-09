@@ -39,3 +39,7 @@ export function interruptSession(sessionId) {
 export function respondPermission(requestId, decision, updatedInput) {
   return request('POST', `/permission/${requestId}`, { decision, updatedInput });
 }
+
+export function forkSession(sessionId) {
+  return request('POST', `/sessions/${sessionId}/fork`);
+}

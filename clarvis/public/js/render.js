@@ -15,7 +15,7 @@ export function renderSessionList() {
   container.innerHTML = state.sessions.map(session => `
     <div class="session-item ${session.id === state.activeSessionId ? 'active' : ''}"
          data-id="${session.id}">
-      <div class="session-item-title">${shortenPath(session.workingDirectory)}</div>
+      <div class="session-item-title">${escapeHtml(session.name || shortenPath(session.workingDirectory))}</div>
       <div class="session-item-meta">
         <span class="status-badge ${session.status}">${session.status}</span>
         <span>${timeAgo(session.lastActivity)}</span>
@@ -61,7 +61,7 @@ export function renderSessionHeader() {
   const status = $('#session-status');
 
   if (title) {
-    title.textContent = session ? shortenPath(session.workingDirectory) : 'No session';
+    title.textContent = session ? (session.name || shortenPath(session.workingDirectory)) : 'No session';
   }
   if (status) {
     status.textContent = session?.status || '-';

@@ -4,7 +4,8 @@ import {
   setActiveSession,
   toggleSidebar,
   toggleConfigPanel,
-  setPendingPermission
+  setPendingPermission,
+  addSession
 } from './state.js';
 import { connect, subscribe as wsSubscribe } from './ws.js';
 import * as api from './api.js';
@@ -58,6 +59,8 @@ function bindEvents() {
   $('#config-btn')?.addEventListener('click', () => toggleConfigPanel());
   $('#close-config')?.addEventListener('click', () => toggleConfigPanel(false));
 
+  $('#fork-btn')?.addEventListener('click', forkCurrentSession);
+
   $('#permission-allow')?.addEventListener('click', () => handlePermission('allow'));
   $('#permission-deny')?.addEventListener('click', () => handlePermission('deny'));
 
@@ -104,6 +107,22 @@ async function handlePermission(decision) {
 
   await api.respondPermission(state.pendingPermission.requestId, decision);
   setPendingPermission(null);
+}
+
+async function forkCurrentSession() {
+  if (!state.activeSessionId) return;
+
+  const forked = await api.forkSession(state.activeSessionId);
+  addSession({ ...forked, messages: [] });
+  setActiveSession(forked.id);
+
+  const fullSession = await api.getSession(forked.id);
+  const session = state.sessions.find(s => s.id === forked.id);
+  if (session) {
+    session.messages = fullSession.messages || [];
+    session.config = fullSession.config;
+  }
+  renderAll();
 }
 
 function autoResize() {

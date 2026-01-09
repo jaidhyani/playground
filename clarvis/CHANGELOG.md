@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0] - 2026-01-09
+
+### Added
+- Fork session functionality via API (`POST /api/sessions/:id/fork`)
+- Fork button in session header (⎇)
+- Forked sessions named "original (fork)"
+
+### Changed
+- Session list and header now display session name instead of path
+
 ## [0.4.0] - 2026-01-09
 
 ### Added

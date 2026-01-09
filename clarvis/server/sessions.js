@@ -167,3 +167,27 @@ export function interruptSession(id) {
   }
   return false;
 }
+
+export async function forkSession(id) {
+  const original = sessions.get(id);
+  if (!original) {
+    throw new Error(`Session ${id} not found`);
+  }
+
+  const newId = randomUUID();
+  const forked = {
+    id: newId,
+    name: `${original.name} (fork)`,
+    status: 'idle',
+    createdAt: Date.now(),
+    lastActivity: Date.now(),
+    messageCount: original.messageCount,
+    config: { ...original.config },
+    messages: original.messages.map(m => ({ ...m })),
+    abortController: null
+  };
+
+  sessions.set(newId, forked);
+  await saveSession(forked);
+  return forked;
+}
