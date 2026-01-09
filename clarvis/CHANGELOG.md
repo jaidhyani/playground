@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.33.0] - 2026-01-09
+
+### Added
+- Keyboard shortcut: Cmd/Ctrl+N to create new session
+- Keyboard shortcut: Escape to close config panel
+
 ## [0.32.1] - 2026-01-09
 
 ### Fixed

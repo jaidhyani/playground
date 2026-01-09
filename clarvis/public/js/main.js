@@ -128,6 +128,19 @@ function bindEvents() {
       e.preventDefault();
       openSearch();
     }
+
+    // Cmd/Ctrl+N to create new session
+    if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+      e.preventDefault();
+      createNewSession();
+    }
+
+    // Escape to close panels/modals
+    if (e.key === 'Escape') {
+      if (state.ui.configPanelOpen) {
+        toggleConfigPanel(false);
+      }
+    }
   });
 }
 
