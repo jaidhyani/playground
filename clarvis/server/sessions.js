@@ -6,6 +6,10 @@ import { saveSession, loadAllSessions, deleteSessionFile } from './persistence.j
 const sessions = new Map();
 const knownDirectories = new Set();
 
+// Cache for models and commands (fetched once on first query)
+let cachedModels = null;
+let cachedCommands = null;
+
 export function getAllSessions() {
   return Array.from(sessions.values()).map(s => {
     const lastMsg = s.messages?.[s.messages.length - 1];
@@ -33,6 +37,19 @@ function truncatePreview(content, maxLength) {
   const cleaned = content.replace(/\s+/g, ' ').trim();
   if (cleaned.length <= maxLength) return cleaned;
   return cleaned.slice(0, maxLength) + '...';
+}
+
+// Extract text from SDK content blocks
+// SDK returns content as array: [{type: 'text', text: '...'}, ...]
+function extractTextContent(contentBlocks) {
+  if (!contentBlocks) return '';
+  if (typeof contentBlocks === 'string') return contentBlocks;
+  if (!Array.isArray(contentBlocks)) return String(contentBlocks);
+
+  return contentBlocks
+    .filter(block => block.type === 'text')
+    .map(block => block.text)
+    .join('\n');
 }
 
 export async function initSessions(workingDirectory) {
@@ -111,16 +128,18 @@ export async function* runPrompt(sessionId, prompt, options = {}) {
 
   const queryOptions = {
     model: session.config.model,
-    workingDirectory: session.config.workingDirectory,
-    permissionMode: session.config.permissionMode
+    cwd: session.config.workingDirectory,
+    permissionMode: session.config.permissionMode,
+    abortController: session.abortController
   };
 
   if (session.config.systemPrompt) {
     queryOptions.systemPrompt = session.config.systemPrompt;
   }
 
-  if (options.resume) {
-    queryOptions.resume = options.resume;
+  // Resume from the session's agent session ID if we have one
+  if (session.agentSessionId) {
+    queryOptions.resume = session.agentSessionId;
   }
 
   if (options.canUseTool) {
@@ -130,6 +149,24 @@ export async function* runPrompt(sessionId, prompt, options = {}) {
   try {
     const response = query({ prompt, options: queryOptions });
 
+    // Fetch models and commands on first query (cache them)
+    if (!cachedModels) {
+      try {
+        cachedModels = await response.supportedModels();
+        console.log(`Loaded ${cachedModels.length} available models`);
+      } catch (e) {
+        console.error('Failed to fetch models:', e.message);
+      }
+    }
+    if (!cachedCommands) {
+      try {
+        cachedCommands = await response.supportedCommands();
+        console.log(`Loaded ${cachedCommands.length} available commands`);
+      } catch (e) {
+        console.error('Failed to fetch commands:', e.message);
+      }
+    }
+
     for await (const message of response) {
       session.lastActivity = Date.now();
 
@@ -138,10 +175,13 @@ export async function* runPrompt(sessionId, prompt, options = {}) {
       }
 
       if (message.type === 'assistant') {
+        // Extract text content from the message structure
+        // SDK returns: { type: 'assistant', message: { content: [{type: 'text', text: '...'}] } }
+        const content = extractTextContent(message.message?.content);
         session.messageCount++;
         session.messages.push({
           role: 'assistant',
-          content: message.content,
+          content,
           timestamp: Date.now()
         });
       }
@@ -305,4 +345,26 @@ export async function autoArchiveInactiveSessions(thresholdMs) {
   }
 
   return archived;
+}
+
+// Get available models (cached after first query)
+export function getAvailableModels() {
+  return cachedModels || [];
+}
+
+// Get available slash commands (cached after first query)
+export function getAvailableCommands() {
+  return cachedCommands || [];
+}
+
+// Update session model
+export async function setSessionModel(id, model) {
+  const session = sessions.get(id);
+  if (!session) {
+    throw new Error(`Session ${id} not found`);
+  }
+
+  session.config.model = model;
+  await saveSession(session);
+  return session;
 }

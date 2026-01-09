@@ -12,6 +12,8 @@ export const state = {
   searchQuery: '',
   searchOpen: false,
   connected: false,
+  availableModels: [],
+  availableCommands: [],
   config: {
     workingDirectory: '',
     model: 'claude-sonnet-4-5',
@@ -168,5 +170,15 @@ export function setSearchOpen(open) {
 
 export function setConnected(connected) {
   state.connected = connected;
+  notify();
+}
+
+export function setAvailableModels(models) {
+  state.availableModels = models;
+  notify();
+}
+
+export function setAvailableCommands(commands) {
+  state.availableCommands = commands;
   notify();
 }

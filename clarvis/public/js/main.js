@@ -8,7 +8,9 @@ import {
   addSession,
   setLastError,
   setSearchQuery,
-  setSearchOpen
+  setSearchOpen,
+  setAvailableModels,
+  setAvailableCommands
 } from './state.js';
 import { connect, subscribe as wsSubscribe } from './ws.js';
 import * as api from './api.js';
@@ -46,7 +48,39 @@ async function init() {
   initToast();
   requestNotificationPermission();
   initAuthSection();
+  fetchModelsAndCommands();
   renderAll();
+}
+
+async function fetchModelsAndCommands() {
+  try {
+    const models = await api.getModels();
+    if (Array.isArray(models) && models.length > 0) {
+      setAvailableModels(models);
+      renderModelSelector();
+    }
+  } catch (err) {
+    console.log('Models not yet available (will load after first query)');
+  }
+
+  try {
+    const commands = await api.getCommands();
+    if (Array.isArray(commands) && commands.length > 0) {
+      setAvailableCommands(commands);
+    }
+  } catch (err) {
+    console.log('Commands not yet available (will load after first query)');
+  }
+}
+
+function renderModelSelector() {
+  const select = $('#config-model');
+  if (!select || state.availableModels.length === 0) return;
+
+  const currentModel = state.config.model;
+  select.innerHTML = state.availableModels.map(m =>
+    `<option value="${m.value}" ${m.value === currentModel ? 'selected' : ''}>${m.displayName || m.value}</option>`
+  ).join('');
 }
 
 function bindEvents() {

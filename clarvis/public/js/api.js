@@ -78,3 +78,15 @@ export function getAuthToken() {
 export function regenerateAuthToken() {
   return request('POST', '/auth/token');
 }
+
+export function getModels() {
+  return request('GET', '/models');
+}
+
+export function getCommands() {
+  return request('GET', '/commands');
+}
+
+export function setSessionModel(sessionId, model) {
+  return request('POST', `/sessions/${sessionId}/model`, { model });
+}

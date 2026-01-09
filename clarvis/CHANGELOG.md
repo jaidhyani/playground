@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.36.0] - 2026-01-09
+
+### Fixed
+- **Critical**: Fixed SDK message handling - content is now correctly extracted from nested `message.message.content` structure
+- Fixed query options: use `cwd` instead of `workingDirectory`, pass `abortController` to SDK
+- Sessions now properly resume using stored `agentSessionId`
+
+### Added
+- API endpoints for dynamic model and command discovery (`/api/models`, `/api/commands`)
+- API endpoint to change session model (`/api/sessions/:id/model`)
+- Dynamic model selector in config panel (populated from SDK)
+- Models and commands are cached after first query and available to all sessions
+
 ## [0.35.0] - 2026-01-09
 
 ### Added

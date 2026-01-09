@@ -13,7 +13,10 @@ import {
   dequeuePrompt,
   renameSession,
   archiveSession,
-  clearSessionMessages
+  clearSessionMessages,
+  getAvailableModels,
+  getAvailableCommands,
+  setSessionModel
 } from './sessions.js';
 import { broadcast, broadcastAll } from './ws-hub.js';
 import { createPermissionHandler, handlePermissionResponse } from './permissions.js';
@@ -189,6 +192,30 @@ export async function handleApiRequest(req, res, parsedUrl) {
     return sendJson(res, 200, { token: newToken });
   }
 
+  // Models and commands endpoints
+  if (path === '/api/models' && method === 'GET') {
+    return sendJson(res, 200, getAvailableModels());
+  }
+
+  if (path === '/api/commands' && method === 'GET') {
+    return sendJson(res, 200, getAvailableCommands());
+  }
+
+  // Set session model
+  const modelMatch = path.match(/^\/api\/sessions\/([^/]+)\/model$/);
+  if (modelMatch && method === 'POST') {
+    const id = modelMatch[1];
+    const body = await readBody(req);
+    if (!body.model) return sendJson(res, 400, { error: 'model required' });
+    try {
+      const session = await setSessionModel(id, body.model);
+      broadcastAll({ type: 'session:model', sessionId: id, payload: { model: body.model } });
+      return sendJson(res, 200, { model: session.config.model });
+    } catch (error) {
+      return sendJson(res, 404, { error: error.message });
+    }
+  }
+
   return sendJson(res, 404, { error: 'Not found' });
 }
 
@@ -213,9 +240,11 @@ async function runPromptAsync(sessionId, prompt) {
           break;
 
         case 'assistant':
+          // Extract text from SDK content blocks: message.message.content is array of blocks
+          const content = extractTextContent(message.message?.content);
           broadcast(sessionId, {
             type: 'message:assistant',
-            payload: { content: message.content, timestamp: Date.now() }
+            payload: { content, timestamp: Date.now() }
           });
           break;
 
@@ -297,6 +326,18 @@ function truncatePreview(content, maxLength) {
   const cleaned = content.replace(/\s+/g, ' ').trim();
   if (cleaned.length <= maxLength) return cleaned;
   return cleaned.slice(0, maxLength) + '...';
+}
+
+// Extract text from SDK content blocks: [{type: 'text', text: '...'}, ...]
+function extractTextContent(contentBlocks) {
+  if (!contentBlocks) return '';
+  if (typeof contentBlocks === 'string') return contentBlocks;
+  if (!Array.isArray(contentBlocks)) return String(contentBlocks);
+
+  return contentBlocks
+    .filter(block => block.type === 'text')
+    .map(block => block.text)
+    .join('\n');
 }
 
 function truncateResult(result) {

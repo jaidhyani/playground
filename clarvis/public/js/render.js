@@ -331,7 +331,17 @@ export function renderConfigPanel() {
     const permissionTimeout = $('#config-permission-timeout');
     const systemPrompt = $('#config-system-prompt');
     if (cwd) cwd.value = state.config.workingDirectory || '';
-    if (model) model.value = state.config.model;
+
+    // Render model options dynamically
+    if (model && state.availableModels.length > 0) {
+      const currentModel = state.config.model;
+      model.innerHTML = state.availableModels.map(m =>
+        `<option value="${m.value}" ${m.value === currentModel ? 'selected' : ''}>${m.displayName || m.value}</option>`
+      ).join('');
+    } else if (model) {
+      model.value = state.config.model;
+    }
+
     if (permission) permission.value = state.config.permissionMode;
     if (permissionTimeout) permissionTimeout.value = state.config.permissionTimeout || '';
     if (systemPrompt) systemPrompt.value = state.config.systemPrompt || '';
