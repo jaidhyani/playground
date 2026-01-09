@@ -14,7 +14,8 @@ export const state = {
   config: {
     workingDirectory: '',
     model: 'claude-sonnet-4-5',
-    permissionMode: 'default'
+    permissionMode: 'default',
+    systemPrompt: ''
   },
   ui: {
     sidebarOpen: false,
@@ -55,6 +56,8 @@ export function setActiveSession(id) {
 }
 
 export function addSession(session) {
+  // Avoid duplicates (e.g., from WS when we already added locally)
+  if (state.sessions.some(s => s.id === session.id)) return;
   state.sessions.push({ ...session, messages: [], unreadCount: 0 });
   notify();
 }

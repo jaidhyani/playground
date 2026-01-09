@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0] - 2026-01-09
+
+### Added
+- System prompt configuration in config panel
+- System prompt persisted per-session and passed to Claude Agent SDK
+- Session config lazily loaded when switching sessions
+
 ## [0.22.0] - 2026-01-09
 
 ### Changed

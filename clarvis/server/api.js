@@ -30,8 +30,9 @@ export async function handleApiRequest(req, res, parsedUrl) {
   if (path === '/api/sessions' && method === 'POST') {
     const body = await readBody(req);
     const session = await createSession(body);
-    broadcastAll({ type: 'session:created', session: summarizeSession(session) });
-    return sendJson(res, 201, summarizeSession(session));
+    const summary = summarizeSession(session);
+    broadcastAll({ type: 'session:created', session: summary });
+    return sendJson(res, 201, { ...summary, config: session.config });
   }
 
   const sessionMatch = path.match(/^\/api\/sessions\/([^/]+)$/);

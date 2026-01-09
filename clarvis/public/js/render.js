@@ -284,9 +284,11 @@ export function renderConfigPanel() {
     const cwd = $('#config-cwd');
     const model = $('#config-model');
     const permission = $('#config-permission');
+    const systemPrompt = $('#config-system-prompt');
     if (cwd) cwd.value = state.config.workingDirectory;
     if (model) model.value = state.config.model;
     if (permission) permission.value = state.config.permissionMode;
+    if (systemPrompt) systemPrompt.value = state.config.systemPrompt || '';
   } else {
     panel.classList.add('hidden');
   }

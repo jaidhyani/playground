@@ -52,7 +52,7 @@ async function init() {
 function bindEvents() {
   $('#new-session-btn')?.addEventListener('click', createNewSession);
 
-  $('#session-list')?.addEventListener('click', (e) => {
+  $('#session-list')?.addEventListener('click', async (e) => {
     const deleteBtn = e.target.closest('.session-delete-btn');
     if (deleteBtn) {
       e.stopPropagation();
@@ -62,7 +62,7 @@ function bindEvents() {
 
     const item = e.target.closest('.session-item');
     if (item) {
-      setActiveSession(item.dataset.id);
+      await selectSession(item.dataset.id);
     }
   });
 
@@ -122,17 +122,36 @@ function toggleToolPanel() {
   }
 }
 
+async function selectSession(sessionId) {
+  const session = state.sessions.find(s => s.id === sessionId);
+  if (!session) return;
+
+  // Load full session data if not already loaded (config, messages)
+  if (!session.config) {
+    const fullSession = await api.getSession(sessionId);
+    session.messages = fullSession.messages || [];
+    session.config = fullSession.config;
+  }
+
+  setActiveSession(sessionId);
+}
+
 async function createNewSession() {
   const cwd = $('#config-cwd')?.value || '';
   const model = $('#config-model')?.value || 'claude-sonnet-4-5';
   const permissionMode = $('#config-permission')?.value || 'default';
+  const systemPrompt = $('#config-system-prompt')?.value || '';
 
   const session = await api.createSession({
     workingDirectory: cwd,
     model,
-    permissionMode
+    permissionMode,
+    systemPrompt: systemPrompt || undefined
   });
 
+  // Add session with its config
+  state.sessions.push({ ...session, messages: [] });
+  state.config = { ...session.config };
   setActiveSession(session.id);
   wsSubscribe(session.id);
   toggleSidebar(false);
