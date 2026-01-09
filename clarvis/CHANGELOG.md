@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.32.1] - 2026-01-09
+
+### Fixed
+- Handle undefined message content gracefully (shows empty instead of "undefined")
+
 ## [0.32.0] - 2026-01-09
 
 ### Added

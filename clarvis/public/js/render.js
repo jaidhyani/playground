@@ -129,9 +129,10 @@ export function renderMessages(forceFullRender = false) {
     const messagesToRender = state.messages.slice(startIndex);
 
     for (const msg of messagesToRender) {
+      const rawContent = msg.content || '';
       const content = msg.role === 'assistant'
-        ? renderMarkdown(msg.content)
-        : escapeHtml(msg.content);
+        ? renderMarkdown(rawContent)
+        : escapeHtml(rawContent);
       html += `<div class="message ${msg.role}"><div class="message-content">${content}</div></div>`;
     }
 
@@ -149,9 +150,10 @@ export function renderMessages(forceFullRender = false) {
       const el = document.createElement('div');
       el.className = `message ${msg.role}`;
 
+      const rawContent = msg.content || '';
       const content = msg.role === 'assistant'
-        ? renderMarkdown(msg.content)
-        : escapeHtml(msg.content);
+        ? renderMarkdown(rawContent)
+        : escapeHtml(rawContent);
 
       el.innerHTML = `<div class="message-content">${content}</div>`;
       container.appendChild(el);
@@ -472,6 +474,7 @@ function timeAgo(timestamp) {
 }
 
 function escapeHtml(str) {
+  if (!str) return '';
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
