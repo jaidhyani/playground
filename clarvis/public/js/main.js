@@ -163,6 +163,13 @@ async function selectSession(sessionId) {
   }
 
   setActiveSession(sessionId);
+  focusPromptInput();
+}
+
+function focusPromptInput() {
+  setTimeout(() => {
+    $('#prompt-input')?.focus();
+  }, 0);
 }
 
 async function createNewSession() {
@@ -187,6 +194,7 @@ async function createNewSession() {
   setActiveSession(session.id);
   wsSubscribe(session.id);
   toggleSidebar(false);
+  focusPromptInput();
 }
 
 async function sendMessage() {

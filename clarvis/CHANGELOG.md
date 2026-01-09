@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.34.0] - 2026-01-09
+
+### Added
+- Auto-focus prompt input when selecting or creating a session
+
 ## [0.33.0] - 2026-01-09
 
 ### Added
