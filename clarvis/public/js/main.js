@@ -5,7 +5,8 @@ import {
   toggleSidebar,
   toggleConfigPanel,
   setPendingPermission,
-  addSession
+  addSession,
+  setLastError
 } from './state.js';
 import { connect, subscribe as wsSubscribe } from './ws.js';
 import * as api from './api.js';
@@ -77,6 +78,9 @@ function bindEvents() {
   $('#messages')?.addEventListener('click', handleImageClick);
 
   $('#session-title')?.addEventListener('click', startRename);
+
+  $('#retry-btn')?.addEventListener('click', retryLastPrompt);
+  $('#dismiss-error-btn')?.addEventListener('click', dismissError);
 }
 
 function toggleToolPanel() {
@@ -200,6 +204,17 @@ async function finishRename(input) {
   input.replaceWith(span);
   renderSessionHeader();
   renderSessionList();
+}
+
+async function retryLastPrompt() {
+  if (!state.lastPrompt || !state.activeSessionId) return;
+
+  setLastError(null);
+  await api.sendPrompt(state.activeSessionId, state.lastPrompt);
+}
+
+function dismissError() {
+  setLastError(null);
 }
 
 init();

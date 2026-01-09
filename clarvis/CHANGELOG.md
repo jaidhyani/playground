@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0] - 2026-01-09
+
+### Added
+- Error retry panel with Retry and Dismiss buttons
+- Shows error message above input when session errors occur
+- Retry resends the last prompt
+
 ## [0.12.0] - 2026-01-09
 
 ### Added

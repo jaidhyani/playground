@@ -459,6 +459,51 @@ body {
   color: var(--danger);
 }
 
+/* Error retry panel */
+#error-retry-panel {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--danger);
+  padding: 8px 16px;
+}
+
+.error-retry-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.error-icon {
+  color: var(--danger);
+  font-size: 1.2rem;
+}
+
+#error-text {
+  flex: 1;
+  color: var(--danger);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#retry-btn {
+  padding: 6px 16px;
+  font-size: 0.875rem;
+}
+
+#dismiss-error-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.875rem;
+}
+
+#dismiss-error-btn:hover {
+  color: var(--text-primary);
+}
+
 /* Input area */
 #input-area {
   padding: 8px 16px;

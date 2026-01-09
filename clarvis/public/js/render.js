@@ -192,6 +192,22 @@ export function renderActivityPanel() {
   }
 }
 
+export function renderErrorRetryPanel() {
+  const panel = $('#error-retry-panel');
+  if (!panel) return;
+
+  if (!state.lastError || !state.lastPrompt) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  panel.classList.remove('hidden');
+  const errorText = panel.querySelector('#error-text');
+  if (errorText) {
+    errorText.textContent = state.lastError;
+  }
+}
+
 export function renderAll() {
   renderSessionList();
   renderMessages();
@@ -202,6 +218,7 @@ export function renderAll() {
   renderSidebar();
   renderQueuePanel();
   renderActivityPanel();
+  renderErrorRetryPanel();
 }
 
 function shortenPath(path) {

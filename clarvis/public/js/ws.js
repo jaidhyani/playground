@@ -9,7 +9,9 @@ import {
   addToQueue,
   removeFromQueue,
   setTyping,
-  setToolActivity
+  setToolActivity,
+  setLastPrompt,
+  setLastError
 } from './state.js';
 import { showWarning, showError } from './toast.js';
 import { notifyPermissionRequest, notifyError, notifySessionComplete } from './notifications.js';
@@ -107,6 +109,10 @@ function handleMessage(msg) {
         content: msg.payload.content,
         timestamp: msg.payload.timestamp
       });
+      if (sessionId === state.activeSessionId) {
+        setLastPrompt(msg.payload.content);
+        setLastError(null);
+      }
       break;
 
     case 'message:assistant':
@@ -155,6 +161,9 @@ function handleMessage(msg) {
       const errSessionName = getSessionName(sessionId);
       showError(msg.payload.error);
       notifyError(msg.payload.error, errSessionName);
+      if (sessionId === state.activeSessionId) {
+        setLastError(msg.payload.error);
+      }
       break;
     }
 

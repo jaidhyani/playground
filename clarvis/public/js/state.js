@@ -7,6 +7,8 @@ export const state = {
   pendingPermission: null,
   isTyping: false,
   toolActivity: null,
+  lastPrompt: null,
+  lastError: null,
   config: {
     workingDirectory: '',
     model: 'claude-sonnet-4-5',
@@ -127,5 +129,15 @@ export function setTyping(isTyping) {
 
 export function setToolActivity(activity) {
   state.toolActivity = activity;
+  notify();
+}
+
+export function setLastPrompt(prompt) {
+  state.lastPrompt = prompt;
+  notify();
+}
+
+export function setLastError(error) {
+  state.lastError = error;
   notify();
 }

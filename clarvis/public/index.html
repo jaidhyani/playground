@@ -63,6 +63,15 @@
         <div id="queue-list"></div>
       </div>
 
+      <div id="error-retry-panel" class="hidden">
+        <div class="error-retry-content">
+          <span class="error-icon">⚠</span>
+          <span id="error-text">Error occurred</span>
+          <button id="retry-btn" class="btn-primary">Retry</button>
+          <button id="dismiss-error-btn">✕</button>
+        </div>
+      </div>
+
       <footer id="input-area">
         <textarea id="prompt-input" placeholder="Send a message..." rows="1"></textarea>
         <button id="send-btn" class="btn-primary">Send</button>
