@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.0] - 2026-01-09
+
+### Added
+- Last message preview in session sidebar
+- Shows truncated preview (60 chars) of most recent message
+- Preview included in API session list response (`lastMessagePreview` field)
+
 ## [0.27.0] - 2026-01-09
 
 ### Added

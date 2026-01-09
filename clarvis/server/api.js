@@ -272,6 +272,11 @@ async function runPromptAsync(sessionId, prompt) {
 }
 
 function summarizeSession(session) {
+  const lastMsg = session.messages?.[session.messages.length - 1];
+  const lastMessagePreview = lastMsg?.content
+    ? truncatePreview(lastMsg.content, 100)
+    : null;
+
   return {
     id: session.id,
     name: session.name,
@@ -279,8 +284,16 @@ function summarizeSession(session) {
     workingDirectory: session.config.workingDirectory,
     createdAt: session.createdAt,
     lastActivity: session.lastActivity,
-    messageCount: session.messageCount
+    messageCount: session.messageCount,
+    lastMessagePreview
   };
+}
+
+function truncatePreview(content, maxLength) {
+  if (!content || typeof content !== 'string') return '';
+  const cleaned = content.replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.slice(0, maxLength) + '...';
 }
 
 function truncateResult(result) {

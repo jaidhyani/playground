@@ -40,6 +40,12 @@ function renderSessionItem(session, isArchived = false) {
     ? `<button class="session-unarchive-btn" data-id="${session.id}" title="Restore session">↩</button>`
     : `<button class="session-archive-btn" data-id="${session.id}" title="Archive session">📦</button>`;
 
+  // Use lastMessagePreview from API summary, or compute from loaded messages
+  const lastMessage = session.messages?.[session.messages.length - 1];
+  const previewText = lastMessage
+    ? truncatePreview(lastMessage.content, 60)
+    : (session.lastMessagePreview ? truncatePreview(session.lastMessagePreview, 60) : '');
+
   return `
     <div class="session-item ${session.id === state.activeSessionId ? 'active' : ''} ${isArchived ? 'archived' : ''}"
          data-id="${session.id}">
@@ -48,6 +54,7 @@ function renderSessionItem(session, isArchived = false) {
           ${escapeHtml(session.name || shortenPath(session.workingDirectory))}
           ${badgeHtml}
         </div>
+        ${previewText ? `<div class="session-item-preview">${escapeHtml(previewText)}</div>` : ''}
         <div class="session-item-meta">
           <span class="status-badge ${session.status}">${session.status}</span>
           <span>${session.messageCount || 0} msgs</span>
@@ -60,6 +67,13 @@ function renderSessionItem(session, isArchived = false) {
       </div>
     </div>
   `;
+}
+
+function truncatePreview(content, maxLength) {
+  if (!content || typeof content !== 'string') return '';
+  const cleaned = content.replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.slice(0, maxLength) + '...';
 }
 
 export function renderMessages(forceFullRender = false) {

@@ -7,17 +7,32 @@ const sessions = new Map();
 const knownDirectories = new Set();
 
 export function getAllSessions() {
-  return Array.from(sessions.values()).map(s => ({
-    id: s.id,
-    name: s.name,
-    status: s.status,
-    workingDirectory: s.config.workingDirectory,
-    createdAt: s.createdAt,
-    lastActivity: s.lastActivity,
-    messageCount: s.messageCount,
-    queueLength: s.promptQueue?.length || 0,
-    archived: s.archived || false
-  }));
+  return Array.from(sessions.values()).map(s => {
+    const lastMsg = s.messages?.[s.messages.length - 1];
+    const lastMessagePreview = lastMsg?.content
+      ? truncatePreview(lastMsg.content, 100)
+      : null;
+
+    return {
+      id: s.id,
+      name: s.name,
+      status: s.status,
+      workingDirectory: s.config.workingDirectory,
+      createdAt: s.createdAt,
+      lastActivity: s.lastActivity,
+      messageCount: s.messageCount,
+      queueLength: s.promptQueue?.length || 0,
+      archived: s.archived || false,
+      lastMessagePreview
+    };
+  });
+}
+
+function truncatePreview(content, maxLength) {
+  if (!content || typeof content !== 'string') return '';
+  const cleaned = content.replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.slice(0, maxLength) + '...';
 }
 
 export async function initSessions(workingDirectory) {
