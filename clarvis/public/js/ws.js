@@ -7,7 +7,9 @@ import {
   addSession,
   removeSession,
   addToQueue,
-  removeFromQueue
+  removeFromQueue,
+  setTyping,
+  setToolActivity
 } from './state.js';
 
 let ws = null;
@@ -74,6 +76,12 @@ function handleMessage(msg) {
 
     case 'session:status':
       updateSession(sessionId, { status: msg.payload.status });
+      if (msg.payload.status === 'running') {
+        setTyping(true);
+      } else {
+        setTyping(false);
+        setToolActivity(null);
+      }
       break;
 
     case 'session:init':
@@ -102,6 +110,8 @@ function handleMessage(msg) {
         status: 'running',
         input: msg.payload.input
       });
+      setToolActivity(formatToolActivity(msg.payload.toolName, msg.payload.input));
+      setTyping(false);
       break;
 
     case 'tool:result':
@@ -110,6 +120,8 @@ function handleMessage(msg) {
         status: 'complete',
         result: msg.payload.result
       });
+      setToolActivity(null);
+      setTyping(true);
       break;
 
     case 'permission:request':
@@ -148,6 +160,23 @@ function formatContent(content) {
       .join('\n');
   }
   return String(content);
+}
+
+function formatToolActivity(toolName, input) {
+  const descriptions = {
+    Read: () => `Reading ${input?.file_path || 'file'}...`,
+    Write: () => `Writing ${input?.file_path || 'file'}...`,
+    Edit: () => `Editing ${input?.file_path || 'file'}...`,
+    Bash: () => `Running command...`,
+    Glob: () => `Searching for ${input?.pattern || 'files'}...`,
+    Grep: () => `Searching for "${input?.pattern || 'pattern'}"...`,
+    WebFetch: () => `Fetching ${input?.url || 'URL'}...`,
+    WebSearch: () => `Searching web...`,
+    Task: () => `Running subtask...`
+  };
+
+  const formatter = descriptions[toolName];
+  return formatter ? formatter() : `Using ${toolName}...`;
 }
 
 export function subscribe(sessionId) {

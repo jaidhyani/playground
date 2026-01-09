@@ -5,6 +5,8 @@ export const state = {
   promptQueue: [],
   currentTool: null,
   pendingPermission: null,
+  isTyping: false,
+  toolActivity: null,
   config: {
     workingDirectory: '',
     model: 'claude-sonnet-4-5',
@@ -112,5 +114,15 @@ export function removeFromQueue(promptId) {
 
 export function setQueue(queue) {
   state.promptQueue = queue;
+  notify();
+}
+
+export function setTyping(isTyping) {
+  state.isTyping = isTyping;
+  notify();
+}
+
+export function setToolActivity(activity) {
+  state.toolActivity = activity;
   notify();
 }

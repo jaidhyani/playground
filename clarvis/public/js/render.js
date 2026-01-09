@@ -155,6 +155,36 @@ export function renderQueuePanel() {
   `).join('');
 }
 
+export function renderActivityPanel() {
+  const panel = $('#activity-panel');
+  const typingIndicator = $('#typing-indicator');
+  const toolActivity = $('#tool-activity');
+  const toolActivityText = $('#tool-activity-text');
+
+  if (!panel) return;
+
+  const showTyping = state.isTyping;
+  const showToolActivity = state.toolActivity !== null;
+
+  if (!showTyping && !showToolActivity) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  panel.classList.remove('hidden');
+
+  if (typingIndicator) {
+    typingIndicator.classList.toggle('hidden', !showTyping);
+  }
+
+  if (toolActivity) {
+    toolActivity.classList.toggle('hidden', !showToolActivity);
+    if (toolActivityText && state.toolActivity) {
+      toolActivityText.textContent = state.toolActivity;
+    }
+  }
+}
+
 export function renderAll() {
   renderSessionList();
   renderMessages();
@@ -164,6 +194,7 @@ export function renderAll() {
   renderConfigPanel();
   renderSidebar();
   renderQueuePanel();
+  renderActivityPanel();
 }
 
 function shortenPath(path) {

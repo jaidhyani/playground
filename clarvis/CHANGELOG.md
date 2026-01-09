@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] - 2026-01-09
+
+### Added
+- Activity panel with typing indicator and tool activity
+- Animated dots show when assistant is generating text
+- Tool activity shows current operation (e.g., "Reading file...")
+- Both indicators visible simultaneously during tool use
+
 ## [0.7.0] - 2026-01-09
 
 ### Added
