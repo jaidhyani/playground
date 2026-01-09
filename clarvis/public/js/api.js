@@ -5,6 +5,13 @@ async function request(method, path, body) {
     method,
     headers: { 'Content-Type': 'application/json' }
   };
+
+  // Include auth token if stored
+  const token = sessionStorage.getItem('clarvis-token');
+  if (token) {
+    options.headers['Authorization'] = `Bearer ${token}`;
+  }
+
   if (body) {
     options.body = JSON.stringify(body);
   }

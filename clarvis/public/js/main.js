@@ -331,6 +331,8 @@ function handleSearchInput(e) {
 // Auth token management
 let cachedToken = null;
 let tokenVisible = false;
+let qrVisible = false;
+let qrCode = null;
 
 async function initAuthSection() {
   const section = $('#auth-section');
@@ -343,11 +345,70 @@ async function initAuthSection() {
   }
 
   section.classList.remove('hidden');
-  cachedToken = authInfo.token;
 
+  // Bind event listeners
+  $('#token-submit-btn')?.addEventListener('click', submitToken);
+  $('#token-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitToken();
+  });
   $('#token-show-btn')?.addEventListener('click', toggleTokenVisibility);
   $('#token-copy-btn')?.addEventListener('click', copyToken);
+  $('#token-qr-btn')?.addEventListener('click', toggleQRCode);
   $('#token-regenerate-btn')?.addEventListener('click', regenerateToken);
+
+  // If already authenticated (token returned), show display section
+  if (authInfo.token) {
+    cachedToken = authInfo.token;
+    showAuthenticatedView();
+  }
+}
+
+function showAuthenticatedView() {
+  $('#token-input-section')?.classList.add('hidden');
+  $('#token-display-section')?.classList.remove('hidden');
+}
+
+async function submitToken() {
+  const input = $('#token-input');
+  const token = input?.value.trim();
+
+  if (!token) {
+    alert('Please enter a token');
+    return;
+  }
+
+  // Test the token by making an authenticated request
+  try {
+    const res = await fetch('/api/sessions', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (res.ok) {
+      cachedToken = token;
+      showAuthenticatedView();
+
+      // Reload sessions with the new token
+      const sessions = await res.json();
+      state.sessions = [];
+      for (const session of sessions) {
+        state.sessions.push({ ...session, messages: [] });
+      }
+
+      if (sessions.length > 0) {
+        const fullSession = await api.getSession(sessions[0].id);
+        state.sessions[0].messages = fullSession.messages || [];
+        state.sessions[0].config = fullSession.config;
+        setActiveSession(sessions[0].id);
+      }
+
+      // Store token in sessionStorage for subsequent API calls
+      sessionStorage.setItem('clarvis-token', token);
+    } else {
+      alert('Invalid token');
+    }
+  } catch (error) {
+    alert('Failed to authenticate: ' + error.message);
+  }
 }
 
 function toggleTokenVisibility() {
@@ -390,6 +451,45 @@ async function copyToken() {
   }
 }
 
+function toggleQRCode() {
+  if (!cachedToken) return;
+
+  const container = $('#qr-container');
+  const qrEl = $('#qr-code');
+  const qrBtn = $('#token-qr-btn');
+
+  if (!qrVisible) {
+    const confirmed = confirm('Show QR code for auth token?\n\nMake sure no one is looking at your screen.');
+    if (!confirmed) return;
+  }
+
+  qrVisible = !qrVisible;
+
+  if (qrVisible) {
+    container.classList.remove('hidden');
+    qrBtn.textContent = 'Hide QR';
+
+    // Clear previous QR code
+    qrEl.innerHTML = '';
+
+    // Generate new QR code (QRCode library from CDN)
+    if (typeof QRCode !== 'undefined') {
+      qrCode = new QRCode(qrEl, {
+        text: cachedToken,
+        width: 160,
+        height: 160,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  } else {
+    container.classList.add('hidden');
+    qrBtn.textContent = 'QR';
+    qrEl.innerHTML = '';
+  }
+}
+
 async function regenerateToken() {
   const confirmed = confirm(
     'Regenerate auth token?\n\n' +
@@ -403,6 +503,14 @@ async function regenerateToken() {
 
   if (tokenVisible) {
     $('#token-value').textContent = cachedToken;
+  }
+
+  // Hide and regenerate QR if visible
+  if (qrVisible) {
+    qrVisible = false;
+    $('#qr-container').classList.add('hidden');
+    $('#token-qr-btn').textContent = 'QR';
+    $('#qr-code').innerHTML = '';
   }
 
   alert('Token regenerated successfully.');

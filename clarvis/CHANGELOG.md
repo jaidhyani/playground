@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.30.0] - 2026-01-09
+
+### Added
+- QR code display for auth token (scan to authenticate other devices)
+- Token input UI for initial authentication when auth is enabled
+- Token stored in sessionStorage for subsequent API calls
+- qrcode.js library for QR code generation
+
 ## [0.29.0] - 2026-01-09
 
 ### Changed

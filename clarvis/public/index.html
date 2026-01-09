@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div id="app">
@@ -128,15 +129,29 @@
 
         <div id="auth-section" class="hidden">
           <hr class="config-divider">
-          <label>
-            Auth Token
-            <div class="token-display">
-              <span id="token-value" class="token-hidden">••••••••••••••••</span>
-              <button id="token-show-btn" class="btn-small">Show</button>
-              <button id="token-copy-btn" class="btn-small hidden">Copy</button>
+          <div id="token-input-section">
+            <label>
+              Enter Auth Token
+              <input type="password" id="token-input" placeholder="Paste token from terminal...">
+            </label>
+            <button id="token-submit-btn" class="btn-primary btn-small">Authenticate</button>
+          </div>
+          <div id="token-display-section" class="hidden">
+            <label>
+              Auth Token
+              <div class="token-display">
+                <span id="token-value" class="token-hidden">••••••••••••••••</span>
+                <button id="token-show-btn" class="btn-small">Show</button>
+                <button id="token-copy-btn" class="btn-small hidden">Copy</button>
+                <button id="token-qr-btn" class="btn-small">QR</button>
+              </div>
+            </label>
+            <div id="qr-container" class="hidden">
+              <div id="qr-code"></div>
+              <p class="qr-hint">Scan to copy token</p>
             </div>
-          </label>
-          <button id="token-regenerate-btn" class="btn-danger btn-small">Regenerate Token</button>
+            <button id="token-regenerate-btn" class="btn-danger btn-small">Regenerate Token</button>
+          </div>
         </div>
       </div>
     </aside>

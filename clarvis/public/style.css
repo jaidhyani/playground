@@ -752,6 +752,15 @@ body {
   margin: 8px 0;
 }
 
+#token-input {
+  width: 100%;
+  margin-top: 4px;
+}
+
+#token-submit-btn {
+  margin-top: 8px;
+}
+
 .token-display {
   display: flex;
   align-items: center;
@@ -783,6 +792,27 @@ body {
 
 #token-regenerate-btn {
   margin-top: 8px;
+}
+
+#qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  margin: 12px 0;
+  background: white;
+  border-radius: 8px;
+}
+
+#qr-code {
+  display: flex;
+  justify-content: center;
+}
+
+.qr-hint {
+  margin: 8px 0 0 0;
+  font-size: 0.75rem;
+  color: #666;
 }
 
 /* Modal */
