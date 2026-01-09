@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
+import qrcode from 'qrcode-terminal';
 
 let authToken = null;
 let tokenPath = null;
@@ -21,13 +22,24 @@ export async function initAuth(workingDirectory) {
     // Generate new token
     authToken = randomBytes(32).toString('hex');
     await writeFile(tokenPath, authToken, 'utf-8');
-    console.log('\n=== Auth Token Generated ===');
-    console.log('Token:', authToken);
-    console.log('Stored in:', tokenPath);
-    console.log('============================\n');
+    printNewToken(authToken, tokenPath);
   }
 
   return authToken;
+}
+
+function printNewToken(token, path) {
+  console.log('\n╔════════════════════════════════════════════════════════════════════╗');
+  console.log('║                     AUTH TOKEN GENERATED                          ║');
+  console.log('╠════════════════════════════════════════════════════════════════════╣');
+  console.log('║ Scan QR code or copy token below to authenticate:                 ║');
+  console.log('╚════════════════════════════════════════════════════════════════════╝');
+  console.log('');
+  qrcode.generate(token, { small: true });
+  console.log('');
+  console.log('Token:', token);
+  console.log('Stored in:', path);
+  console.log('');
 }
 
 export function getToken() {

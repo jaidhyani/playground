@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.0] - 2026-01-09
+
+### Added
+- Terminal QR code display when new auth token is generated
+- ASCII QR code makes it easy to scan token with phone on server startup
+- Uses qrcode-terminal npm package
+
 ## [0.30.0] - 2026-01-09
 
 ### Added
