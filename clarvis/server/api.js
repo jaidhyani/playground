@@ -168,7 +168,7 @@ async function runPromptAsync(sessionId, prompt) {
   broadcast(sessionId, { type: 'session:status', payload: { status: 'running' } });
 
   try {
-    const canUseTool = createPermissionHandler(sessionId);
+    const canUseTool = createPermissionHandler(sessionId, session.config.permissionTimeout);
 
     for await (const message of runPrompt(sessionId, prompt, { canUseTool })) {
       switch (message.type) {

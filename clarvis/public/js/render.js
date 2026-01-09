@@ -284,10 +284,12 @@ export function renderConfigPanel() {
     const cwd = $('#config-cwd');
     const model = $('#config-model');
     const permission = $('#config-permission');
+    const permissionTimeout = $('#config-permission-timeout');
     const systemPrompt = $('#config-system-prompt');
     if (cwd) cwd.value = state.config.workingDirectory;
     if (model) model.value = state.config.model;
     if (permission) permission.value = state.config.permissionMode;
+    if (permissionTimeout) permissionTimeout.value = state.config.permissionTimeout || '';
     if (systemPrompt) systemPrompt.value = state.config.systemPrompt || '';
   } else {
     panel.classList.add('hidden');

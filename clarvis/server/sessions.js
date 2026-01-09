@@ -56,7 +56,8 @@ export async function createSession(config) {
       workingDirectory,
       permissionMode: config.permissionMode || 'default',
       model: config.model || 'claude-sonnet-4-5',
-      systemPrompt: config.systemPrompt
+      systemPrompt: config.systemPrompt,
+      permissionTimeout: config.permissionTimeout ?? null  // null = wait indefinitely
     },
     messages: [],
     promptQueue: [],

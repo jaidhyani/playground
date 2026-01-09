@@ -140,12 +140,15 @@ async function createNewSession() {
   const cwd = $('#config-cwd')?.value || '';
   const model = $('#config-model')?.value || 'claude-sonnet-4-5';
   const permissionMode = $('#config-permission')?.value || 'default';
+  const permissionTimeoutVal = $('#config-permission-timeout')?.value;
+  const permissionTimeout = permissionTimeoutVal ? parseInt(permissionTimeoutVal, 10) : null;
   const systemPrompt = $('#config-system-prompt')?.value || '';
 
   const session = await api.createSession({
     workingDirectory: cwd,
     model,
     permissionMode,
+    permissionTimeout,
     systemPrompt: systemPrompt || undefined
   });
 

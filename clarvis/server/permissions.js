@@ -1,9 +1,9 @@
 import { broadcast } from './ws-hub.js';
 
 const pendingPermissions = new Map();
-const PERMISSION_TIMEOUT_MS = 5 * 60 * 1000;
 
-export function createPermissionHandler(sessionId) {
+// timeoutMs: 0 or null means wait indefinitely (pause)
+export function createPermissionHandler(sessionId, timeoutMs = null) {
   return async (toolName, input) => {
     const readOnlyTools = ['Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch'];
     if (readOnlyTools.includes(toolName)) {
@@ -18,14 +18,19 @@ export function createPermissionHandler(sessionId) {
     });
 
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        pendingPermissions.delete(requestId);
-        resolve({ behavior: 'deny', message: 'Permission request timed out' });
-      }, PERMISSION_TIMEOUT_MS);
+      let timeoutHandle = null;
+
+      // Only set timeout if a positive value is provided
+      if (timeoutMs && timeoutMs > 0) {
+        timeoutHandle = setTimeout(() => {
+          pendingPermissions.delete(requestId);
+          resolve({ behavior: 'deny', message: 'Permission request timed out' });
+        }, timeoutMs);
+      }
 
       pendingPermissions.set(requestId, {
         resolve: (decision) => {
-          clearTimeout(timeout);
+          if (timeoutHandle) clearTimeout(timeoutHandle);
           pendingPermissions.delete(requestId);
           resolve(decision);
         },

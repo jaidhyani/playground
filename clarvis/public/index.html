@@ -111,6 +111,16 @@
           </select>
         </label>
         <label>
+          Permission Timeout
+          <select id="config-permission-timeout">
+            <option value="">Wait forever (pause)</option>
+            <option value="60000">1 minute</option>
+            <option value="300000">5 minutes</option>
+            <option value="600000">10 minutes</option>
+            <option value="1800000">30 minutes</option>
+          </select>
+        </label>
+        <label>
           System Prompt
           <textarea id="config-system-prompt" placeholder="Optional instructions for the assistant..." rows="3"></textarea>
         </label>

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0] - 2026-01-09
+
+### Added
+- Permission timeout configuration in config panel
+- Options: wait forever (default), 1 min, 5 min, 10 min, 30 min
+- Timeout stored per-session and honored by permission handler
+
 ## [0.23.0] - 2026-01-09
 
 ### Added

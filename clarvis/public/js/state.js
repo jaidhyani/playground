@@ -15,6 +15,7 @@ export const state = {
     workingDirectory: '',
     model: 'claude-sonnet-4-5',
     permissionMode: 'default',
+    permissionTimeout: null,
     systemPrompt: ''
   },
   ui: {
