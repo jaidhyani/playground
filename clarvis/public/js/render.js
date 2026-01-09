@@ -62,7 +62,81 @@ export function renderMessages() {
     container.appendChild(el);
   }
 
+  // Apply search filtering
+  applySearchFilter(container);
+
   container.scrollTop = container.scrollHeight;
+}
+
+function applySearchFilter(container) {
+  const messages = container.querySelectorAll('.message');
+  const query = state.searchQuery?.toLowerCase() || '';
+
+  messages.forEach((el, index) => {
+    const msg = state.messages[index];
+    if (!msg) return;
+
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    const matches = query && content.toLowerCase().includes(query);
+
+    // Show/hide based on search
+    if (query) {
+      el.classList.toggle('search-hidden', !matches);
+    } else {
+      el.classList.remove('search-hidden');
+    }
+
+    // Apply highlighting
+    if (matches && query) {
+      highlightText(el, query);
+    } else {
+      removeHighlights(el);
+    }
+  });
+}
+
+function highlightText(el, query) {
+  const contentEl = el.querySelector('.message-content');
+  if (!contentEl) return;
+
+  // Remove existing highlights first
+  removeHighlights(el);
+
+  const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT, null);
+  const textNodes = [];
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode);
+  }
+
+  for (const node of textNodes) {
+    const text = node.textContent;
+    const lowerText = text.toLowerCase();
+    const index = lowerText.indexOf(query);
+
+    if (index !== -1) {
+      const before = text.slice(0, index);
+      const match = text.slice(index, index + query.length);
+      const after = text.slice(index + query.length);
+
+      const span = document.createElement('span');
+      span.className = 'search-highlight';
+      span.textContent = match;
+
+      const fragment = document.createDocumentFragment();
+      if (before) fragment.appendChild(document.createTextNode(before));
+      fragment.appendChild(span);
+      if (after) fragment.appendChild(document.createTextNode(after));
+
+      node.parentNode.replaceChild(fragment, node);
+    }
+  }
+}
+
+function removeHighlights(el) {
+  el.querySelectorAll('.search-highlight').forEach(span => {
+    const text = document.createTextNode(span.textContent);
+    span.parentNode.replaceChild(text, span);
+  });
 }
 
 export function renderSessionHeader() {
@@ -211,6 +285,37 @@ export function renderErrorRetryPanel() {
   }
 }
 
+export function renderSearchBar() {
+  const bar = $('#search-bar');
+  const input = $('#search-input');
+  const count = $('#search-results-count');
+
+  if (!bar) return;
+
+  if (state.searchOpen) {
+    bar.classList.remove('hidden');
+
+    // Update results count
+    if (state.searchQuery) {
+      const matches = countSearchMatches();
+      count.textContent = `${matches} match${matches !== 1 ? 'es' : ''}`;
+    } else {
+      count.textContent = '';
+    }
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function countSearchMatches() {
+  if (!state.searchQuery) return 0;
+  const query = state.searchQuery.toLowerCase();
+  return state.messages.filter(msg => {
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    return content.toLowerCase().includes(query);
+  }).length;
+}
+
 export function renderAll() {
   renderSessionList();
   renderMessages();
@@ -222,6 +327,7 @@ export function renderAll() {
   renderQueuePanel();
   renderActivityPanel();
   renderErrorRetryPanel();
+  renderSearchBar();
 }
 
 function shortenPath(path) {

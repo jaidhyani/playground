@@ -27,8 +27,15 @@
           <span id="session-status" class="status-badge">-</span>
         </div>
         <button id="fork-btn" title="Fork session">⎇</button>
+        <button id="search-btn" title="Search messages">🔍</button>
         <button id="config-btn">⚙</button>
       </header>
+
+      <div id="search-bar" class="hidden">
+        <input type="text" id="search-input" placeholder="Search messages...">
+        <span id="search-results-count"></span>
+        <button id="search-close">✕</button>
+      </div>
 
       <section id="messages">
         <div id="empty-state">

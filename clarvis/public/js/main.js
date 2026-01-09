@@ -6,7 +6,9 @@ import {
   toggleConfigPanel,
   setPendingPermission,
   addSession,
-  setLastError
+  setLastError,
+  setSearchQuery,
+  setSearchOpen
 } from './state.js';
 import { connect, subscribe as wsSubscribe } from './ws.js';
 import * as api from './api.js';
@@ -88,6 +90,13 @@ function bindEvents() {
 
   $('#retry-btn')?.addEventListener('click', retryLastPrompt);
   $('#dismiss-error-btn')?.addEventListener('click', dismissError);
+
+  $('#search-btn')?.addEventListener('click', openSearch);
+  $('#search-close')?.addEventListener('click', closeSearch);
+  $('#search-input')?.addEventListener('input', handleSearchInput);
+  $('#search-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSearch();
+  });
 }
 
 function toggleToolPanel() {
@@ -232,6 +241,22 @@ async function handleDeleteSession(sessionId) {
   if (!confirmed) return;
 
   await api.deleteSession(sessionId);
+}
+
+function openSearch() {
+  setSearchOpen(true);
+  setTimeout(() => {
+    $('#search-input')?.focus();
+  }, 0);
+}
+
+function closeSearch() {
+  setSearchOpen(false);
+  $('#search-input').value = '';
+}
+
+function handleSearchInput(e) {
+  setSearchQuery(e.target.value);
 }
 
 init();

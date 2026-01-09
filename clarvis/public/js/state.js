@@ -9,6 +9,8 @@ export const state = {
   toolActivity: null,
   lastPrompt: null,
   lastError: null,
+  searchQuery: '',
+  searchOpen: false,
   config: {
     workingDirectory: '',
     model: 'claude-sonnet-4-5',
@@ -139,5 +141,18 @@ export function setLastPrompt(prompt) {
 
 export function setLastError(error) {
   state.lastError = error;
+  notify();
+}
+
+export function setSearchQuery(query) {
+  state.searchQuery = query;
+  notify();
+}
+
+export function setSearchOpen(open) {
+  state.searchOpen = open;
+  if (!open) {
+    state.searchQuery = '';
+  }
   notify();
 }

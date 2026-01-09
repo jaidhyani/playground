@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.0] - 2026-01-09
+
+### Added
+- Search messages functionality via 🔍 button in header
+- Filters messages to show only matches
+- Highlights matching text in yellow
+- Shows match count
+- Close with ✕ button or Escape key
+
 ## [0.15.0] - 2026-01-09
 
 ### Added
