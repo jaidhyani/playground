@@ -22,16 +22,22 @@ const $ = (sel) => document.querySelector(sel);
 async function init() {
   subscribe(renderAll);
 
-  const sessions = await api.getSessions();
-  for (const session of sessions) {
-    state.sessions.push({ ...session, messages: [] });
-  }
+  try {
+    const sessions = await api.getSessions();
+    if (Array.isArray(sessions)) {
+      for (const session of sessions) {
+        state.sessions.push({ ...session, messages: [] });
+      }
 
-  if (sessions.length > 0) {
-    const firstSession = await api.getSession(sessions[0].id);
-    state.sessions[0].messages = firstSession.messages || [];
-    state.sessions[0].config = firstSession.config;
-    setActiveSession(sessions[0].id);
+      if (sessions.length > 0) {
+        const firstSession = await api.getSession(sessions[0].id);
+        state.sessions[0].messages = firstSession.messages || [];
+        state.sessions[0].config = firstSession.config;
+        setActiveSession(sessions[0].id);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load sessions:', err);
   }
 
   connect();
@@ -39,6 +45,7 @@ async function init() {
   initLightbox();
   initToast();
   requestNotificationPermission();
+  initAuthSection();
   renderAll();
 }
 
@@ -266,6 +273,86 @@ function closeSearch() {
 
 function handleSearchInput(e) {
   setSearchQuery(e.target.value);
+}
+
+// Auth token management
+let cachedToken = null;
+let tokenVisible = false;
+
+async function initAuthSection() {
+  const section = $('#auth-section');
+  if (!section) return;
+
+  const authInfo = await api.getAuthToken();
+  if (!authInfo.enabled) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  section.classList.remove('hidden');
+  cachedToken = authInfo.token;
+
+  $('#token-show-btn')?.addEventListener('click', toggleTokenVisibility);
+  $('#token-copy-btn')?.addEventListener('click', copyToken);
+  $('#token-regenerate-btn')?.addEventListener('click', regenerateToken);
+}
+
+function toggleTokenVisibility() {
+  if (!tokenVisible) {
+    const confirmed = confirm('Show auth token?\n\nMake sure no one is looking at your screen.');
+    if (!confirmed) return;
+  }
+
+  tokenVisible = !tokenVisible;
+  const valueEl = $('#token-value');
+  const showBtn = $('#token-show-btn');
+  const copyBtn = $('#token-copy-btn');
+
+  if (tokenVisible) {
+    valueEl.textContent = cachedToken;
+    valueEl.classList.remove('token-hidden');
+    showBtn.textContent = 'Hide';
+    copyBtn.classList.remove('hidden');
+  } else {
+    valueEl.textContent = '••••••••••••••••';
+    valueEl.classList.add('token-hidden');
+    showBtn.textContent = 'Show';
+    copyBtn.classList.add('hidden');
+  }
+}
+
+async function copyToken() {
+  if (!cachedToken) return;
+
+  try {
+    await navigator.clipboard.writeText(cachedToken);
+    const copyBtn = $('#token-copy-btn');
+    const originalText = copyBtn.textContent;
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => {
+      copyBtn.textContent = originalText;
+    }, 1500);
+  } catch {
+    alert('Failed to copy token');
+  }
+}
+
+async function regenerateToken() {
+  const confirmed = confirm(
+    'Regenerate auth token?\n\n' +
+    'This will invalidate the current token.\n' +
+    'All connected clients will need the new token.'
+  );
+  if (!confirmed) return;
+
+  const result = await api.regenerateAuthToken();
+  cachedToken = result.token;
+
+  if (tokenVisible) {
+    $('#token-value').textContent = cachedToken;
+  }
+
+  alert('Token regenerated successfully.');
 }
 
 init();

@@ -35,8 +35,8 @@ const server = createServer(async (req, res) => {
     return res.end();
   }
 
-  // Auth check for API endpoints
-  if (AUTH_ENABLED && url.pathname.startsWith('/api/')) {
+  // Auth check for API endpoints (skip for auth status check)
+  if (AUTH_ENABLED && url.pathname.startsWith('/api/') && url.pathname !== '/api/auth/token') {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
     if (token !== getToken()) {

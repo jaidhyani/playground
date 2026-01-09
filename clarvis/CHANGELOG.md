@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.20.0] - 2026-01-09
+
+### Added
+- Auth token management UI in config panel
+- Show/hide token with confirmation dialog
+- Copy token to clipboard
+- Regenerate token button with confirmation
+- Auth section only visible when AUTH=true enabled
+
+### Fixed
+- UI now loads gracefully when auth fails (shows empty state)
+
 ## [0.19.0] - 2026-01-09
 
 ### Changed

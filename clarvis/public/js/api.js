@@ -55,3 +55,11 @@ export function cancelQueuedPrompt(sessionId, promptId) {
 export function renameSession(sessionId, name) {
   return request('POST', `/sessions/${sessionId}/rename`, { name });
 }
+
+export function getAuthToken() {
+  return request('GET', '/auth/token');
+}
+
+export function regenerateAuthToken() {
+  return request('POST', '/auth/token');
+}

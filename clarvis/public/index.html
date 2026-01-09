@@ -110,6 +110,19 @@
             <option value="bypassPermissions">Bypass all permissions</option>
           </select>
         </label>
+
+        <div id="auth-section" class="hidden">
+          <hr class="config-divider">
+          <label>
+            Auth Token
+            <div class="token-display">
+              <span id="token-value" class="token-hidden">••••••••••••••••</span>
+              <button id="token-show-btn" class="btn-small">Show</button>
+              <button id="token-copy-btn" class="btn-small hidden">Copy</button>
+            </div>
+          </label>
+          <button id="token-regenerate-btn" class="btn-danger btn-small">Regenerate Token</button>
+        </div>
       </div>
     </aside>
 

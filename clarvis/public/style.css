@@ -662,6 +662,45 @@ body {
   font-size: 1rem;
 }
 
+.config-divider {
+  border: none;
+  border-top: 1px solid var(--bg-tertiary);
+  margin: 8px 0;
+}
+
+.token-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+#token-value {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 0.75rem;
+  background: var(--bg-tertiary);
+  padding: 8px 10px;
+  border-radius: 4px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#token-value.token-hidden {
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+}
+
+.btn-small {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+}
+
+#token-regenerate-btn {
+  margin-top: 8px;
+}
+
 /* Modal */
 .modal {
   position: fixed;

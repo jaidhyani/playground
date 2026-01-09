@@ -15,6 +15,7 @@ import {
 } from './sessions.js';
 import { broadcast, broadcastAll } from './ws-hub.js';
 import { createPermissionHandler, handlePermissionResponse } from './permissions.js';
+import { getToken, regenerateToken } from './auth.js';
 
 export async function handleApiRequest(req, res, parsedUrl) {
   const path = parsedUrl.pathname;
@@ -136,6 +137,24 @@ export async function handleApiRequest(req, res, parsedUrl) {
     const body = await readBody(req);
     const success = handlePermissionResponse(requestId, body.decision, body.updatedInput);
     return sendJson(res, success ? 200 : 404, { success });
+  }
+
+  // Auth endpoints - GET returns status only (token hidden unless authenticated)
+  if (path === '/api/auth/token' && method === 'GET') {
+    const token = getToken();
+    const authHeader = req.headers.authorization;
+    const isAuthenticated = authHeader && authHeader.replace('Bearer ', '') === token;
+
+    // Only return the actual token if already authenticated
+    return sendJson(res, 200, {
+      token: isAuthenticated ? token : null,
+      enabled: token !== null
+    });
+  }
+
+  if (path === '/api/auth/token' && method === 'POST') {
+    const newToken = await regenerateToken();
+    return sendJson(res, 200, { token: newToken });
   }
 
   return sendJson(res, 404, { error: 'Not found' });
