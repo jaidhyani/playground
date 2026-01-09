@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clarvis</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <h1>Clarvis</h1>
+        <button id="new-session-btn" class="btn-primary">+ New</button>
+      </div>
+      <div id="session-list"></div>
+    </nav>
+
+    <main id="content">
+      <header id="session-header">
+        <button id="menu-btn" class="mobile-only">☰</button>
+        <div id="session-info">
+          <span id="session-title">No session</span>
+          <span id="session-status" class="status-badge">-</span>
+        </div>
+        <button id="config-btn">⚙</button>
+      </header>
+
+      <section id="messages">
+        <div id="empty-state">
+          <p>Create or select a session to begin</p>
+        </div>
+      </section>
+
+      <div id="tool-panel" class="hidden">
+        <div class="tool-header">
+          <span id="tool-name">-</span>
+          <span id="tool-status">-</span>
+        </div>
+        <pre id="tool-output"></pre>
+      </div>
+
+      <footer id="input-area">
+        <textarea id="prompt-input" placeholder="Send a message..." rows="1"></textarea>
+        <button id="send-btn" class="btn-primary">Send</button>
+      </footer>
+    </main>
+
+    <aside id="config-panel" class="hidden">
+      <div class="panel-header">
+        <h2>Session Config</h2>
+        <button id="close-config">✕</button>
+      </div>
+      <div class="config-form">
+        <label>
+          Working Directory
+          <input type="text" id="config-cwd" placeholder="(defaults to server cwd)">
+        </label>
+        <label>
+          Model
+          <select id="config-model">
+            <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
+            <option value="claude-opus-4-5-20251101">Claude Opus 4.5</option>
+          </select>
+        </label>
+        <label>
+          Permission Mode
+          <select id="config-permission">
+            <option value="default">Ask for dangerous ops</option>
+            <option value="acceptEdits">Accept edits automatically</option>
+            <option value="bypassPermissions">Bypass all permissions</option>
+          </select>
+        </label>
+      </div>
+    </aside>
+
+    <div id="permission-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Permission Request</h3>
+        <p id="permission-tool">-</p>
+        <pre id="permission-input"></pre>
+        <div class="modal-actions">
+          <button id="permission-deny" class="btn-danger">Deny</button>
+          <button id="permission-allow" class="btn-primary">Allow</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
