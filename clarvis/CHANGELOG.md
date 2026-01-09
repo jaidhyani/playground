@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.0] - 2026-01-09
+
+### Changed
+- Permission modal now full-screen on mobile devices
+- Modal uses flexbox layout for better content distribution
+- Buttons anchored to bottom of modal on mobile
+
 ## [0.28.0] - 2026-01-09
 
 ### Added
