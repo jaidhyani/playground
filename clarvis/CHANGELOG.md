@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0] - 2026-01-09
+
+### Added
+- Collapsible tool output panel with smooth animation
+- Click tool header to expand/collapse output
+- Chevron icon rotates to indicate collapsed state
+
 ## [0.3.0] - 2026-01-09
 
 ### Added

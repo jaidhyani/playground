@@ -60,6 +60,15 @@ function bindEvents() {
 
   $('#permission-allow')?.addEventListener('click', () => handlePermission('allow'));
   $('#permission-deny')?.addEventListener('click', () => handlePermission('deny'));
+
+  $('#tool-toggle')?.addEventListener('click', toggleToolPanel);
+}
+
+function toggleToolPanel() {
+  const wrapper = $('#tool-output-wrapper');
+  if (wrapper) {
+    wrapper.classList.toggle('collapsed');
+  }
 }
 
 async function createNewSession() {

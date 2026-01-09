@@ -265,24 +265,65 @@ body {
 #tool-panel {
   background: var(--bg-secondary);
   border-top: 1px solid var(--bg-tertiary);
-  max-height: 200px;
-  overflow: hidden;
 }
 
 .tool-header {
   padding: 8px 16px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   font-size: 0.875rem;
-  border-bottom: 1px solid var(--bg-tertiary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.tool-header:hover {
+  background: var(--bg-tertiary);
+}
+
+#tool-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+#tool-status {
+  color: var(--text-secondary);
+}
+
+#tool-expand-icon {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+#tool-output-wrapper {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 200px;
+  border-top: 1px solid var(--bg-tertiary);
+}
+
+#tool-output-wrapper.collapsed {
+  max-height: 0;
+  border-top: none;
+}
+
+#tool-output-wrapper.collapsed + #tool-expand-icon,
+.collapsed ~ #tool-expand-icon {
+  transform: rotate(-90deg);
+}
+
+#tool-panel:has(#tool-output-wrapper.collapsed) #tool-expand-icon {
+  transform: rotate(-90deg);
 }
 
 #tool-output {
   padding: 8px 16px;
   font-size: 0.75rem;
   overflow: auto;
-  max-height: 150px;
+  max-height: 180px;
   color: var(--text-secondary);
+  margin: 0;
 }
 
 /* Input area */

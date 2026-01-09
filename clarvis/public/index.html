@@ -36,11 +36,14 @@
       </section>
 
       <div id="tool-panel" class="hidden">
-        <div class="tool-header">
+        <div class="tool-header" id="tool-toggle">
           <span id="tool-name">-</span>
           <span id="tool-status">-</span>
+          <span id="tool-expand-icon">▼</span>
         </div>
-        <pre id="tool-output"></pre>
+        <div id="tool-output-wrapper" class="collapsed">
+          <pre id="tool-output"></pre>
+        </div>
       </div>
 
       <footer id="input-area">
