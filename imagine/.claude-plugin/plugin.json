@@ -1,0 +1,5 @@
+{
+  "name": "imagine",
+  "description": "Generate images using Gemini 3 Pro (Nano Banana Pro)",
+  "version": "1.0.0"
+}
