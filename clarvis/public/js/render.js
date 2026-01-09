@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { renderMarkdown } from './markdown.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -42,7 +43,12 @@ export function renderMessages() {
   for (const msg of newMessages) {
     const el = document.createElement('div');
     el.className = `message ${msg.role}`;
-    el.innerHTML = `<div class="message-content">${escapeHtml(msg.content)}</div>`;
+
+    const content = msg.role === 'assistant'
+      ? renderMarkdown(msg.content)
+      : escapeHtml(msg.content);
+
+    el.innerHTML = `<div class="message-content">${content}</div>`;
     container.appendChild(el);
   }
 

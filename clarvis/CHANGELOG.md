@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0] - 2026-01-09
+
+### Added
+- Markdown rendering for assistant messages using marked.js
+- Syntax highlighting for code blocks using highlight.js (github-dark theme)
+- CSS styling for markdown elements (headings, lists, blockquotes, code, links)
+- New `markdown.js` module for rendering
+
 ## [0.2.0] - 2026-01-09
 
 ### Added
