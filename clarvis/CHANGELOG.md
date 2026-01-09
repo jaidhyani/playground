@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0] - 2026-01-09
+
+### Added
+- Prompt queue: queue prompts while session is running
+- Queue panel UI above input area shows queued prompts
+- Cancel buttons to remove queued prompts
+- API endpoints: `GET/DELETE /api/sessions/:id/queue/:promptId`
+- Queue processes automatically after current prompt completes
+
 ## [0.5.0] - 2026-01-09
 
 ### Added

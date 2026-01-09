@@ -5,7 +5,9 @@ import {
   setCurrentTool,
   setPendingPermission,
   addSession,
-  removeSession
+  removeSession,
+  addToQueue,
+  removeFromQueue
 } from './state.js';
 
 let ws = null;
@@ -121,6 +123,18 @@ function handleMessage(msg) {
 
     case 'error':
       console.error('Session error:', msg.payload.error);
+      break;
+
+    case 'queue:added':
+      addToQueue(msg.payload);
+      break;
+
+    case 'queue:cancelled':
+      removeFromQueue(msg.payload.promptId);
+      break;
+
+    case 'queue:processing':
+      removeFromQueue(msg.payload.id);
       break;
   }
 }

@@ -6,7 +6,11 @@ import {
   runPrompt,
   interruptSession,
   addUserMessage,
-  forkSession
+  forkSession,
+  queuePrompt,
+  getQueue,
+  cancelQueuedPrompt,
+  dequeuePrompt
 } from './sessions.js';
 import { broadcast, broadcastAll } from './ws-hub.js';
 import { createPermissionHandler, handlePermissionResponse } from './permissions.js';
@@ -59,6 +63,12 @@ export async function handleApiRequest(req, res, parsedUrl) {
     const body = await readBody(req);
     if (!body.prompt) return sendJson(res, 400, { error: 'prompt required' });
 
+    if (session.status === 'running') {
+      const queued = queuePrompt(id, body.prompt);
+      broadcast(id, { type: 'queue:added', payload: queued });
+      return sendJson(res, 202, { status: 'queued', queued });
+    }
+
     const userMessage = await addUserMessage(id, body.prompt);
 
     broadcast(id, {
@@ -68,6 +78,22 @@ export async function handleApiRequest(req, res, parsedUrl) {
 
     runPromptAsync(id, body.prompt);
     return sendJson(res, 202, { status: 'running' });
+  }
+
+  const queueMatch = path.match(/^\/api\/sessions\/([^/]+)\/queue$/);
+  if (queueMatch && method === 'GET') {
+    const id = queueMatch[1];
+    return sendJson(res, 200, getQueue(id));
+  }
+
+  const cancelQueueMatch = path.match(/^\/api\/sessions\/([^/]+)\/queue\/([^/]+)$/);
+  if (cancelQueueMatch && method === 'DELETE') {
+    const [, sessionId, promptId] = cancelQueueMatch;
+    const success = cancelQueuedPrompt(sessionId, promptId);
+    if (success) {
+      broadcast(sessionId, { type: 'queue:cancelled', payload: { promptId } });
+    }
+    return sendJson(res, success ? 200 : 404, { success });
   }
 
   const interruptMatch = path.match(/^\/api\/sessions\/([^/]+)\/interrupt$/);
@@ -169,6 +195,17 @@ async function runPromptAsync(sessionId, prompt) {
     type: 'session:status',
     payload: { status: finalSession?.status || 'ended' }
   });
+
+  const nextPrompt = dequeuePrompt(sessionId);
+  if (nextPrompt) {
+    broadcast(sessionId, { type: 'queue:processing', payload: nextPrompt });
+    const userMessage = await addUserMessage(sessionId, nextPrompt.prompt);
+    broadcast(sessionId, {
+      type: 'message:user',
+      payload: { content: nextPrompt.prompt, timestamp: userMessage.timestamp }
+    });
+    runPromptAsync(sessionId, nextPrompt.prompt);
+  }
 }
 
 function summarizeSession(session) {

@@ -136,6 +136,25 @@ export function renderSidebar() {
   }
 }
 
+export function renderQueuePanel() {
+  const panel = $('#queue-panel');
+  const list = $('#queue-list');
+  if (!panel || !list) return;
+
+  if (state.promptQueue.length === 0) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  panel.classList.remove('hidden');
+  list.innerHTML = state.promptQueue.map(item => `
+    <div class="queue-item" data-id="${item.id}">
+      <span class="queue-item-text">${escapeHtml(item.prompt)}</span>
+      <button class="queue-item-cancel" data-prompt-id="${item.id}">✕</button>
+    </div>
+  `).join('');
+}
+
 export function renderAll() {
   renderSessionList();
   renderMessages();
@@ -144,6 +163,7 @@ export function renderAll() {
   renderPermissionModal();
   renderConfigPanel();
   renderSidebar();
+  renderQueuePanel();
 }
 
 function shortenPath(path) {

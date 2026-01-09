@@ -2,6 +2,7 @@ export const state = {
   sessions: [],
   activeSessionId: null,
   messages: [],
+  promptQueue: [],
   currentTool: null,
   pendingPermission: null,
   config: {
@@ -37,9 +38,11 @@ export function setActiveSession(id) {
   const session = state.sessions.find(s => s.id === id);
   if (session) {
     state.messages = session.messages || [];
+    state.promptQueue = session.promptQueue || [];
     state.config = { ...session.config };
   } else {
     state.messages = [];
+    state.promptQueue = [];
   }
   notify();
 }
@@ -94,5 +97,20 @@ export function toggleSidebar(open) {
 
 export function toggleConfigPanel(open) {
   state.ui.configPanelOpen = open ?? !state.ui.configPanelOpen;
+  notify();
+}
+
+export function addToQueue(queuedPrompt) {
+  state.promptQueue.push(queuedPrompt);
+  notify();
+}
+
+export function removeFromQueue(promptId) {
+  state.promptQueue = state.promptQueue.filter(p => p.id !== promptId);
+  notify();
+}
+
+export function setQueue(queue) {
+  state.promptQueue = queue;
   notify();
 }

@@ -43,3 +43,11 @@ export function respondPermission(requestId, decision, updatedInput) {
 export function forkSession(sessionId) {
   return request('POST', `/sessions/${sessionId}/fork`);
 }
+
+export function getQueue(sessionId) {
+  return request('GET', `/sessions/${sessionId}/queue`);
+}
+
+export function cancelQueuedPrompt(sessionId, promptId) {
+  return request('DELETE', `/sessions/${sessionId}/queue/${promptId}`);
+}

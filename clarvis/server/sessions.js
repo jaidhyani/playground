@@ -14,7 +14,8 @@ export function getAllSessions() {
     workingDirectory: s.config.workingDirectory,
     createdAt: s.createdAt,
     lastActivity: s.lastActivity,
-    messageCount: s.messageCount
+    messageCount: s.messageCount,
+    queueLength: s.promptQueue?.length || 0
   }));
 }
 
@@ -58,6 +59,7 @@ export async function createSession(config) {
       systemPrompt: config.systemPrompt
     },
     messages: [],
+    promptQueue: [],
     abortController: null
   };
   sessions.set(id, session);
@@ -184,10 +186,48 @@ export async function forkSession(id) {
     messageCount: original.messageCount,
     config: { ...original.config },
     messages: original.messages.map(m => ({ ...m })),
+    promptQueue: [],
     abortController: null
   };
 
   sessions.set(newId, forked);
   await saveSession(forked);
   return forked;
+}
+
+export function queuePrompt(sessionId, prompt) {
+  const session = sessions.get(sessionId);
+  if (!session) return null;
+
+  const queuedPrompt = {
+    id: randomUUID(),
+    prompt,
+    queuedAt: Date.now()
+  };
+
+  if (!session.promptQueue) session.promptQueue = [];
+  session.promptQueue.push(queuedPrompt);
+  return queuedPrompt;
+}
+
+export function getQueue(sessionId) {
+  const session = sessions.get(sessionId);
+  return session?.promptQueue || [];
+}
+
+export function cancelQueuedPrompt(sessionId, promptId) {
+  const session = sessions.get(sessionId);
+  if (!session?.promptQueue) return false;
+
+  const index = session.promptQueue.findIndex(p => p.id === promptId);
+  if (index === -1) return false;
+
+  session.promptQueue.splice(index, 1);
+  return true;
+}
+
+export function dequeuePrompt(sessionId) {
+  const session = sessions.get(sessionId);
+  if (!session?.promptQueue?.length) return null;
+  return session.promptQueue.shift();
 }

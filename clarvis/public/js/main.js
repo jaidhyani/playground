@@ -65,6 +65,8 @@ function bindEvents() {
   $('#permission-deny')?.addEventListener('click', () => handlePermission('deny'));
 
   $('#tool-toggle')?.addEventListener('click', toggleToolPanel);
+
+  $('#queue-list')?.addEventListener('click', handleQueueClick);
 }
 
 function toggleToolPanel() {
@@ -128,6 +130,16 @@ async function forkCurrentSession() {
 function autoResize() {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+}
+
+async function handleQueueClick(e) {
+  const cancelBtn = e.target.closest('.queue-item-cancel');
+  if (!cancelBtn) return;
+
+  const promptId = cancelBtn.dataset.promptId;
+  if (promptId && state.activeSessionId) {
+    await api.cancelQueuedPrompt(state.activeSessionId, promptId);
+  }
 }
 
 init();
