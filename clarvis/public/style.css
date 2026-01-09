@@ -742,6 +742,72 @@ body {
   outline: 2px solid var(--accent);
 }
 
+/* Input wrapper for autocomplete positioning */
+#input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+#input-wrapper #prompt-input {
+  width: 100%;
+}
+
+/* Command autocomplete dropdown */
+#command-autocomplete {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+#command-autocomplete.hidden {
+  display: none;
+}
+
+.autocomplete-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--bg-secondary);
+  transition: background 0.1s;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+  background: var(--bg-secondary);
+}
+
+.autocomplete-item-name {
+  color: var(--accent);
+  font-weight: 500;
+  font-family: monospace;
+}
+
+.autocomplete-item-hint {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-left: 8px;
+  font-family: monospace;
+}
+
+.autocomplete-item-desc {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
 /* Config panel */
 #config-panel {
   width: 300px;

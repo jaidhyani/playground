@@ -9,6 +9,7 @@ const knownDirectories = new Set();
 // Cache for models and commands (fetched once on first query)
 let cachedModels = null;
 let cachedCommands = null;
+let cachedSlashCommands = null; // All slash commands from init message
 
 export function getAllSessions() {
   return Array.from(sessions.values()).map(s => {
@@ -88,7 +89,7 @@ export async function createSession(config) {
     config: {
       workingDirectory,
       permissionMode: config.permissionMode || 'default',
-      model: config.model || 'claude-sonnet-4-5',
+      model: config.model || 'sonnet',
       systemPrompt: config.systemPrompt,
       permissionTimeout: config.permissionTimeout ?? null  // null = wait indefinitely
     },
@@ -152,7 +153,9 @@ export async function* runPrompt(sessionId, prompt, options = {}) {
     // Fetch models and commands on first query (cache them)
     if (!cachedModels) {
       try {
-        cachedModels = await response.supportedModels();
+        const allModels = await response.supportedModels();
+        // Filter out "Custom model" entries - keep only standard aliases
+        cachedModels = allModels.filter(m => m.description !== 'Custom model');
         console.log(`Loaded ${cachedModels.length} available models`);
       } catch (e) {
         console.error('Failed to fetch models:', e.message);
@@ -161,7 +164,7 @@ export async function* runPrompt(sessionId, prompt, options = {}) {
     if (!cachedCommands) {
       try {
         cachedCommands = await response.supportedCommands();
-        console.log(`Loaded ${cachedCommands.length} available commands`);
+        console.log(`Loaded ${cachedCommands.length} skill commands`);
       } catch (e) {
         console.error('Failed to fetch commands:', e.message);
       }
@@ -172,6 +175,11 @@ export async function* runPrompt(sessionId, prompt, options = {}) {
 
       if (message.type === 'system' && message.subtype === 'init') {
         session.agentSessionId = message.session_id;
+
+        // Note: message.slash_commands only contains skill commands, not built-in CLI commands
+        if (!cachedSlashCommands && message.slash_commands) {
+          cachedSlashCommands = message.slash_commands;
+        }
       }
 
       if (message.type === 'assistant') {
@@ -352,9 +360,52 @@ export function getAvailableModels() {
   return cachedModels || [];
 }
 
-// Get available slash commands (cached after first query)
+// Get available slash commands
+// Merges skill commands (with descriptions) with built-in CLI commands
 export function getAvailableCommands() {
-  return cachedCommands || [];
+  const skillCommands = cachedCommands || [];
+
+  // Built-in CLI commands (not exposed by SDK but handled by Claude Code)
+  const builtInCommands = [
+    { name: 'clear', description: 'Clear conversation history and start fresh', argumentHint: '' },
+    { name: 'help', description: 'Show available commands and help', argumentHint: '' },
+    { name: 'model', description: 'Change the current model (e.g., /model sonnet)', argumentHint: '<model>' },
+    { name: 'bug', description: 'Report a bug', argumentHint: '' },
+    { name: 'doctor', description: 'Check Claude Code health and configuration', argumentHint: '' },
+    { name: 'login', description: 'Log in to your Anthropic account', argumentHint: '' },
+    { name: 'logout', description: 'Log out of your account', argumentHint: '' },
+    { name: 'memory', description: 'View and manage CLAUDE.md memory files', argumentHint: '' },
+    { name: 'permissions', description: 'View and manage tool permissions', argumentHint: '' },
+    { name: 'status', description: 'Show current session status and info', argumentHint: '' },
+    { name: 'vim', description: 'Toggle vim keybindings mode', argumentHint: '' },
+    { name: 'terminal-setup', description: 'Configure terminal integration (Shift+Enter)', argumentHint: '' },
+    { name: 'config', description: 'Open or edit configuration', argumentHint: '' },
+    { name: 'add-dir', description: 'Add a directory to the allowed list', argumentHint: '<directory>' },
+    { name: 'mcp', description: 'View MCP server status and configuration', argumentHint: '' }
+  ];
+
+  // Build merged command list: built-in commands first, then skill commands
+  const commands = [];
+  const seenNames = new Set();
+
+  // Add built-in commands
+  for (const cmd of builtInCommands) {
+    seenNames.add(cmd.name);
+    commands.push(cmd);
+  }
+
+  // Add skill commands (these have better descriptions from SDK)
+  for (const cmd of skillCommands) {
+    if (!seenNames.has(cmd.name)) {
+      seenNames.add(cmd.name);
+      commands.push(cmd);
+    }
+  }
+
+  // Sort alphabetically for easier discovery
+  commands.sort((a, b) => a.name.localeCompare(b.name));
+
+  return commands;
 }
 
 // Update session model

@@ -335,9 +335,12 @@ export function renderConfigPanel() {
     // Render model options dynamically
     if (model && state.availableModels.length > 0) {
       const currentModel = state.config.model;
-      model.innerHTML = state.availableModels.map(m =>
-        `<option value="${m.value}" ${m.value === currentModel ? 'selected' : ''}>${m.displayName || m.value}</option>`
-      ).join('');
+      model.innerHTML = state.availableModels.map(m => {
+        const label = m.description
+          ? `${m.displayName} — ${m.description}`
+          : (m.displayName || m.value);
+        return `<option value="${m.value}" ${m.value === currentModel ? 'selected' : ''}>${label}</option>`;
+      }).join('');
     } else if (model) {
       model.value = state.config.model;
     }

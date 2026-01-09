@@ -83,7 +83,12 @@
       </div>
 
       <footer id="input-area">
-        <textarea id="prompt-input" placeholder="Send a message..." rows="1"></textarea>
+        <div id="input-wrapper">
+          <div id="command-autocomplete" class="hidden">
+            <!-- Populated by JavaScript -->
+          </div>
+          <textarea id="prompt-input" placeholder="Send a message..." rows="1"></textarea>
+        </div>
         <button id="send-btn" class="btn-primary">Send</button>
       </footer>
     </main>

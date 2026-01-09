@@ -6,12 +6,20 @@
 - **Critical**: Fixed SDK message handling - content is now correctly extracted from nested `message.message.content` structure
 - Fixed query options: use `cwd` instead of `workingDirectory`, pass `abortController` to SDK
 - Sessions now properly resume using stored `agentSessionId`
+- Model selector now shows only standard aliases with full descriptions (e.g., "Default (recommended) — Opus 4.5 · Most capable for complex work")
 
 ### Added
 - API endpoints for dynamic model and command discovery (`/api/models`, `/api/commands`)
 - API endpoint to change session model (`/api/sessions/:id/model`)
 - Dynamic model selector in config panel (populated from SDK)
 - Models and commands are cached after first query and available to all sessions
+- Slash command autocomplete in prompt input (type `/` to see commands)
+- All 23 slash commands: built-in CLI commands (`/model`, `/clear`, `/help`, `/config`, etc.) plus SDK skills
+- Keyboard navigation (arrow keys, Tab/Enter to select, Escape to close)
+- Click selection and filtering as you type
+
+### Changed
+- Default model now uses `sonnet` alias instead of specific model ID
 
 ## [0.35.0] - 2026-01-09
 

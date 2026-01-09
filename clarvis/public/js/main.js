@@ -78,9 +78,13 @@ function renderModelSelector() {
   if (!select || state.availableModels.length === 0) return;
 
   const currentModel = state.config.model;
-  select.innerHTML = state.availableModels.map(m =>
-    `<option value="${m.value}" ${m.value === currentModel ? 'selected' : ''}>${m.displayName || m.value}</option>`
-  ).join('');
+  select.innerHTML = state.availableModels.map(m => {
+    // Show "displayName — description" to match Claude Code's format
+    const label = m.description
+      ? `${m.displayName} — ${m.description}`
+      : (m.displayName || m.value);
+    return `<option value="${m.value}" ${m.value === currentModel ? 'selected' : ''}>${label}</option>`;
+  }).join('');
 }
 
 function bindEvents() {
@@ -117,13 +121,48 @@ function bindEvents() {
   $('#send-btn')?.addEventListener('click', sendMessage);
 
   $('#prompt-input')?.addEventListener('keydown', (e) => {
+    // Handle autocomplete navigation
+    if (autocompleteState.visible) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateAutocomplete(1);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateAutocomplete(-1);
+        return;
+      }
+      if (e.key === 'Tab' || e.key === 'Enter') {
+        e.preventDefault();
+        selectAutocompleteItem();
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        hideAutocomplete();
+        return;
+      }
+    }
+
+    // Normal enter to send
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   });
 
-  $('#prompt-input')?.addEventListener('input', autoResize);
+  $('#prompt-input')?.addEventListener('input', (e) => {
+    autoResize.call(e.target);
+    handleAutocompleteInput(e.target.value);
+  });
+
+  // Hide autocomplete when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#input-wrapper') && autocompleteState.visible) {
+      hideAutocomplete();
+    }
+  });
 
   $('#menu-btn')?.addEventListener('click', () => toggleSidebar());
 
@@ -576,6 +615,124 @@ async function regenerateToken() {
   }
 
   alert('Token regenerated successfully.');
+}
+
+// Slash command autocomplete
+const autocompleteState = {
+  visible: false,
+  filtered: [],
+  selectedIndex: 0
+};
+
+function handleAutocompleteInput(value) {
+  // Only trigger autocomplete for slash commands at the start
+  if (!value.startsWith('/')) {
+    hideAutocomplete();
+    return;
+  }
+
+  const query = value.slice(1).toLowerCase(); // Remove leading "/"
+  const commands = state.availableCommands || [];
+
+  // Filter commands matching the query
+  const filtered = commands.filter(cmd =>
+    cmd.name.toLowerCase().startsWith(query)
+  );
+
+  if (filtered.length === 0) {
+    hideAutocomplete();
+    return;
+  }
+
+  autocompleteState.filtered = filtered;
+  autocompleteState.selectedIndex = 0;
+  showAutocomplete();
+}
+
+function showAutocomplete() {
+  const container = $('#command-autocomplete');
+  if (!container) return;
+
+  autocompleteState.visible = true;
+  container.classList.remove('hidden');
+  renderAutocomplete();
+}
+
+function hideAutocomplete() {
+  const container = $('#command-autocomplete');
+  if (!container) return;
+
+  autocompleteState.visible = false;
+  autocompleteState.filtered = [];
+  autocompleteState.selectedIndex = 0;
+  container.classList.add('hidden');
+}
+
+function renderAutocomplete() {
+  const container = $('#command-autocomplete');
+  if (!container) return;
+
+  container.innerHTML = autocompleteState.filtered.map((cmd, index) => {
+    const isSelected = index === autocompleteState.selectedIndex;
+    const hint = cmd.argumentHint ? `<span class="autocomplete-item-hint">${escapeHtml(cmd.argumentHint)}</span>` : '';
+
+    return `
+      <div class="autocomplete-item ${isSelected ? 'selected' : ''}" data-index="${index}">
+        <div>
+          <span class="autocomplete-item-name">/${escapeHtml(cmd.name)}</span>
+          ${hint}
+        </div>
+        <div class="autocomplete-item-desc">${escapeHtml(cmd.description)}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind click handlers
+  container.querySelectorAll('.autocomplete-item').forEach(item => {
+    item.addEventListener('click', () => {
+      autocompleteState.selectedIndex = parseInt(item.dataset.index, 10);
+      selectAutocompleteItem();
+    });
+  });
+}
+
+function navigateAutocomplete(direction) {
+  const count = autocompleteState.filtered.length;
+  if (count === 0) return;
+
+  autocompleteState.selectedIndex = (autocompleteState.selectedIndex + direction + count) % count;
+  renderAutocomplete();
+
+  // Scroll selected item into view
+  const container = $('#command-autocomplete');
+  const selected = container?.querySelector('.autocomplete-item.selected');
+  selected?.scrollIntoView({ block: 'nearest' });
+}
+
+function selectAutocompleteItem() {
+  const cmd = autocompleteState.filtered[autocompleteState.selectedIndex];
+  if (!cmd) return;
+
+  const input = $('#prompt-input');
+  if (!input) return;
+
+  // Replace input with the selected command
+  input.value = `/${cmd.name} `;
+  input.focus();
+
+  // Move cursor to end
+  input.setSelectionRange(input.value.length, input.value.length);
+
+  hideAutocomplete();
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 init();
