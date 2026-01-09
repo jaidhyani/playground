@@ -18,14 +18,17 @@ export function renderSessionList() {
     return `
     <div class="session-item ${session.id === state.activeSessionId ? 'active' : ''}"
          data-id="${session.id}">
-      <div class="session-item-title">
-        ${escapeHtml(session.name || shortenPath(session.workingDirectory))}
-        ${badgeHtml}
+      <div class="session-item-content">
+        <div class="session-item-title">
+          ${escapeHtml(session.name || shortenPath(session.workingDirectory))}
+          ${badgeHtml}
+        </div>
+        <div class="session-item-meta">
+          <span class="status-badge ${session.status}">${session.status}</span>
+          <span>${timeAgo(session.lastActivity)}</span>
+        </div>
       </div>
-      <div class="session-item-meta">
-        <span class="status-badge ${session.status}">${session.status}</span>
-        <span>${timeAgo(session.lastActivity)}</span>
-      </div>
+      <button class="session-delete-btn" data-id="${session.id}" title="Delete session">✕</button>
     </div>
   `;
   }).join('');

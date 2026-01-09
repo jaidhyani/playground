@@ -44,6 +44,13 @@ function bindEvents() {
   $('#new-session-btn')?.addEventListener('click', createNewSession);
 
   $('#session-list')?.addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.session-delete-btn');
+    if (deleteBtn) {
+      e.stopPropagation();
+      handleDeleteSession(deleteBtn.dataset.id);
+      return;
+    }
+
     const item = e.target.closest('.session-item');
     if (item) {
       setActiveSession(item.dataset.id);
@@ -215,6 +222,16 @@ async function retryLastPrompt() {
 
 function dismissError() {
   setLastError(null);
+}
+
+async function handleDeleteSession(sessionId) {
+  const session = state.sessions.find(s => s.id === sessionId);
+  if (!session) return;
+
+  const confirmed = confirm(`Delete session "${session.name}"?\n\nThis cannot be undone.`);
+  if (!confirmed) return;
+
+  await api.deleteSession(sessionId);
 }
 
 init();

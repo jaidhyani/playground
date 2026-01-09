@@ -72,6 +72,14 @@ body {
   cursor: pointer;
   margin-bottom: 4px;
   transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.session-item-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .session-item:hover {
@@ -80,6 +88,34 @@ body {
 
 .session-item.active {
   background: var(--accent);
+}
+
+.session-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.session-item:hover .session-delete-btn {
+  opacity: 1;
+}
+
+.session-delete-btn:hover {
+  color: var(--danger);
+}
+
+.session-item.active .session-delete-btn {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.session-item.active .session-delete-btn:hover {
+  color: var(--danger);
 }
 
 .session-item-title {

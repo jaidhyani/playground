@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0] - 2026-01-09
+
+### Added
+- Delete session button (appears on hover in sidebar)
+- Confirmation dialog before deletion
+- Session deletion removes from disk and UI
+
 ## [0.14.0] - 2026-01-09
 
 ### Added
