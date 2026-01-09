@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0] - 2026-01-09
+
+### Changed
+- Permission modal now uses tiered disclosure
+- Summary shows first ~100 chars of tool input
+- "View full input" expands to show complete JSON
+
 ## [0.18.0] - 2026-01-09
 
 ### Added

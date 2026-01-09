@@ -181,6 +181,7 @@ export function renderToolPanel() {
 export function renderPermissionModal() {
   const modal = $('#permission-modal');
   const tool = $('#permission-tool');
+  const summary = $('#permission-summary');
   const input = $('#permission-input');
 
   if (!modal) return;
@@ -192,8 +193,18 @@ export function renderPermissionModal() {
 
   modal.classList.remove('hidden');
   if (tool) tool.textContent = `Tool: ${state.pendingPermission.toolName}`;
+
+  const fullInput = JSON.stringify(state.pendingPermission.input, null, 2);
+
+  if (summary) {
+    const truncated = fullInput.length > 100
+      ? fullInput.slice(0, 100) + '...'
+      : fullInput;
+    summary.textContent = truncated;
+  }
+
   if (input) {
-    input.textContent = JSON.stringify(state.pendingPermission.input, null, 2);
+    input.textContent = fullInput;
   }
 }
 

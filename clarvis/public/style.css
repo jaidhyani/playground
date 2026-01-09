@@ -687,11 +687,34 @@ body {
   margin-bottom: 16px;
 }
 
+.permission-summary {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 8px 0;
+  font-family: 'SF Mono', Monaco, monospace;
+  word-break: break-word;
+}
+
+#permission-details {
+  margin: 12px 0;
+}
+
+#permission-details summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.875rem;
+  user-select: none;
+}
+
+#permission-details summary:hover {
+  text-decoration: underline;
+}
+
 #permission-input {
   background: var(--bg-tertiary);
   padding: 12px;
   border-radius: 6px;
-  margin: 12px 0;
+  margin: 8px 0 0 0;
   font-size: 0.75rem;
   max-height: 200px;
   overflow: auto;
