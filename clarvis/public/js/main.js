@@ -97,6 +97,15 @@ function bindEvents() {
   $('#search-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeSearch();
   });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Cmd/Ctrl+F to open search
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+      e.preventDefault();
+      openSearch();
+    }
+  });
 }
 
 function toggleToolPanel() {
