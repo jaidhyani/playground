@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0] - 2026-01-09
+
+### Changed
+- Search now bypasses virtual scroll to find all matching messages
+- Hidden messages become visible during active search
+- Virtual scroll restored when search is closed
+
 ## [0.21.0] - 2026-01-09
 
 ### Added

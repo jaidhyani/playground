@@ -5,6 +5,7 @@ import { getVisibleMessages, renderLoadMoreBanner } from './virtual-scroll.js';
 const $ = (sel) => document.querySelector(sel);
 let visibleMessagesOffset = 0; // Track how many extra messages are loaded
 let lastRenderedSessionId = null; // Track session changes
+let lastSearchState = false; // Track search state changes
 
 export function renderSessionList() {
   const container = $('#session-list');
@@ -60,8 +61,19 @@ export function renderMessages(forceFullRender = false) {
 
   emptyState?.classList.add('hidden');
 
-  // Get visible messages (limited for performance)
-  const { visible, hiddenCount } = getVisibleMessages(state.messages);
+  // Disable virtual scroll during search to show all matching messages
+  const isSearching = state.searchQuery && state.searchQuery.length > 0;
+
+  // Force re-render when search state changes
+  if (isSearching !== lastSearchState) {
+    lastSearchState = isSearching;
+    forceFullRender = true;
+  }
+
+  // Get visible messages (limited for performance, unless searching)
+  const { visible, hiddenCount } = isSearching
+    ? { visible: state.messages, hiddenCount: 0 }
+    : getVisibleMessages(state.messages);
   const actualHidden = Math.max(0, hiddenCount - visibleMessagesOffset);
 
   // Check if we need to re-render or just append
@@ -70,7 +82,7 @@ export function renderMessages(forceFullRender = false) {
   const expectedCount = visible.length + visibleMessagesOffset;
 
   // Force full render when message count exceeds limit (to show banner)
-  const needsVirtualization = hiddenCount > 0 && !existingBanner;
+  const needsVirtualization = hiddenCount > 0 && !existingBanner && !isSearching;
 
   if (forceFullRender || existingMessages === 0 || existingBanner || needsVirtualization) {
     // Full re-render
