@@ -152,8 +152,8 @@ async function createNewSession() {
     systemPrompt: systemPrompt || undefined
   });
 
-  // Add session with its config
-  state.sessions.push({ ...session, messages: [] });
+  // Add session with its config (addSession checks for duplicates)
+  addSession(session);
   state.config = { ...session.config };
   setActiveSession(session.id);
   wsSubscribe(session.id);
