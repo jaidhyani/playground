@@ -443,6 +443,21 @@ function countSearchMatches() {
   }).length;
 }
 
+export function renderConnectionStatus() {
+  const dot = $('#connection-status');
+  if (!dot) return;
+
+  if (state.connected) {
+    dot.classList.remove('disconnected');
+    dot.classList.add('connected');
+    dot.title = 'Connected';
+  } else {
+    dot.classList.remove('connected');
+    dot.classList.add('disconnected');
+    dot.title = 'Disconnected - reconnecting...';
+  }
+}
+
 export function renderAll() {
   renderSessionList();
   renderMessages();
@@ -455,6 +470,7 @@ export function renderAll() {
   renderActivityPanel();
   renderErrorRetryPanel();
   renderSearchBar();
+  renderConnectionStatus();
 }
 
 function shortenPath(path) {

@@ -11,7 +11,8 @@ import {
   setTyping,
   setToolActivity,
   setLastPrompt,
-  setLastError
+  setLastError,
+  setConnected
 } from './state.js';
 import { showWarning, showError, showSuccess } from './toast.js';
 import { notifyPermissionRequest, notifyError, notifySessionComplete } from './notifications.js';
@@ -28,6 +29,7 @@ export function connect() {
 
   ws.onopen = async () => {
     console.log('WebSocket connected');
+    setConnected(true);
     const isReconnect = wasConnected;
     wasConnected = true;
     reconnectDelay = 1000;
@@ -52,6 +54,7 @@ export function connect() {
 
   ws.onclose = () => {
     console.log('WebSocket closed, reconnecting...');
+    setConnected(false);
     scheduleReconnect();
   };
 

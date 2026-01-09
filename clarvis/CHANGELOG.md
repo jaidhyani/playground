@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.0] - 2026-01-09
+
+### Added
+- WebSocket connection status indicator (green dot = connected, pulsing red = disconnected)
+- Visual feedback when reconnecting after connection loss
+
 ## [0.34.0] - 2026-01-09
 
 ### Added

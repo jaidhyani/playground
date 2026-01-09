@@ -11,6 +11,7 @@ export const state = {
   lastError: null,
   searchQuery: '',
   searchOpen: false,
+  connected: false,
   config: {
     workingDirectory: '',
     model: 'claude-sonnet-4-5',
@@ -162,5 +163,10 @@ export function setSearchOpen(open) {
   if (!open) {
     state.searchQuery = '';
   }
+  notify();
+}
+
+export function setConnected(connected) {
+  state.connected = connected;
   notify();
 }
