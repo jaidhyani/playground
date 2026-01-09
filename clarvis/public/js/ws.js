@@ -13,23 +13,31 @@ import {
   setLastPrompt,
   setLastError
 } from './state.js';
-import { showWarning, showError } from './toast.js';
+import { showWarning, showError, showSuccess } from './toast.js';
 import { notifyPermissionRequest, notifyError, notifySessionComplete } from './notifications.js';
+import * as api from './api.js';
 
 let ws = null;
 let reconnectTimeout = null;
 let reconnectDelay = 1000;
+let wasConnected = false;
 
 export function connect() {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${protocol}//${location.host}`);
 
-  ws.onopen = () => {
+  ws.onopen = async () => {
     console.log('WebSocket connected');
+    const isReconnect = wasConnected;
+    wasConnected = true;
     reconnectDelay = 1000;
 
     for (const session of state.sessions) {
       subscribe(session.id);
+    }
+
+    if (isReconnect && state.activeSessionId) {
+      await fetchMissedMessages();
     }
   };
 
@@ -59,6 +67,32 @@ function scheduleReconnect() {
     reconnectDelay = Math.min(reconnectDelay * 2, 30000);
     connect();
   }, reconnectDelay);
+}
+
+async function fetchMissedMessages() {
+  try {
+    const sessionData = await api.getSession(state.activeSessionId);
+    const localSession = state.sessions.find(s => s.id === state.activeSessionId);
+
+    if (!localSession || !sessionData.messages) return;
+
+    const localCount = localSession.messages?.length || 0;
+    const serverCount = sessionData.messages.length;
+
+    if (serverCount > localCount) {
+      const missedMessages = sessionData.messages.slice(localCount);
+      for (const msg of missedMessages) {
+        addMessage(state.activeSessionId, msg);
+      }
+      console.log(`Recovered ${missedMessages.length} missed messages`);
+      showSuccess(`Recovered ${missedMessages.length} missed messages`);
+    }
+
+    // Update session status
+    updateSession(state.activeSessionId, { status: sessionData.status });
+  } catch (error) {
+    console.error('Failed to fetch missed messages:', error);
+  }
 }
 
 function handleMessage(msg) {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0] - 2026-01-09
+
+### Added
+- Auto-fetch missed messages on WebSocket reconnect
+- Shows success toast when messages are recovered
+- Syncs session status on reconnect
+
 ## [0.13.0] - 2026-01-09
 
 ### Added
