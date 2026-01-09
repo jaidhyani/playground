@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.0] - 2026-01-09
+
+### Added
+- Stop button (⏹) in session header to interrupt running sessions
+- Button only visible when session status is `running` or `waiting_permission`
+- Broadcasts status update to all connected clients on stop
+
 ## [0.31.0] - 2026-01-09
 
 ### Added

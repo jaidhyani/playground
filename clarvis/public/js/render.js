@@ -248,6 +248,7 @@ export function renderSessionHeader() {
   const session = state.sessions.find(s => s.id === state.activeSessionId);
   const title = $('#session-title');
   const status = $('#session-status');
+  const stopBtn = $('#stop-btn');
 
   if (title) {
     title.textContent = session ? (session.name || shortenPath(session.workingDirectory)) : 'No session';
@@ -255,6 +256,10 @@ export function renderSessionHeader() {
   if (status) {
     status.textContent = session?.status || '-';
     status.className = `status-badge ${session?.status || ''}`;
+  }
+  if (stopBtn) {
+    const isRunning = session?.status === 'running' || session?.status === 'waiting_permission';
+    stopBtn.classList.toggle('hidden', !isRunning);
   }
 }
 

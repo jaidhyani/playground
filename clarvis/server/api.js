@@ -105,6 +105,9 @@ export async function handleApiRequest(req, res, parsedUrl) {
   if (interruptMatch && method === 'POST') {
     const id = interruptMatch[1];
     const success = interruptSession(id);
+    if (success) {
+      broadcast(id, { type: 'session:status', payload: { status: 'idle' } });
+    }
     return sendJson(res, 200, { success });
   }
 

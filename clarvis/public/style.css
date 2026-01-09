@@ -240,6 +240,20 @@ body {
   background: var(--bg-secondary);
 }
 
+#stop-btn {
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+#stop-btn:hover {
+  opacity: 0.8;
+}
+
 /* Search bar */
 #search-bar {
   display: flex;

@@ -98,6 +98,7 @@ function bindEvents() {
 
   $('#fork-btn')?.addEventListener('click', forkCurrentSession);
   $('#clear-btn')?.addEventListener('click', clearCurrentSession);
+  $('#stop-btn')?.addEventListener('click', stopCurrentSession);
 
   $('#permission-allow')?.addEventListener('click', () => handlePermission('allow'));
   $('#permission-deny')?.addEventListener('click', () => handlePermission('deny'));
@@ -220,6 +221,12 @@ async function clearCurrentSession() {
   if (!confirmed) return;
 
   await api.clearSessionMessages(state.activeSessionId);
+}
+
+async function stopCurrentSession() {
+  if (!state.activeSessionId) return;
+
+  await api.interruptSession(state.activeSessionId);
 }
 
 function autoResize() {
