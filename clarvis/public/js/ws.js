@@ -12,6 +12,7 @@ import {
   setToolActivity
 } from './state.js';
 import { showWarning, showError } from './toast.js';
+import { notifyPermissionRequest, notifyError, notifySessionComplete } from './notifications.js';
 
 let ws = null;
 let reconnectTimeout = null;
@@ -75,15 +76,22 @@ function handleMessage(msg) {
       removeSession(sessionId);
       break;
 
-    case 'session:status':
+    case 'session:status': {
+      const prevStatus = state.sessions.find(s => s.id === sessionId)?.status;
       updateSession(sessionId, { status: msg.payload.status });
       if (msg.payload.status === 'running') {
         setTyping(true);
       } else {
         setTyping(false);
         setToolActivity(null);
+        // Notify when session becomes idle after being busy
+        if (prevStatus === 'running' && msg.payload.status === 'idle') {
+          const sessionName = getSessionName(sessionId);
+          notifySessionComplete(sessionName);
+        }
       }
       break;
+    }
 
     case 'session:init':
       updateSession(sessionId, { agentSessionId: msg.payload.agentSessionId });
@@ -125,20 +133,26 @@ function handleMessage(msg) {
       setTyping(true);
       break;
 
-    case 'permission:request':
+    case 'permission:request': {
       setPendingPermission({
         requestId: msg.payload.requestId,
         toolName: msg.payload.toolName,
         input: msg.payload.input,
         sessionId
       });
+      const permSessionName = getSessionName(sessionId);
       showWarning(`Permission required: ${msg.payload.toolName}`);
+      notifyPermissionRequest(msg.payload.toolName, permSessionName);
       break;
+    }
 
-    case 'error':
+    case 'error': {
       console.error('Session error:', msg.payload.error);
+      const errSessionName = getSessionName(sessionId);
       showError(msg.payload.error);
+      notifyError(msg.payload.error, errSessionName);
       break;
+    }
 
     case 'queue:added':
       addToQueue(msg.payload);
@@ -152,6 +166,11 @@ function handleMessage(msg) {
       removeFromQueue(msg.payload.id);
       break;
   }
+}
+
+function getSessionName(sessionId) {
+  const session = state.sessions.find(s => s.id === sessionId);
+  return session?.name || 'Session';
 }
 
 function formatContent(content) {

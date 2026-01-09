@@ -12,6 +12,7 @@ import * as api from './api.js';
 import { renderAll } from './render.js';
 import { initLightbox, handleImageClick } from './lightbox.js';
 import { initToast } from './toast.js';
+import { requestPermission as requestNotificationPermission } from './notifications.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -34,6 +35,7 @@ async function init() {
   bindEvents();
   initLightbox();
   initToast();
+  requestNotificationPermission();
   renderAll();
 }
 

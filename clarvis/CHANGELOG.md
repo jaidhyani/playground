@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.0] - 2026-01-09
+
+### Added
+- Browser notifications for permission requests, errors, and session completion
+- Notifications appear when browser tab not focused
+- Click notification to focus window
+- Auto-dismiss after 10 seconds
+
 ## [0.10.0] - 2026-01-09
 
 ### Added
