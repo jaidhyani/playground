@@ -9,7 +9,7 @@ import {
 } from './state.js';
 import { connect, subscribe as wsSubscribe } from './ws.js';
 import * as api from './api.js';
-import { renderAll } from './render.js';
+import { renderAll, renderSessionHeader, renderSessionList } from './render.js';
 import { initLightbox, handleImageClick } from './lightbox.js';
 import { initToast } from './toast.js';
 import { requestPermission as requestNotificationPermission } from './notifications.js';
@@ -75,6 +75,8 @@ function bindEvents() {
   $('#queue-list')?.addEventListener('click', handleQueueClick);
 
   $('#messages')?.addEventListener('click', handleImageClick);
+
+  $('#session-title')?.addEventListener('click', startRename);
 }
 
 function toggleToolPanel() {
@@ -148,6 +150,56 @@ async function handleQueueClick(e) {
   if (promptId && state.activeSessionId) {
     await api.cancelQueuedPrompt(state.activeSessionId, promptId);
   }
+}
+
+function startRename() {
+  if (!state.activeSessionId) return;
+
+  const titleEl = $('#session-title');
+  if (!titleEl || titleEl.tagName === 'INPUT') return;
+
+  const session = state.sessions.find(s => s.id === state.activeSessionId);
+  if (!session) return;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'session-title-input';
+  input.className = 'session-title-input';
+  input.value = session.name;
+
+  input.addEventListener('blur', () => finishRename(input));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      input.blur();
+    }
+    if (e.key === 'Escape') {
+      input.value = session.name;
+      input.blur();
+    }
+  });
+
+  titleEl.replaceWith(input);
+  input.focus();
+  input.select();
+}
+
+async function finishRename(input) {
+  const newName = input.value.trim();
+  const session = state.sessions.find(s => s.id === state.activeSessionId);
+
+  if (newName && newName !== session?.name) {
+    await api.renameSession(state.activeSessionId, newName);
+  }
+
+  const span = document.createElement('span');
+  span.id = 'session-title';
+  span.textContent = session?.name || 'No session';
+  span.addEventListener('click', startRename);
+
+  input.replaceWith(span);
+  renderSessionHeader();
+  renderSessionList();
 }
 
 init();

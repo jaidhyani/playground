@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0] - 2026-01-09
+
+### Added
+- Session renaming via inline edit in header
+- Click session title to rename, Enter to save, Escape to cancel
+- API endpoint: `POST /api/sessions/:id/rename`
+
 ## [0.11.0] - 2026-01-09
 
 ### Added

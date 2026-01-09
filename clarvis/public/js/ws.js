@@ -76,6 +76,10 @@ function handleMessage(msg) {
       removeSession(sessionId);
       break;
 
+    case 'session:renamed':
+      updateSession(sessionId, { name: msg.payload.name });
+      break;
+
     case 'session:status': {
       const prevStatus = state.sessions.find(s => s.id === sessionId)?.status;
       updateSession(sessionId, { status: msg.payload.status });

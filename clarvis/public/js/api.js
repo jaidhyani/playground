@@ -51,3 +51,7 @@ export function getQueue(sessionId) {
 export function cancelQueuedPrompt(sessionId, promptId) {
   return request('DELETE', `/sessions/${sessionId}/queue/${promptId}`);
 }
+
+export function renameSession(sessionId, name) {
+  return request('POST', `/sessions/${sessionId}/rename`, { name });
+}

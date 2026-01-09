@@ -151,6 +151,25 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+#session-title:hover {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
+
+.session-title-input {
+  font-size: inherit;
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text-primary);
+  padding: 4px 8px;
+  outline: none;
+  width: 200px;
+  max-width: 100%;
 }
 
 .status-badge {

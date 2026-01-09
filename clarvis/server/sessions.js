@@ -231,3 +231,14 @@ export function dequeuePrompt(sessionId) {
   if (!session?.promptQueue?.length) return null;
   return session.promptQueue.shift();
 }
+
+export async function renameSession(id, newName) {
+  const session = sessions.get(id);
+  if (!session) {
+    throw new Error(`Session ${id} not found`);
+  }
+
+  session.name = newName.trim() || session.name;
+  await saveSession(session);
+  return session;
+}
