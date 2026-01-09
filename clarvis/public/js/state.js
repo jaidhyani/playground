@@ -42,6 +42,7 @@ export function setActiveSession(id) {
     state.messages = session.messages || [];
     state.promptQueue = session.promptQueue || [];
     state.config = { ...session.config };
+    session.unreadCount = 0;
   } else {
     state.messages = [];
     state.promptQueue = [];
@@ -50,7 +51,7 @@ export function setActiveSession(id) {
 }
 
 export function addSession(session) {
-  state.sessions.push({ ...session, messages: [] });
+  state.sessions.push({ ...session, messages: [], unreadCount: 0 });
   notify();
 }
 
@@ -77,6 +78,8 @@ export function addMessage(sessionId, message) {
     session.messages.push(message);
     if (sessionId === state.activeSessionId) {
       state.messages = session.messages;
+    } else if (message.role === 'assistant') {
+      session.unreadCount = (session.unreadCount || 0) + 1;
     }
     notify();
   }

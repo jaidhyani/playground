@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0] - 2026-01-09
+
+### Added
+- Unread message badges on sessions in sidebar
+- Badge shows count of new assistant messages
+- Badge clears when session is selected
+
 ## [0.8.0] - 2026-01-09
 
 ### Added

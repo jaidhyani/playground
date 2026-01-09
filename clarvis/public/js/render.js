@@ -12,16 +12,23 @@ export function renderSessionList() {
     return;
   }
 
-  container.innerHTML = state.sessions.map(session => `
+  container.innerHTML = state.sessions.map(session => {
+    const unread = session.unreadCount || 0;
+    const badgeHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
+    return `
     <div class="session-item ${session.id === state.activeSessionId ? 'active' : ''}"
          data-id="${session.id}">
-      <div class="session-item-title">${escapeHtml(session.name || shortenPath(session.workingDirectory))}</div>
+      <div class="session-item-title">
+        ${escapeHtml(session.name || shortenPath(session.workingDirectory))}
+        ${badgeHtml}
+      </div>
       <div class="session-item-meta">
         <span class="status-badge ${session.status}">${session.status}</span>
         <span>${timeAgo(session.lastActivity)}</span>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 export function renderMessages() {
