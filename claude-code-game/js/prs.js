@@ -101,11 +101,13 @@ export function mergePR(prId) {
     // Get task info for message
     const task = pr.taskId ? getTask(pr.taskId) : null;
 
-    // First prototype merge gives dev multiplier boost
+    // First prototype merge unlocks Claude Code assist
     if (pr.isPrototype && gameState.clickMultiplier === 1) {
         const multiplier = 1.1 + Math.random() * 0.2; // 1.1x to 1.3x
         gameState.clickMultiplier = Math.round(multiplier * 10) / 10;
-        addEvent(`Merged "${pr.title}". Dev multiplier: ${gameState.clickMultiplier}x`, 'success');
+        gameState.resources.apiCredits = 100;  // Starting credits
+        gameState.narrative.flags.claudeCodeUnlocked = true;
+        addEvent(`Merged "${pr.title}". Claude Code unlocked. Dev: ${gameState.clickMultiplier}x`, 'success');
     } else if (task?.message) {
         // Show task's unlock message
         addEvent(task.message, 'success');

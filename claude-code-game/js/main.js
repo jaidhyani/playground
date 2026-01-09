@@ -104,8 +104,16 @@ function clickTask(taskId) {
     const task = gameState.tasks.find(t => t.id === taskId);
     if (!task) return;
 
-    // Each click adds multiplier points toward the task's devPoints requirement
-    task.progress += gameState.clickMultiplier;
+    // Base progress from click multiplier
+    let progress = gameState.clickMultiplier;
+
+    // Claude Code assist: 2x bonus but costs 1 API credit per click
+    if (gameState.settings.claudeCodeAssist && gameState.resources.apiCredits >= 1) {
+        gameState.resources.apiCredits -= 1;
+        progress *= 2;
+    }
+
+    task.progress += progress;
 
     if (task.progress >= task.devPoints) {
         completeTask(task);
@@ -115,6 +123,17 @@ function clickTask(taskId) {
 }
 
 window.clickTask = clickTask;
+
+function toggleClaudeCode() {
+    // Can only turn on if we have credits
+    if (!gameState.settings.claudeCodeAssist && gameState.resources.apiCredits < 1) {
+        return;
+    }
+    gameState.settings.claudeCodeAssist = !gameState.settings.claudeCodeAssist;
+    updateDisplay();
+}
+
+window.toggleClaudeCode = toggleClaudeCode;
 
 let selectedPR = null;
 

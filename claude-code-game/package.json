@@ -1,0 +1,14 @@
+{
+  "name": "claude-code-game",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:dom": "vitest run tests/dom",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0",
+    "vitest": "^2.0.0"
+  }
+}

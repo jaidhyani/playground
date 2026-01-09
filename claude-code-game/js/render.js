@@ -2,7 +2,7 @@
  * Rendering - Flat button-based UI
  */
 
-import { gameState, hasUpgrade } from './state.js';
+import { gameState, hasUpgrade, visibility } from './state.js';
 import { actions, canAffordAction } from './actions.js';
 import { upgradeDefinitions, canAffordUpgrade } from './upgrades.js';
 
@@ -26,43 +26,33 @@ export function renderResources() {
     const codebaseEl = document.getElementById('codebase');
     if (codebaseEl) codebaseEl.textContent = Math.floor(gameState.resources.codebase);
 
-    // Tech Debt (conditional)
+    // Tech Debt
     const techDebtEl = document.getElementById('techDebt');
     const techDebtDisplay = document.getElementById('tech-debt-display');
     if (techDebtEl) techDebtEl.textContent = Math.floor(gameState.resources.techDebt);
-    if (techDebtDisplay) {
-        techDebtDisplay.style.display = gameState.resources.techDebt > 0 ? 'inline' : 'none';
-    }
+    if (techDebtDisplay) techDebtDisplay.style.display = visibility.techDebt() ? 'inline' : 'none';
 
     // Trust
     const trustEl = document.getElementById('trust');
     if (trustEl) trustEl.textContent = Math.floor(gameState.resources.trust);
 
-    // Click multiplier (shown after first PR merged)
+    // Click multiplier
     const multiplierEl = document.getElementById('multiplier');
     const multiplierDisplay = document.getElementById('multiplier-display');
     if (multiplierEl) multiplierEl.textContent = gameState.clickMultiplier.toFixed(1) + 'x';
-    if (multiplierDisplay) {
-        multiplierDisplay.style.display = gameState.clickMultiplier > 1 ? 'inline' : 'none';
-    }
+    if (multiplierDisplay) multiplierDisplay.style.display = visibility.multiplier() ? 'inline' : 'none';
 
-    // API Credits (shown after vibe coding unlocks)
+    // API Credits
     const apiCreditsEl = document.getElementById('apiCredits');
     const apiCreditsDisplay = document.getElementById('api-credits-display');
     if (apiCreditsEl) apiCreditsEl.textContent = Math.floor(gameState.resources.apiCredits);
-    if (apiCreditsDisplay) {
-        apiCreditsDisplay.style.display = gameState.settings.vibeMode ? 'inline' : 'none';
-    }
+    if (apiCreditsDisplay) apiCreditsDisplay.style.display = visibility.apiCredits() ? 'inline' : 'none';
 
-    // Money (shown when low on credits or payday happens)
+    // Money
     const moneyEl = document.getElementById('money');
     const moneyDisplay = document.getElementById('money-display');
     if (moneyEl) moneyEl.textContent = Math.floor(gameState.resources.money);
-    if (moneyDisplay) {
-        const showMoney = gameState.narrative.flags.moneyRevealed ||
-            (gameState.settings.vibeMode && gameState.resources.apiCredits < 50);
-        moneyDisplay.style.display = showMoney ? 'inline' : 'none';
-    }
+    if (moneyDisplay) moneyDisplay.style.display = visibility.money() ? 'inline' : 'none';
 }
 
 function formatDate(date) {
@@ -93,6 +83,22 @@ export function renderButtons() {
 
     let html = '';
 
+    // Claude Code assist toggle
+    if (visibility.claudeCodeToggle()) {
+        const isOn = gameState.settings.claudeCodeAssist;
+        const hasCredits = gameState.resources.apiCredits >= 1;
+        const disabled = !hasCredits && !isOn;
+        const statusText = isOn ? 'ON (2x dev, -1 credit/click)' : 'OFF';
+        html += `<button class="btn claude-code-toggle ${isOn ? 'active' : ''}" ${disabled ? 'disabled' : ''} onclick="toggleClaudeCode()">Claude Code: ${statusText}</button>`;
+    }
+
+    // PRs first - these need attention
+    for (const pr of gameState.prQueue) {
+        const isRisky = pr.quality < 0.4;
+        const label = isRisky ? `PR: "${pr.title}" ⚠` : `PR: "${pr.title}"`;
+        html += `<button class="btn pr ${isRisky ? 'risky' : ''}" onclick="openPR(${pr.id})">${label}</button>`;
+    }
+
     // Tasks as clickable progress bars
     for (const task of gameState.tasks) {
         const currentPoints = task.progress.toFixed(2);
@@ -109,13 +115,6 @@ export function renderButtons() {
         if (!action.available()) continue;
         const canAfford = canAffordAction(action);
         html += `<button class="btn action" ${canAfford ? '' : 'disabled'} onclick="executeAction('${action.id}')">${action.name}</button>`;
-    }
-
-    // PRs as buttons that open panel
-    for (const pr of gameState.prQueue) {
-        const isRisky = pr.quality < 0.4;
-        const label = isRisky ? `PR: "${pr.title}" ⚠` : `PR: "${pr.title}"`;
-        html += `<button class="btn pr ${isRisky ? 'risky' : ''}" onclick="openPR(${pr.id})">${label}</button>`;
     }
 
     // Upgrades/Decisions

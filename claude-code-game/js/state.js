@@ -46,7 +46,8 @@ export const gameState = {
     // Settings
     settings: {
         autoMergePRs: false,
-        vibeMode: false
+        vibeMode: false,
+        claudeCodeAssist: false  // Toggle: costs API credits but boosts dev speed
     },
 
     // Timing
@@ -57,3 +58,13 @@ export const gameState = {
 export function hasUpgrade(id) {
     return gameState.upgrades.includes(id) || gameState.declinedUpgrades.includes(id);
 }
+
+// Visibility helpers - centralizes "when to show what" logic
+export const visibility = {
+    techDebt: () => gameState.resources.techDebt > 0,
+    multiplier: () => !!gameState.narrative.flags.claudeCodeUnlocked,
+    apiCredits: () => !!gameState.narrative.flags.claudeCodeUnlocked,
+    money: () => !!gameState.narrative.flags.moneyRevealed ||
+        (!!gameState.narrative.flags.claudeCodeUnlocked && gameState.resources.apiCredits < 50),
+    claudeCodeToggle: () => !!gameState.narrative.flags.claudeCodeUnlocked
+};

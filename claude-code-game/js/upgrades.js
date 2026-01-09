@@ -2,7 +2,7 @@
  * Upgrades/Decisions - Key choices that shape your path
  */
 
-import { gameState, hasUpgrade } from './state.js';
+import { gameState, hasUpgrade, visibility } from './state.js';
 import { addEvent } from './events.js';
 import { updateDisplay } from './render.js';
 
@@ -40,7 +40,7 @@ export const upgradeDefinitions = {
                 }
             }
         ],
-        condition: () => gameState.settings.vibeMode &&
+        condition: () => visibility.apiCredits() &&
             gameState.resources.apiCredits < 20 &&
             gameState.resources.money >= 50
     },

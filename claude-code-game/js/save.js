@@ -23,27 +23,8 @@ export function loadGame() {
             Object.assign(gameState, parsed);
             gameState.lastTick = Date.now();
 
-            // Migrations for old saves
-            if (gameState.resources.trust === undefined) {
-                gameState.resources.trust = 50;
-            }
-            if (gameState.resources.techDebt === undefined) {
-                gameState.resources.techDebt = 0;
-            }
-            if (gameState.settings.vibeMode === undefined) {
-                gameState.settings.vibeMode = false;
-            }
-            if (gameState.clickMultiplier === undefined) {
-                gameState.clickMultiplier = 1;
-            }
-            if (gameState.tasks === undefined) {
-                gameState.tasks = [];
-            }
-            if (gameState.completedTasks === undefined) {
-                gameState.completedTasks = [];
-            }
-            // Convert old date strings back to Date objects
-            if (gameState.gameDate && typeof gameState.gameDate === 'string') {
+            // Restore Date object from JSON string
+            if (typeof gameState.gameDate === 'string') {
                 gameState.gameDate = new Date(gameState.gameDate);
             }
 
@@ -81,6 +62,14 @@ export const dev = {
     },
     addMoney: (n = 500) => {
         gameState.resources.money += n;
+        updateDisplay();
+    },
+    unlockClaudeCode: () => {
+        gameState.narrative.flags.claudeCodeUnlocked = true;
+        gameState.clickMultiplier = 1.2;
+        if (gameState.resources.apiCredits < 100) {
+            gameState.resources.apiCredits = 100;
+        }
         updateDisplay();
     },
     state: () => console.log(gameState)

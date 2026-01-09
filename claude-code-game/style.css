@@ -188,8 +188,38 @@ body {
     z-index: 1;
 }
 
-.btn.pr { border-color: #0af; color: #0af; }
-.btn.pr.risky { border-color: #f80; color: #f80; }
+.btn.pr {
+    border-color: #0af;
+    color: #0af;
+    border-width: 2px;
+    background: rgba(0, 170, 255, 0.1);
+}
+.btn.pr:hover {
+    background: rgba(0, 170, 255, 0.2);
+    border-color: #0af;
+}
+.btn.pr.risky {
+    border-color: #f80;
+    color: #f80;
+    background: rgba(255, 136, 0, 0.1);
+}
+.btn.pr.risky:hover {
+    background: rgba(255, 136, 0, 0.2);
+    border-color: #f80;
+}
+.btn.claude-code-toggle {
+    border-color: #f0f;
+    color: #f0f;
+    border-width: 2px;
+}
+.btn.claude-code-toggle:hover {
+    background: rgba(255, 0, 255, 0.1);
+}
+.btn.claude-code-toggle.active {
+    background: rgba(255, 0, 255, 0.2);
+    border-color: #f0f;
+    color: #fff;
+}
 .btn.upgrade { border-color: #ff0; color: #ff0; }
 .btn.decline { border-color: #444; color: #666; }
 
