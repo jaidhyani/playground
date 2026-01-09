@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0] - 2026-01-09
+
+### Added
+- Toast notifications for permission requests and errors
+- Toasts appear in top-right corner with colored left border
+- Auto-dismiss after configurable duration
+- Manual dismiss via close button
+
 ## [0.9.0] - 2026-01-09
 
 ### Added

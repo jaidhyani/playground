@@ -11,6 +11,7 @@ import {
   setTyping,
   setToolActivity
 } from './state.js';
+import { showWarning, showError } from './toast.js';
 
 let ws = null;
 let reconnectTimeout = null;
@@ -131,10 +132,12 @@ function handleMessage(msg) {
         input: msg.payload.input,
         sessionId
       });
+      showWarning(`Permission required: ${msg.payload.toolName}`);
       break;
 
     case 'error':
       console.error('Session error:', msg.payload.error);
+      showError(msg.payload.error);
       break;
 
     case 'queue:added':
