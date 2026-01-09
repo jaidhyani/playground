@@ -29,7 +29,9 @@ export function renderMarkdown(text) {
   initMarkdown();
 
   try {
-    return marked.parse(text);
+    let html = marked.parse(text);
+    html = html.replace(/<img /g, '<img class="message-image" ');
+    return html;
   } catch (e) {
     console.error('Markdown parse error:', e);
     return escapeHtml(text);

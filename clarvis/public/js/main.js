@@ -10,6 +10,7 @@ import {
 import { connect, subscribe as wsSubscribe } from './ws.js';
 import * as api from './api.js';
 import { renderAll } from './render.js';
+import { initLightbox, handleImageClick } from './lightbox.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -30,6 +31,7 @@ async function init() {
 
   connect();
   bindEvents();
+  initLightbox();
   renderAll();
 }
 
@@ -67,6 +69,8 @@ function bindEvents() {
   $('#tool-toggle')?.addEventListener('click', toggleToolPanel);
 
   $('#queue-list')?.addEventListener('click', handleQueueClick);
+
+  $('#messages')?.addEventListener('click', handleImageClick);
 }
 
 function toggleToolPanel() {

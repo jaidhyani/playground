@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0] - 2026-01-09
+
+### Added
+- Lightbox image viewer for images in assistant messages
+- Click any image to view full-screen with dark backdrop
+- Close with X button, clicking backdrop, or Escape key
+- Images styled as thumbnails in messages
+
 ## [0.6.0] - 2026-01-09
 
 ### Added
