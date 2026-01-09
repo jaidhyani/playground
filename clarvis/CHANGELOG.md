@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.21.0] - 2026-01-09
+
+### Added
+- Virtual scroll for long sessions (100+ messages)
+- "Load more" banner shows count of hidden older messages
+- Click to load 50 more messages at a time
+- Improves performance for sessions with 1000+ messages
+
 ## [0.20.0] - 2026-01-09
 
 ### Added

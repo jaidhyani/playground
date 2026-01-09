@@ -280,6 +280,24 @@ body {
   padding: 16px;
 }
 
+.load-more-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.load-more-btn {
+  background: var(--accent);
+  color: white;
+}
+
 #empty-state {
   height: 100%;
   display: flex;

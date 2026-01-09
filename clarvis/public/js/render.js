@@ -1,7 +1,10 @@
 import { state } from './state.js';
 import { renderMarkdown } from './markdown.js';
+import { getVisibleMessages, renderLoadMoreBanner } from './virtual-scroll.js';
 
 const $ = (sel) => document.querySelector(sel);
+let visibleMessagesOffset = 0; // Track how many extra messages are loaded
+let lastRenderedSessionId = null; // Track session changes
 
 export function renderSessionList() {
   const container = $('#session-list');
@@ -35,38 +38,90 @@ export function renderSessionList() {
   }).join('');
 }
 
-export function renderMessages() {
+export function renderMessages(forceFullRender = false) {
   const container = $('#messages');
   const emptyState = $('#empty-state');
   if (!container) return;
 
   if (!state.activeSessionId) {
     emptyState?.classList.remove('hidden');
-    container.querySelectorAll('.message').forEach(el => el.remove());
+    container.innerHTML = '';
+    visibleMessagesOffset = 0;
+    lastRenderedSessionId = null;
     return;
+  }
+
+  // Reset offset when switching sessions
+  if (lastRenderedSessionId !== state.activeSessionId) {
+    visibleMessagesOffset = 0;
+    lastRenderedSessionId = state.activeSessionId;
+    forceFullRender = true;
   }
 
   emptyState?.classList.add('hidden');
 
+  // Get visible messages (limited for performance)
+  const { visible, hiddenCount } = getVisibleMessages(state.messages);
+  const actualHidden = Math.max(0, hiddenCount - visibleMessagesOffset);
+
+  // Check if we need to re-render or just append
   const existingMessages = container.querySelectorAll('.message').length;
-  const newMessages = state.messages.slice(existingMessages);
+  const existingBanner = container.querySelector('.load-more-banner');
+  const expectedCount = visible.length + visibleMessagesOffset;
 
-  for (const msg of newMessages) {
-    const el = document.createElement('div');
-    el.className = `message ${msg.role}`;
+  // Force full render when message count exceeds limit (to show banner)
+  const needsVirtualization = hiddenCount > 0 && !existingBanner;
 
-    const content = msg.role === 'assistant'
-      ? renderMarkdown(msg.content)
-      : escapeHtml(msg.content);
+  if (forceFullRender || existingMessages === 0 || existingBanner || needsVirtualization) {
+    // Full re-render
+    let html = renderLoadMoreBanner(actualHidden);
 
-    el.innerHTML = `<div class="message-content">${content}</div>`;
-    container.appendChild(el);
+    const startIndex = Math.max(0, state.messages.length - expectedCount);
+    const messagesToRender = state.messages.slice(startIndex);
+
+    for (const msg of messagesToRender) {
+      const content = msg.role === 'assistant'
+        ? renderMarkdown(msg.content)
+        : escapeHtml(msg.content);
+      html += `<div class="message ${msg.role}"><div class="message-content">${content}</div></div>`;
+    }
+
+    container.innerHTML = html;
+
+    // Bind load more button
+    const loadMoreBtn = container.querySelector('.load-more-btn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', loadMoreMessages);
+    }
+  } else {
+    // Incremental append for new messages
+    const newMessages = state.messages.slice(state.messages.length - expectedCount + existingMessages);
+    for (const msg of newMessages) {
+      const el = document.createElement('div');
+      el.className = `message ${msg.role}`;
+
+      const content = msg.role === 'assistant'
+        ? renderMarkdown(msg.content)
+        : escapeHtml(msg.content);
+
+      el.innerHTML = `<div class="message-content">${content}</div>`;
+      container.appendChild(el);
+    }
   }
 
   // Apply search filtering
   applySearchFilter(container);
 
   container.scrollTop = container.scrollHeight;
+}
+
+function loadMoreMessages() {
+  visibleMessagesOffset += 50; // Load 50 more messages
+  renderMessages(true);
+}
+
+export function resetMessageOffset() {
+  visibleMessagesOffset = 0;
 }
 
 function applySearchFilter(container) {
