@@ -120,6 +120,20 @@ function handleMessage(msg) {
       updateSession(sessionId, { archived: msg.payload.archived });
       break;
 
+    case 'session:cleared': {
+      const session = state.sessions.find(s => s.id === sessionId);
+      if (session) {
+        session.messages = [];
+        session.messageCount = 0;
+        if (sessionId === state.activeSessionId) {
+          state.messages = [];
+        }
+      }
+      // Still notify to trigger re-render
+      updateSession(sessionId, {});
+      break;
+    }
+
     case 'session:status': {
       const prevStatus = state.sessions.find(s => s.id === sessionId)?.status;
       updateSession(sessionId, { status: msg.payload.status });

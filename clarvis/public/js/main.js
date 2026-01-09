@@ -97,6 +97,7 @@ function bindEvents() {
   $('#close-config')?.addEventListener('click', () => toggleConfigPanel(false));
 
   $('#fork-btn')?.addEventListener('click', forkCurrentSession);
+  $('#clear-btn')?.addEventListener('click', clearCurrentSession);
 
   $('#permission-allow')?.addEventListener('click', () => handlePermission('allow'));
   $('#permission-deny')?.addEventListener('click', () => handlePermission('deny'));
@@ -207,6 +208,18 @@ async function forkCurrentSession() {
     session.config = fullSession.config;
   }
   renderAll();
+}
+
+async function clearCurrentSession() {
+  if (!state.activeSessionId) return;
+
+  const session = state.sessions.find(s => s.id === state.activeSessionId);
+  if (!session) return;
+
+  const confirmed = confirm(`Clear all messages from "${session.name}"?\n\nThis cannot be undone.`);
+  if (!confirmed) return;
+
+  await api.clearSessionMessages(state.activeSessionId);
 }
 
 function autoResize() {

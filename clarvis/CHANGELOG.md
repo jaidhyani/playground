@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.0] - 2026-01-09
+
+### Added
+- Clear session messages via 🗑 button in session header
+- Confirmation dialog before clearing
+- API endpoint: `POST /api/sessions/:id/clear`
+- WebSocket event broadcasts to sync across clients
+
 ## [0.26.0] - 2026-01-09
 
 ### Added

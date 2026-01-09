@@ -256,6 +256,19 @@ export async function archiveSession(id, archived = true) {
   return session;
 }
 
+export async function clearSessionMessages(id) {
+  const session = sessions.get(id);
+  if (!session) {
+    throw new Error(`Session ${id} not found`);
+  }
+
+  session.messages = [];
+  session.messageCount = 0;
+  session.lastActivity = Date.now();
+  await saveSession(session);
+  return session;
+}
+
 // Auto-archive sessions inactive for longer than threshold
 // Returns array of session IDs that were archived
 export async function autoArchiveInactiveSessions(thresholdMs) {

@@ -12,7 +12,8 @@ import {
   cancelQueuedPrompt,
   dequeuePrompt,
   renameSession,
-  archiveSession
+  archiveSession,
+  clearSessionMessages
 } from './sessions.js';
 import { broadcast, broadcastAll } from './ws-hub.js';
 import { createPermissionHandler, handlePermissionResponse } from './permissions.js';
@@ -142,6 +143,18 @@ export async function handleApiRequest(req, res, parsedUrl) {
       const session = await archiveSession(id, archived);
       broadcastAll({ type: 'session:archived', sessionId: id, payload: { archived } });
       return sendJson(res, 200, { ...summarizeSession(session), archived });
+    } catch (error) {
+      return sendJson(res, 404, { error: error.message });
+    }
+  }
+
+  const clearMatch = path.match(/^\/api\/sessions\/([^/]+)\/clear$/);
+  if (clearMatch && method === 'POST') {
+    const id = clearMatch[1];
+    try {
+      const session = await clearSessionMessages(id);
+      broadcast(id, { type: 'session:cleared' });
+      return sendJson(res, 200, summarizeSession(session));
     } catch (error) {
       return sendJson(res, 404, { error: error.message });
     }

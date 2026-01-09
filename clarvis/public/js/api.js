@@ -60,6 +60,10 @@ export function archiveSession(sessionId, archived = true) {
   return request('POST', `/sessions/${sessionId}/archive`, { archived });
 }
 
+export function clearSessionMessages(sessionId) {
+  return request('POST', `/sessions/${sessionId}/clear`);
+}
+
 export function getAuthToken() {
   return request('GET', '/auth/token');
 }
