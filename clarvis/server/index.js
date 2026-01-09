@@ -6,10 +6,12 @@ import { fileURLToPath } from 'url';
 import { initWebSocket } from './ws-hub.js';
 import { handleApiRequest } from './api.js';
 import { initSessions } from './sessions.js';
+import { initAuth, getToken } from './auth.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
 const PORT = process.env.PORT || 3000;
+const AUTH_ENABLED = process.env.AUTH === 'true';
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -31,6 +33,18 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
     return res.end();
+  }
+
+  // Auth check for API endpoints
+  if (AUTH_ENABLED && url.pathname.startsWith('/api/')) {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    if (token !== getToken()) {
+      res.statusCode = 401;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
   }
 
   if (url.pathname.startsWith('/api/')) {
@@ -70,13 +84,23 @@ async function serveStatic(req, res, url) {
   }
 }
 
-initWebSocket(server);
+initWebSocket(server, AUTH_ENABLED ? getToken : null);
 
 async function start() {
-  await initSessions();
+  const cwd = process.cwd();
+
+  if (AUTH_ENABLED) {
+    await initAuth(cwd);
+  }
+
+  await initSessions(cwd);
 
   server.listen(PORT, () => {
     console.log(`Clarvis running at http://localhost:${PORT}`);
+    if (AUTH_ENABLED) {
+      console.log(`Auth enabled - token required for API access`);
+      console.log(`Token stored in: ${cwd}/.clarvis/auth-token`);
+    }
   });
 }
 

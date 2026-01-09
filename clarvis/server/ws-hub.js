@@ -1,12 +1,24 @@
 import { WebSocketServer } from 'ws';
 
 let wss = null;
+let getTokenFn = null;
 const clientSessions = new Map();
 
-export function initWebSocket(server) {
+export function initWebSocket(server, tokenGetter) {
   wss = new WebSocketServer({ server });
+  getTokenFn = tokenGetter;
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
+    // Auth check for WebSocket connections
+    if (getTokenFn) {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const token = url.searchParams.get('token');
+      if (token !== getTokenFn()) {
+        ws.close(4001, 'Unauthorized');
+        return;
+      }
+    }
+
     const clientId = Math.random().toString(36).slice(2);
     clientSessions.set(clientId, { ws, subscribedSessions: new Set() });
 

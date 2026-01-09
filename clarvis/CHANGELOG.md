@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.0] - 2026-01-09
+
+### Added
+- Optional auth token system for remote access
+- Enable with `AUTH=true` environment variable
+- Token auto-generated and stored in `.clarvis/auth-token`
+- Protects API and WebSocket connections when enabled
+
 ## [0.16.0] - 2026-01-09
 
 ### Added
