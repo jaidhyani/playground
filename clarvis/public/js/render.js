@@ -25,6 +25,7 @@ export function renderSessionList() {
         </div>
         <div class="session-item-meta">
           <span class="status-badge ${session.status}">${session.status}</span>
+          <span>${session.messageCount || 0} msgs</span>
           <span>${timeAgo(session.lastActivity)}</span>
         </div>
       </div>

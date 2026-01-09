@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.18.0] - 2026-01-09
+
+### Added
+- Message count displayed in session list sidebar
+
 ## [0.17.0] - 2026-01-09
 
 ### Added
