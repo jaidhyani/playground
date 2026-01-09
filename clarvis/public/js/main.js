@@ -60,6 +60,20 @@ function bindEvents() {
       return;
     }
 
+    const archiveBtn = e.target.closest('.session-archive-btn');
+    if (archiveBtn) {
+      e.stopPropagation();
+      await handleArchiveSession(archiveBtn.dataset.id, true);
+      return;
+    }
+
+    const unarchiveBtn = e.target.closest('.session-unarchive-btn');
+    if (unarchiveBtn) {
+      e.stopPropagation();
+      await handleArchiveSession(unarchiveBtn.dataset.id, false);
+      return;
+    }
+
     const item = e.target.closest('.session-item');
     if (item) {
       await selectSession(item.dataset.id);
@@ -279,6 +293,10 @@ async function handleDeleteSession(sessionId) {
   if (!confirmed) return;
 
   await api.deleteSession(sessionId);
+}
+
+async function handleArchiveSession(sessionId, archive) {
+  await api.archiveSession(sessionId, archive);
 }
 
 function openSearch() {

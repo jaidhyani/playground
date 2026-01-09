@@ -56,6 +56,10 @@ export function renameSession(sessionId, name) {
   return request('POST', `/sessions/${sessionId}/rename`, { name });
 }
 
+export function archiveSession(sessionId, archived = true) {
+  return request('POST', `/sessions/${sessionId}/archive`, { archived });
+}
+
 export function getAuthToken() {
   return request('GET', '/auth/token');
 }

@@ -116,6 +116,10 @@ function handleMessage(msg) {
       updateSession(sessionId, { name: msg.payload.name });
       break;
 
+    case 'session:archived':
+      updateSession(sessionId, { archived: msg.payload.archived });
+      break;
+
     case 'session:status': {
       const prevStatus = state.sessions.find(s => s.id === sessionId)?.status;
       updateSession(sessionId, { status: msg.payload.status });

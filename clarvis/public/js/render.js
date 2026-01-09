@@ -16,11 +16,32 @@ export function renderSessionList() {
     return;
   }
 
-  container.innerHTML = state.sessions.map(session => {
-    const unread = session.unreadCount || 0;
-    const badgeHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
-    return `
-    <div class="session-item ${session.id === state.activeSessionId ? 'active' : ''}"
+  const activeSessions = state.sessions.filter(s => !s.archived);
+  const archivedSessions = state.sessions.filter(s => s.archived);
+
+  let html = activeSessions.map(session => renderSessionItem(session)).join('');
+
+  if (archivedSessions.length > 0) {
+    html += `
+      <div class="session-section-header">
+        <span>Archived (${archivedSessions.length})</span>
+      </div>
+    `;
+    html += archivedSessions.map(session => renderSessionItem(session, true)).join('');
+  }
+
+  container.innerHTML = html;
+}
+
+function renderSessionItem(session, isArchived = false) {
+  const unread = session.unreadCount || 0;
+  const badgeHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
+  const archiveBtn = isArchived
+    ? `<button class="session-unarchive-btn" data-id="${session.id}" title="Restore session">↩</button>`
+    : `<button class="session-archive-btn" data-id="${session.id}" title="Archive session">📦</button>`;
+
+  return `
+    <div class="session-item ${session.id === state.activeSessionId ? 'active' : ''} ${isArchived ? 'archived' : ''}"
          data-id="${session.id}">
       <div class="session-item-content">
         <div class="session-item-title">
@@ -33,10 +54,12 @@ export function renderSessionList() {
           <span>${timeAgo(session.lastActivity)}</span>
         </div>
       </div>
-      <button class="session-delete-btn" data-id="${session.id}" title="Delete session">✕</button>
+      <div class="session-item-actions">
+        ${archiveBtn}
+        <button class="session-delete-btn" data-id="${session.id}" title="Delete session">✕</button>
+      </div>
     </div>
   `;
-  }).join('');
 }
 
 export function renderMessages(forceFullRender = false) {

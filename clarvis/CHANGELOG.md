@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0] - 2026-01-09
+
+### Added
+- Archive/unarchive sessions via sidebar buttons
+- Archived sessions displayed in separate section at bottom of sidebar
+- Archive state persisted to disk
+
 ## [0.24.0] - 2026-01-09
 
 ### Added

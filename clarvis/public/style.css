@@ -156,6 +156,59 @@ body {
   color: rgba(255,255,255,0.7);
 }
 
+/* Session item actions */
+.session-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.session-item:hover .session-item-actions {
+  opacity: 1;
+}
+
+.session-archive-btn,
+.session-unarchive-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.75rem;
+  transition: color 0.15s;
+}
+
+.session-archive-btn:hover {
+  color: var(--text-primary);
+}
+
+.session-unarchive-btn:hover {
+  color: var(--accent);
+}
+
+/* Archive section header */
+.session-section-header {
+  padding: 12px 16px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+/* Archived session styling */
+.session-item.archived {
+  opacity: 0.7;
+}
+
+.session-item.archived .session-item-title {
+  font-weight: 400;
+}
+
 /* Main content */
 #content {
   flex: 1;

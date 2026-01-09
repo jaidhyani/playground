@@ -15,7 +15,8 @@ export function getAllSessions() {
     createdAt: s.createdAt,
     lastActivity: s.lastActivity,
     messageCount: s.messageCount,
-    queueLength: s.promptQueue?.length || 0
+    queueLength: s.promptQueue?.length || 0,
+    archived: s.archived || false
   }));
 }
 
@@ -240,6 +241,17 @@ export async function renameSession(id, newName) {
   }
 
   session.name = newName.trim() || session.name;
+  await saveSession(session);
+  return session;
+}
+
+export async function archiveSession(id, archived = true) {
+  const session = sessions.get(id);
+  if (!session) {
+    throw new Error(`Session ${id} not found`);
+  }
+
+  session.archived = archived;
   await saveSession(session);
   return session;
 }
