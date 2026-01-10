@@ -1,12 +1,12 @@
 """MCP server for Chromium Sync.
 
-Exposes sync data (tabs, history, bookmarks) as MCP tools for Claude Code.
+Exposes browser data (tabs, history, bookmarks) as MCP tools for Claude Code.
+Reads directly from local browser profile files.
 """
 
 import asyncio
 import os
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -14,130 +14,55 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
-from .auth import create_credentials
-from .cache import SyncCache
-from .client import SyncClient, SyncError, Bookmark, Device, HistoryEntry
+from .local import LocalReader, Device, HistoryEntry, Bookmark
 
 
-# Cache TTL - how long before we refresh from server
-CACHE_TTL_MINUTES = 5
-
-
-def get_env_config() -> dict[str, Any]:
-    """Get configuration from environment variables."""
-    seed_phrase = os.environ.get("CHROMIUM_SYNC_SEED")
-    if not seed_phrase:
-        raise ValueError("CHROMIUM_SYNC_SEED environment variable is required")
-
-    return {
-        "seed_phrase": seed_phrase,
-        "cache_path": os.environ.get("CHROMIUM_SYNC_CACHE_PATH"),
-        "server_url": os.environ.get(
-            "CHROMIUM_SYNC_SERVER", "https://sync-v2.brave.com/v2"
-        ),
-    }
+def get_profile_path() -> Path | None:
+    """Get browser profile path from environment or auto-detect."""
+    env_path = os.environ.get("CHROMIUM_PROFILE_PATH")
+    if env_path:
+        return Path(env_path)
+    return None  # Let LocalReader auto-detect
 
 
 class ChromiumSyncServer:
-    """MCP server wrapping the sync client and cache."""
+    """MCP server reading from local browser files."""
 
-    def __init__(self, config: dict[str, Any]):
-        self.config = config
-        self.cache = SyncCache(config.get("cache_path"))
-        self.client: SyncClient | None = None
-        self._initialized = False
+    def __init__(self, profile_path: Path | None = None):
+        self.profile_path = profile_path
+        self.reader: LocalReader | None = None
 
-    async def initialize(self):
-        """Initialize cache and sync client."""
-        if self._initialized:
-            return
+    def _get_reader(self) -> LocalReader:
+        """Get or create the local reader."""
+        if self.reader is None:
+            self.reader = LocalReader(self.profile_path)
+        return self.reader
 
-        await self.cache.initialize()
-
-        credentials = create_credentials(self.config["seed_phrase"])
-        self.client = SyncClient(
-            credentials=credentials,
-            server_url=self.config["server_url"],
-        )
-
-        # Initialize encryption
-        try:
-            await self.client.initialize_encryption(self.config["seed_phrase"])
-        except SyncError:
-            # May fail if server is unreachable; we'll use cache
-            pass
-
-        self._initialized = True
-
-    async def close(self):
+    def close(self):
         """Clean up resources."""
-        if self.client:
-            await self.client.close()
-        await self.cache.close()
+        if self.reader:
+            self.reader.close()
 
-    def _is_cache_stale(self, last_sync: datetime | None) -> bool:
-        """Check if the cache needs refreshing."""
-        if not last_sync:
-            return True
-        return datetime.now() - last_sync > timedelta(minutes=CACHE_TTL_MINUTES)
+    def get_tabs(self) -> list[Device]:
+        """Get open tabs from all synced devices."""
+        return self._get_reader().get_tabs()
 
-    async def get_tabs(self) -> list[Device]:
-        """Get open tabs from all devices."""
-        last_sync = await self.cache.get_last_sync_time()
-        use_cache = not self._is_cache_stale(last_sync)
-
-        if not use_cache and self.client:
-            try:
-                devices = await self.client.fetch_sessions()
-                await self.cache.save_devices(devices)
-                return devices
-            except SyncError:
-                # Fall back to cache
-                pass
-
-        return await self.cache.get_devices()
-
-    async def get_history(
+    def get_history(
         self,
         query: str | None = None,
         limit: int = 100,
         days_back: int | None = None,
     ) -> list[HistoryEntry]:
         """Get browsing history with optional search."""
-        last_sync = await self.cache.get_last_sync_time()
-        use_cache = not self._is_cache_stale(last_sync)
+        return self._get_reader().get_history(query=query, limit=limit, days_back=days_back)
 
-        if not use_cache and self.client:
-            try:
-                history = await self.client.fetch_history()
-                await self.cache.save_history(history)
-            except SyncError:
-                # Fall back to cache
-                pass
-
-        return await self.cache.get_history(query=query, limit=limit, days_back=days_back)
-
-    async def get_bookmarks(self, folder_id: str | None = None) -> list[Bookmark]:
+    def get_bookmarks(self, folder_id: str | None = None) -> list[Bookmark]:
         """Get bookmarks, optionally filtered by folder."""
-        last_sync = await self.cache.get_last_sync_time()
-        use_cache = not self._is_cache_stale(last_sync)
+        return self._get_reader().get_bookmarks(folder_id=folder_id)
 
-        if not use_cache and self.client:
-            try:
-                bookmarks = await self.client.fetch_bookmarks()
-                await self.cache.save_bookmarks(bookmarks)
-                return bookmarks
-            except SyncError:
-                # Fall back to cache
-                pass
-
-        return await self.cache.get_bookmarks(folder_id=folder_id)
-
-    async def search_bookmarks(self, query: str) -> list[Bookmark]:
+    def search_bookmarks(self, query: str) -> list[Bookmark]:
         """Search bookmarks by title or URL."""
-        # Ensure cache is populated
-        await self.get_bookmarks()
-        return await self.cache.search_bookmarks(query)
+        return self._get_reader().search_bookmarks(query)
 
 
 # Create the MCP server
@@ -147,13 +72,12 @@ app = Server("chromium-sync")
 _sync_server: ChromiumSyncServer | None = None
 
 
-async def get_sync_server() -> ChromiumSyncServer:
+def get_sync_server() -> ChromiumSyncServer:
     """Get or create the sync server instance."""
     global _sync_server
     if _sync_server is None:
-        config = get_env_config()
-        _sync_server = ChromiumSyncServer(config)
-        await _sync_server.initialize()
+        profile_path = get_profile_path()
+        _sync_server = ChromiumSyncServer(profile_path)
     return _sync_server
 
 
@@ -224,10 +148,10 @@ async def list_tools() -> list[Tool]:
 @app.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     """Handle tool calls."""
-    server = await get_sync_server()
+    server = get_sync_server()
 
     if name == "brave_sync_tabs":
-        devices = await server.get_tabs()
+        devices = server.get_tabs()
         result = format_devices(devices)
         return [TextContent(type="text", text=result)]
 
@@ -235,19 +159,19 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         query = arguments.get("query")
         limit = arguments.get("limit", 100)
         days_back = arguments.get("days_back")
-        history = await server.get_history(query=query, limit=limit, days_back=days_back)
+        history = server.get_history(query=query, limit=limit, days_back=days_back)
         result = format_history(history)
         return [TextContent(type="text", text=result)]
 
     elif name == "brave_sync_bookmarks":
         folder = arguments.get("folder")
-        bookmarks = await server.get_bookmarks(folder_id=folder)
+        bookmarks = server.get_bookmarks(folder_id=folder)
         result = format_bookmarks(bookmarks)
         return [TextContent(type="text", text=result)]
 
     elif name == "brave_sync_search_bookmarks":
         query = arguments.get("query", "")
-        bookmarks = await server.search_bookmarks(query)
+        bookmarks = server.search_bookmarks(query)
         result = format_bookmarks(bookmarks)
         return [TextContent(type="text", text=result)]
 
@@ -262,13 +186,15 @@ def format_devices(devices: list[Device]) -> str:
 
     lines = []
     for device in devices:
-        lines.append(f"\n## {device.name}")
+        lines.append(f"\n## {device.name} ({device.device_type})")
         if not device.tabs:
             lines.append("  No open tabs")
         else:
             for tab in device.tabs:
-                time_str = tab.last_active.strftime("%Y-%m-%d %H:%M") if tab.last_active else "unknown"
-                lines.append(f"  - [{tab.title}]({tab.url}) (last active: {time_str})")
+                if tab.title:
+                    lines.append(f"  - [{tab.title}]({tab.url})")
+                else:
+                    lines.append(f"  - {tab.url}")
 
     return "\n".join(lines)
 
@@ -295,7 +221,7 @@ def format_bookmarks(bookmarks: list[Bookmark]) -> str:
     lines = [f"Found {len(bookmarks)} bookmarks:\n"]
     for bookmark in bookmarks:
         if bookmark.is_folder:
-            lines.append(f"- 📁 {bookmark.title} (id: {bookmark.id})")
+            lines.append(f"- [folder] {bookmark.title} (id: {bookmark.id})")
         else:
             lines.append(f"- [{bookmark.title}]({bookmark.url})")
 
@@ -317,6 +243,9 @@ def main():
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+    finally:
+        if _sync_server:
+            _sync_server.close()
 
 
 if __name__ == "__main__":
