@@ -71,16 +71,34 @@ class Bookmark:
     is_folder: bool
 
 
-def find_brave_profile() -> Path | None:
-    """Find the default Brave browser profile directory."""
-    possible_paths = [
-        Path.home() / ".config/BraveSoftware/Brave-Browser/Default",  # Linux
-        Path.home() / "Library/Application Support/BraveSoftware/Brave-Browser/Default",  # macOS
-        Path.home() / "AppData/Local/BraveSoftware/Brave-Browser/User Data/Default",  # Windows
+def find_browser_profile() -> Path | None:
+    """Find a Chromium-based browser profile directory.
+
+    Checks for Brave, Chrome, and Chromium in that order.
+    Returns the first profile found, or None if no browser is installed.
+    """
+    home = Path.home()
+
+    # Paths for each browser: Brave, Chrome, Chromium (checked in order)
+    browser_paths = [
+        # Brave
+        home / ".config/BraveSoftware/Brave-Browser/Default",
+        home / "Library/Application Support/BraveSoftware/Brave-Browser/Default",
+        home / "AppData/Local/BraveSoftware/Brave-Browser/User Data/Default",
+        # Chrome
+        home / ".config/google-chrome/Default",
+        home / "Library/Application Support/Google/Chrome/Default",
+        home / "AppData/Local/Google/Chrome/User Data/Default",
+        # Chromium
+        home / ".config/chromium/Default",
+        home / "Library/Application Support/Chromium/Default",
+        home / "AppData/Local/Chromium/User Data/Default",
     ]
-    for path in possible_paths:
+
+    for path in browser_paths:
         if path.exists():
             return path
+
     return None
 
 
@@ -88,9 +106,12 @@ class LocalReader:
     """Reads browser data from local profile files."""
 
     def __init__(self, profile_path: Path | None = None):
-        resolved_path = profile_path or find_brave_profile()
+        resolved_path = profile_path or find_browser_profile()
         if not resolved_path:
-            raise ValueError("Could not find Brave browser profile")
+            raise ValueError(
+                "Could not find browser profile. "
+                "Set CHROMIUM_PROFILE_PATH to your browser's profile directory."
+            )
         self.profile_path: Path = resolved_path
 
         self._temp_dir = tempfile.mkdtemp(prefix="chromium_sync_")
