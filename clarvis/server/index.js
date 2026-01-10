@@ -1,18 +1,14 @@
-import { createServer } from 'http';
-import { readFile, stat } from 'fs/promises';
-import { join, extname } from 'path';
-import { fileURLToPath } from 'url';
+import { createServer } from 'http'
+import { readFileSync, existsSync } from 'fs'
+import { join, extname } from 'path'
+import { fileURLToPath } from 'url'
+import { WebSocketServer } from 'ws'
+import { loadConfig } from './config.js'
+import { ensureToken } from './auth.js'
+import { handleConnection } from './ws-handler.js'
 
-import { initWebSocket, broadcastAll } from './ws-hub.js';
-import { handleApiRequest } from './api.js';
-import { initSessions, autoArchiveInactiveSessions } from './sessions.js';
-import { initAuth, getToken } from './auth.js';
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const PUBLIC_DIR = join(__dirname, '..', 'public');
-const PORT = process.env.PORT || 3000;
-const AUTH_ENABLED = process.env.AUTH === 'true';
-const AUTO_ARCHIVE_HOURS = parseFloat(process.env.AUTO_ARCHIVE_HOURS) || 0;
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
+const PUBLIC_DIR = join(__dirname, '..', 'public')
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -22,108 +18,77 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon'
-};
+}
 
-const server = createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
+function serveStatic(req, res) {
+  let filePath = req.url === '/' ? '/index.html' : req.url
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.statusCode = 204;
-    return res.end();
+  // Remove query string
+  const queryIndex = filePath.indexOf('?')
+  if (queryIndex !== -1) {
+    filePath = filePath.slice(0, queryIndex)
   }
 
-  // Auth check for API endpoints (skip for auth status check)
-  if (AUTH_ENABLED && url.pathname.startsWith('/api/') && url.pathname !== '/api/auth/token') {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '');
-    if (token !== getToken()) {
-      res.statusCode = 401;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ error: 'Unauthorized' }));
-      return;
-    }
+  // Security: prevent directory traversal
+  if (filePath.includes('..')) {
+    res.writeHead(403)
+    res.end('Forbidden')
+    return
   }
 
-  if (url.pathname.startsWith('/api/')) {
-    return handleApiRequest(req, res, url);
+  const fullPath = join(PUBLIC_DIR, filePath)
+
+  if (!existsSync(fullPath)) {
+    res.writeHead(404)
+    res.end('Not Found')
+    return
   }
-
-  await serveStatic(req, res, url);
-});
-
-async function serveStatic(req, res, url) {
-  let filePath = url.pathname === '/' ? '/index.html' : url.pathname;
-  filePath = join(PUBLIC_DIR, filePath);
 
   try {
-    const stats = await stat(filePath);
-    if (stats.isDirectory()) {
-      filePath = join(filePath, 'index.html');
-    }
+    const content = readFileSync(fullPath)
+    const ext = extname(fullPath)
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream'
 
-    const content = await readFile(filePath);
-    const ext = extname(filePath);
-    const mime = MIME_TYPES[ext] || 'application/octet-stream';
-
-    res.setHeader('Content-Type', mime);
-    res.statusCode = 200;
-    res.end(content);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      res.statusCode = 404;
-      res.setHeader('Content-Type', 'text/plain');
-      res.end('Not Found');
-    } else {
-      res.statusCode = 500;
-      res.setHeader('Content-Type', 'text/plain');
-      res.end('Internal Server Error');
-    }
+    res.writeHead(200, { 'Content-Type': contentType })
+    res.end(content)
+  } catch {
+    res.writeHead(500)
+    res.end('Internal Server Error')
   }
 }
 
-initWebSocket(server, AUTH_ENABLED ? getToken : null);
+function main() {
+  const config = loadConfig()
+  const token = ensureToken()
 
-async function start() {
-  const cwd = process.cwd();
+  // Create HTTP server
+  const server = createServer((req, res) => {
+    serveStatic(req, res)
+  })
 
-  if (AUTH_ENABLED) {
-    await initAuth(cwd);
-  }
+  // Create WebSocket server
+  const wss = new WebSocketServer({ server })
 
-  await initSessions(cwd);
+  wss.on('connection', (ws, req) => {
+    handleConnection(ws, req, config)
+  })
 
-  // Set up auto-archive if configured
-  if (AUTO_ARCHIVE_HOURS > 0) {
-    const thresholdMs = AUTO_ARCHIVE_HOURS * 60 * 60 * 1000;
-    const checkIntervalMs = Math.min(thresholdMs / 4, 60 * 60 * 1000); // Check at most every hour
-
-    setInterval(async () => {
-      const archivedIds = await autoArchiveInactiveSessions(thresholdMs);
-      for (const id of archivedIds) {
-        broadcastAll({ type: 'session:archived', sessionId: id, payload: { archived: true } });
-      }
-      if (archivedIds.length > 0) {
-        console.log(`Auto-archived ${archivedIds.length} inactive session(s)`);
-      }
-    }, checkIntervalMs);
-
-    console.log(`Auto-archive enabled: sessions inactive for ${AUTO_ARCHIVE_HOURS}h will be archived`);
-  }
-
-  server.listen(PORT, () => {
-    console.log(`Clarvis running at http://localhost:${PORT}`);
-    if (AUTH_ENABLED) {
-      console.log(`Auth enabled - token required for API access`);
-      console.log(`Token stored in: ${cwd}/.clarvis/auth-token`);
-    }
-  });
+  server.listen(config.port, () => {
+    console.log('')
+    console.log('  ╔═══════════════════════════════════════╗')
+    console.log('  ║           CLARVIS SERVER              ║')
+    console.log('  ╚═══════════════════════════════════════╝')
+    console.log('')
+    console.log(`  Local:    http://localhost:${config.port}`)
+    console.log(`  Projects: ${config.projectsRoot}`)
+    console.log('')
+    console.log('  Auth Token:')
+    console.log(`  ${token}`)
+    console.log('')
+    console.log('  Connect with token in query string:')
+    console.log(`  ws://localhost:${config.port}?token=${token}`)
+    console.log('')
+  })
 }
 
-start().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+main()

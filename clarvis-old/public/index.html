@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clarvis</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <h1>Clarvis <span id="connection-status" class="connection-dot disconnected" title="Disconnected"></span></h1>
+        <button id="new-session-btn" class="btn-primary">+ New</button>
+      </div>
+      <div id="session-list"></div>
+    </nav>
+
+    <main id="content">
+      <header id="session-header">
+        <button id="menu-btn" class="mobile-only">☰</button>
+        <div id="session-info">
+          <span id="session-title">No session</span>
+          <span id="session-status" class="status-badge">-</span>
+        </div>
+        <button id="stop-btn" title="Stop session" class="hidden">⏹</button>
+        <button id="fork-btn" title="Fork session">⎇</button>
+        <button id="clear-btn" title="Clear messages">🗑</button>
+        <button id="search-btn" title="Search messages">🔍</button>
+        <button id="config-btn">⚙</button>
+      </header>
+
+      <div id="search-bar" class="hidden">
+        <input type="text" id="search-input" placeholder="Search messages...">
+        <span id="search-results-count"></span>
+        <button id="search-close">✕</button>
+      </div>
+
+      <section id="messages">
+        <div id="empty-state">
+          <p>Create or select a session to begin</p>
+        </div>
+      </section>
+
+      <div id="activity-panel" class="hidden">
+        <div id="typing-indicator" class="hidden">
+          <span class="typing-dots"><span></span><span></span><span></span></span>
+          <span class="typing-text">Generating response...</span>
+        </div>
+        <div id="tool-activity" class="hidden">
+          <span id="tool-activity-icon">⚡</span>
+          <span id="tool-activity-text">-</span>
+        </div>
+      </div>
+
+      <div id="tool-panel" class="hidden">
+        <div class="tool-header" id="tool-toggle">
+          <span id="tool-name">-</span>
+          <span id="tool-status">-</span>
+          <span id="tool-expand-icon">▼</span>
+        </div>
+        <div id="tool-output-wrapper" class="collapsed">
+          <pre id="tool-output"></pre>
+        </div>
+      </div>
+
+      <div id="queue-panel" class="hidden">
+        <div class="queue-header">Queued prompts</div>
+        <div id="queue-list"></div>
+      </div>
+
+      <div id="error-retry-panel" class="hidden">
+        <div class="error-retry-content">
+          <span class="error-icon">⚠</span>
+          <span id="error-text">Error occurred</span>
+          <button id="retry-btn" class="btn-primary">Retry</button>
+          <button id="dismiss-error-btn">✕</button>
+        </div>
+      </div>
+
+      <footer id="input-area">
+        <div id="input-wrapper">
+          <div id="command-autocomplete" class="hidden">
+            <!-- Populated by JavaScript -->
+          </div>
+          <textarea id="prompt-input" placeholder="Send a message..." rows="1"></textarea>
+        </div>
+        <button id="send-btn" class="btn-primary">Send</button>
+      </footer>
+    </main>
+
+    <aside id="config-panel" class="hidden">
+      <div class="panel-header">
+        <h2>Session Config</h2>
+        <button id="close-config">✕</button>
+      </div>
+      <div class="config-form">
+        <label>
+          Working Directory
+          <input type="text" id="config-cwd" placeholder="(defaults to server cwd)">
+        </label>
+        <label>
+          Model
+          <select id="config-model">
+            <option value="">Loading models...</option>
+          </select>
+        </label>
+        <label>
+          Permission Mode
+          <select id="config-permission">
+            <option value="default">Ask for dangerous ops</option>
+            <option value="acceptEdits">Accept edits automatically</option>
+            <option value="bypassPermissions">Bypass all permissions</option>
+          </select>
+        </label>
+        <label>
+          Permission Timeout
+          <select id="config-permission-timeout">
+            <option value="">Wait forever (pause)</option>
+            <option value="60000">1 minute</option>
+            <option value="300000">5 minutes</option>
+            <option value="600000">10 minutes</option>
+            <option value="1800000">30 minutes</option>
+          </select>
+        </label>
+        <label>
+          System Prompt
+          <textarea id="config-system-prompt" placeholder="Optional instructions for the assistant..." rows="3"></textarea>
+        </label>
+
+        <div id="auth-section" class="hidden">
+          <hr class="config-divider">
+          <div id="token-input-section">
+            <label>
+              Enter Auth Token
+              <input type="password" id="token-input" placeholder="Paste token from terminal...">
+            </label>
+            <button id="token-submit-btn" class="btn-primary btn-small">Authenticate</button>
+          </div>
+          <div id="token-display-section" class="hidden">
+            <label>
+              Auth Token
+              <div class="token-display">
+                <span id="token-value" class="token-hidden">••••••••••••••••</span>
+                <button id="token-show-btn" class="btn-small">Show</button>
+                <button id="token-copy-btn" class="btn-small hidden">Copy</button>
+                <button id="token-qr-btn" class="btn-small">QR</button>
+              </div>
+            </label>
+            <div id="qr-container" class="hidden">
+              <div id="qr-code"></div>
+              <p class="qr-hint">Scan to copy token</p>
+            </div>
+            <button id="token-regenerate-btn" class="btn-danger btn-small">Regenerate Token</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div id="permission-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Permission Request</h3>
+        <p id="permission-tool">-</p>
+        <p id="permission-summary" class="permission-summary">-</p>
+        <details id="permission-details">
+          <summary>View full input</summary>
+          <pre id="permission-input"></pre>
+        </details>
+        <div class="modal-actions">
+          <button id="permission-deny" class="btn-danger">Deny</button>
+          <button id="permission-allow" class="btn-primary">Allow</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

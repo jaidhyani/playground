@@ -1,3 +1,4 @@
 node_modules/
-.clarvis/
-.claude/
+.env
+*.log
+.DS_Store
