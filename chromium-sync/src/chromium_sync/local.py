@@ -71,49 +71,125 @@ class Bookmark:
     is_folder: bool
 
 
-def find_browser_profile() -> Path | None:
-    """Find a Chromium-based browser profile directory.
+CONFIG_DIR = Path.home() / ".config" / "chromium-sync"
+CONFIG_FILE = CONFIG_DIR / "profile"
 
-    Checks for Brave, Chrome, and Chromium in that order.
-    Returns the first profile found, or None if no browser is installed.
-    """
+
+def get_browser_paths() -> dict[str, list[Path]]:
+    """Get all possible profile paths for each browser."""
     home = Path.home()
+    return {
+        "brave": [
+            home / ".config/BraveSoftware/Brave-Browser/Default",
+            home / "Library/Application Support/BraveSoftware/Brave-Browser/Default",
+            home / "AppData/Local/BraveSoftware/Brave-Browser/User Data/Default",
+        ],
+        "chrome": [
+            home / ".config/google-chrome/Default",
+            home / "Library/Application Support/Google/Chrome/Default",
+            home / "AppData/Local/Google/Chrome/User Data/Default",
+        ],
+        "chromium": [
+            home / ".config/chromium/Default",
+            home / "Library/Application Support/Chromium/Default",
+            home / "AppData/Local/Chromium/User Data/Default",
+        ],
+    }
 
-    # Paths for each browser: Brave, Chrome, Chromium (checked in order)
-    browser_paths = [
-        # Brave
-        home / ".config/BraveSoftware/Brave-Browser/Default",
-        home / "Library/Application Support/BraveSoftware/Brave-Browser/Default",
-        home / "AppData/Local/BraveSoftware/Brave-Browser/User Data/Default",
-        # Chrome
-        home / ".config/google-chrome/Default",
-        home / "Library/Application Support/Google/Chrome/Default",
-        home / "AppData/Local/Google/Chrome/User Data/Default",
-        # Chromium
-        home / ".config/chromium/Default",
-        home / "Library/Application Support/Chromium/Default",
-        home / "AppData/Local/Chromium/User Data/Default",
-    ]
 
-    for path in browser_paths:
+def find_all_browser_profiles() -> dict[str, Path]:
+    """Find all installed Chromium-based browser profiles.
+
+    Returns:
+        Dict mapping browser name to profile path for each installed browser.
+    """
+    found = {}
+    for browser, paths in get_browser_paths().items():
+        for path in paths:
+            if path.exists():
+                found[browser] = path
+                break
+    return found
+
+
+def load_saved_profile() -> Path | None:
+    """Load saved profile path from config file."""
+    if CONFIG_FILE.exists():
+        try:
+            path = Path(CONFIG_FILE.read_text().strip())
+            if path.exists():
+                return path
+        except Exception:
+            pass
+    return None
+
+
+def save_profile_choice(path: Path) -> None:
+    """Save profile path to config file."""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    CONFIG_FILE.write_text(str(path))
+
+
+class MultipleProfilesFound(Exception):
+    """Raised when multiple browser profiles are found and user must choose."""
+
+    def __init__(self, profiles: dict[str, Path]):
+        self.profiles = profiles
+        super().__init__(f"Multiple browser profiles found: {list(profiles.keys())}")
+
+
+def resolve_browser_profile(env_path: str | None = None) -> Path:
+    """Resolve which browser profile to use.
+
+    Priority:
+    1. CHROMIUM_PROFILE_PATH env var (passed as env_path)
+    2. Saved preference in ~/.config/chromium-sync/profile
+    3. Auto-detection (if exactly one browser found)
+    4. Raises MultipleProfilesFound if multiple browsers detected
+
+    Args:
+        env_path: Value of CHROMIUM_PROFILE_PATH env var, if set.
+
+    Returns:
+        Path to the browser profile directory.
+
+    Raises:
+        MultipleProfilesFound: Multiple browsers detected, user must choose.
+        ValueError: No browser profile found.
+    """
+    # 1. Environment variable
+    if env_path:
+        path = Path(env_path)
         if path.exists():
             return path
+        raise ValueError(f"CHROMIUM_PROFILE_PATH does not exist: {env_path}")
 
-    return None
+    # 2. Saved config
+    saved = load_saved_profile()
+    if saved:
+        return saved
+
+    # 3. Auto-detection
+    profiles = find_all_browser_profiles()
+
+    if not profiles:
+        raise ValueError(
+            "No browser profile found. "
+            "Set CHROMIUM_PROFILE_PATH to your browser's profile directory."
+        )
+
+    if len(profiles) == 1:
+        return next(iter(profiles.values()))
+
+    # 4. Multiple found - need user input
+    raise MultipleProfilesFound(profiles)
 
 
 class LocalReader:
     """Reads browser data from local profile files."""
 
-    def __init__(self, profile_path: Path | None = None):
-        resolved_path = profile_path or find_browser_profile()
-        if not resolved_path:
-            raise ValueError(
-                "Could not find browser profile. "
-                "Set CHROMIUM_PROFILE_PATH to your browser's profile directory."
-            )
-        self.profile_path: Path = resolved_path
-
+    def __init__(self, profile_path: Path):
+        self.profile_path = profile_path
         self._temp_dir = tempfile.mkdtemp(prefix="chromium_sync_")
 
     def close(self):

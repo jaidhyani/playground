@@ -14,77 +14,104 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
-from .local import LocalReader, Device, HistoryEntry, Bookmark
-
-
-def get_profile_path() -> Path | None:
-    """Get browser profile path from environment or auto-detect."""
-    env_path = os.environ.get("CHROMIUM_PROFILE_PATH")
-    if env_path:
-        return Path(env_path)
-    return None  # Let LocalReader auto-detect
-
-
-class ChromiumSyncServer:
-    """MCP server reading from local browser files."""
-
-    def __init__(self, profile_path: Path | None = None):
-        self.profile_path = profile_path
-        self.reader: LocalReader | None = None
-
-    def _get_reader(self) -> LocalReader:
-        """Get or create the local reader."""
-        if self.reader is None:
-            self.reader = LocalReader(self.profile_path)
-        return self.reader
-
-    def close(self):
-        """Clean up resources."""
-        if self.reader:
-            self.reader.close()
-
-    def get_tabs(self) -> list[Device]:
-        """Get open tabs from all synced devices."""
-        return self._get_reader().get_tabs()
-
-    def get_history(
-        self,
-        query: str | None = None,
-        limit: int = 100,
-        days_back: int | None = None,
-    ) -> list[HistoryEntry]:
-        """Get browsing history with optional search."""
-        return self._get_reader().get_history(query=query, limit=limit, days_back=days_back)
-
-    def get_bookmarks(self, folder_id: str | None = None) -> list[Bookmark]:
-        """Get bookmarks, optionally filtered by folder."""
-        return self._get_reader().get_bookmarks(folder_id=folder_id)
-
-    def search_bookmarks(self, query: str) -> list[Bookmark]:
-        """Search bookmarks by title or URL."""
-        return self._get_reader().search_bookmarks(query)
+from .local import (
+    LocalReader,
+    Device,
+    HistoryEntry,
+    Bookmark,
+    MultipleProfilesFound,
+    resolve_browser_profile,
+    find_all_browser_profiles,
+    save_profile_choice,
+    CONFIG_FILE,
+)
 
 
 # Create the MCP server
 app = Server("chromium-sync")
 
-# Global server instance
-_sync_server: ChromiumSyncServer | None = None
+# Global state
+_reader: LocalReader | None = None
+_pending_profiles: dict[str, Path] | None = None
 
 
-def get_sync_server() -> ChromiumSyncServer:
-    """Get or create the sync server instance."""
-    global _sync_server
-    if _sync_server is None:
-        profile_path = get_profile_path()
-        _sync_server = ChromiumSyncServer(profile_path)
-    return _sync_server
+def get_reader() -> LocalReader | None:
+    """Get the reader, or None if profile selection is pending."""
+    global _reader, _pending_profiles
+
+    if _reader is not None:
+        return _reader
+
+    env_path = os.environ.get("CHROMIUM_PROFILE_PATH")
+
+    try:
+        profile_path = resolve_browser_profile(env_path)
+        _reader = LocalReader(profile_path)
+        return _reader
+    except MultipleProfilesFound as e:
+        _pending_profiles = e.profiles
+        return None
+
+
+def select_browser(browser: str, save_default: bool = False) -> str:
+    """Select a browser and optionally save as default."""
+    global _reader, _pending_profiles
+
+    profiles = _pending_profiles or find_all_browser_profiles()
+    browser_lower = browser.lower()
+
+    if browser_lower not in profiles:
+        available = ", ".join(profiles.keys())
+        return f"Unknown browser '{browser}'. Available: {available}"
+
+    profile_path = profiles[browser_lower]
+
+    if save_default:
+        save_profile_choice(profile_path)
+
+    _reader = LocalReader(profile_path)
+    _pending_profiles = None
+
+    saved_msg = f" Saved to {CONFIG_FILE}" if save_default else ""
+    return f"Selected {browser} ({profile_path}).{saved_msg}"
+
+
+def format_profile_selection_prompt(profiles: dict[str, Path]) -> str:
+    """Format the prompt for selecting a browser profile."""
+    lines = [
+        "Multiple browser profiles detected:\n",
+    ]
+    for name, path in profiles.items():
+        lines.append(f"  - **{name}**: {path}")
+
+    lines.append("\nUse the `chromium_select_browser` tool to choose one.")
+    lines.append("Set `save_default: true` to remember your choice.")
+    return "\n".join(lines)
 
 
 @app.list_tools()
 async def list_tools() -> list[Tool]:
     """List available sync tools."""
     return [
+        Tool(
+            name="chromium_select_browser",
+            description="Select which browser to use when multiple are installed. Use this when prompted to choose between browsers.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "browser": {
+                        "type": "string",
+                        "description": "Browser to use: 'brave', 'chrome', or 'chromium'",
+                    },
+                    "save_default": {
+                        "type": "boolean",
+                        "description": "Save this choice as the default for future sessions",
+                        "default": False,
+                    },
+                },
+                "required": ["browser"],
+            },
+        ),
         Tool(
             name="brave_sync_tabs",
             description="Get open tabs from all synced devices. Returns a list of devices with their open tabs.",
@@ -148,10 +175,27 @@ async def list_tools() -> list[Tool]:
 @app.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     """Handle tool calls."""
-    server = get_sync_server()
+    global _pending_profiles
+
+    # Handle browser selection
+    if name == "chromium_select_browser":
+        browser = arguments.get("browser", "")
+        save_default = arguments.get("save_default", False)
+        result = select_browser(browser, save_default)
+        return [TextContent(type="text", text=result)]
+
+    # For all other tools, we need a reader
+    reader = get_reader()
+
+    if reader is None and _pending_profiles:
+        prompt = format_profile_selection_prompt(_pending_profiles)
+        return [TextContent(type="text", text=prompt)]
+
+    if reader is None:
+        return [TextContent(type="text", text="No browser profile found.")]
 
     if name == "brave_sync_tabs":
-        devices = server.get_tabs()
+        devices = reader.get_tabs()
         result = format_devices(devices)
         return [TextContent(type="text", text=result)]
 
@@ -159,19 +203,19 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         query = arguments.get("query")
         limit = arguments.get("limit", 100)
         days_back = arguments.get("days_back")
-        history = server.get_history(query=query, limit=limit, days_back=days_back)
+        history = reader.get_history(query=query, limit=limit, days_back=days_back)
         result = format_history(history)
         return [TextContent(type="text", text=result)]
 
     elif name == "brave_sync_bookmarks":
         folder = arguments.get("folder")
-        bookmarks = server.get_bookmarks(folder_id=folder)
+        bookmarks = reader.get_bookmarks(folder_id=folder)
         result = format_bookmarks(bookmarks)
         return [TextContent(type="text", text=result)]
 
     elif name == "brave_sync_search_bookmarks":
         query = arguments.get("query", "")
-        bookmarks = server.search_bookmarks(query)
+        bookmarks = reader.search_bookmarks(query)
         result = format_bookmarks(bookmarks)
         return [TextContent(type="text", text=result)]
 
@@ -244,8 +288,8 @@ def main():
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
     finally:
-        if _sync_server:
-            _sync_server.close()
+        if _reader:
+            _reader.close()
 
 
 if __name__ == "__main__":
