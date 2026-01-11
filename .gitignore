@@ -9,6 +9,4 @@ __pycache__/
 .venv/
 *.egg-info/
 
-# chromium-sync generated files
-chromium-sync/proto_src/
-chromium-sync/src/chromium_sync/proto/*_pb2.py
+nohup.out
