@@ -31,10 +31,18 @@ uv run generate.py --prompt "description" --aspect 16:9 --size 2K
 ```
 
 ### clarvis
-Empty placeholder for future project.
+Web UI for the Claude Agent SDK. Multi-session Claude Code management with mobile-friendly design. Preact + htm frontend, no build step.
+
+```bash
+cd clarvis
+./start.sh    # Start server (loads .env, opens at localhost:3000)
+npm run dev   # Start with --watch
+npm test      # Run tests
+```
 
 ## Architecture Notes
 
 - **claude-code-game**: Modular ES modules (state.js, render.js, etc.), tech tree as DAG, localStorage persistence, tick-based game loop
 - **tab-overview-extension**: Manifest v3, service worker pattern, message-based communication between background.js and overview.js
 - **imagine**: Single Python script with PEP 723 metadata, designed as Claude Code plugin
+- **clarvis**: Node.js WebSocket server bridging to Claude Agent SDK, Preact + htm frontend with no build step, session state managed by SDK
