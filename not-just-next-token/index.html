@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Not Just a Next-Token Predictor</title>
+  <meta name="description" content="Interactive demonstrations of how LLMs plan ahead through KV activations, not just predict the next token.">
+  <meta property="og:title" content="Not Just a Next-Token Predictor">
+  <meta property="og:description" content="Interactive demonstrations of how LLMs plan ahead through KV activations.">
+  <meta property="og:type" content="article">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="article">
+
+    <section id="section-intro">
+      <!-- Author prose goes here -->
+    </section>
+
+    <section id="section-myopic">
+      <!-- Author prose goes here -->
+      <div class="demo-container" id="demo-myopic"></div>
+    </section>
+
+    <section id="section-gradients">
+      <!-- Author prose goes here -->
+      <div class="demo-container" id="demo-gradients"></div>
+    </section>
+
+    <section id="section-two-outputs">
+      <!-- Author prose goes here -->
+      <div class="demo-container" id="demo-two-outputs"></div>
+    </section>
+
+    <section id="section-hidden-state">
+      <!-- Author prose goes here -->
+      <div class="demo-container" id="demo-hidden-state"></div>
+    </section>
+
+    <section id="section-conclusion">
+      <!-- Author prose goes here -->
+    </section>
+
+  </div>
+
+  <script type="module">
+    import { init as initMyopic } from './demos/demo1-myopic.js';
+    import { init as initGradients } from './demos/demo2-gradients.js';
+    import { init as initTwoOutputs } from './demos/demo3-two-outputs.js';
+    import { init as initHiddenState } from './demos/demo4-hidden-state.js';
+
+    initMyopic(document.getElementById('demo-myopic'));
+    initGradients(document.getElementById('demo-gradients'));
+    initTwoOutputs(document.getElementById('demo-two-outputs'));
+    initHiddenState(document.getElementById('demo-hidden-state'));
+  </script>
+</body>
+</html>
