@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 3: Two Outputs</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="article">
+    <h2>Demo 3: Two Outputs</h2>
+    <p>Each transformer position produces two things: a next-token prediction and a KV activation.
+       Drag the slider to see what changes when training optimizes for long-range usefulness.</p>
+    <div class="demo-container" id="demo-two-outputs"></div>
+  </div>
+  <script type="module">
+    import { init } from './demo3-two-outputs.js';
+    init(document.getElementById('demo-two-outputs'));
+  </script>
+</body>
+</html>

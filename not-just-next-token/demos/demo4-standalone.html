@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 4 – The Hidden State</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="article">
+    <h2>Demo 4: The Hidden State</h2>
+    <p>RNNs compress all history into a single fixed-size vector — a bottleneck that
+       loses information over time. Transformers keep a growing KV cache where every
+       past token remains directly accessible.</p>
+    <div id="demo4" class="demo-container"></div>
+  </div>
+  <script type="module">
+    import { init } from './demo4-hidden-state.js';
+    init(document.getElementById('demo4'));
+  </script>
+</body>
+</html>
