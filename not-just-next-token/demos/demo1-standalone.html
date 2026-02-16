@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 1: The Myopic Model</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="article">
+    <h2>Demo 1: The Myopic Model</h2>
+    <p>The standard mental model: read context, predict one token, move on. Mechanical and shallow.</p>
+    <div class="demo-container" id="demo-myopic"></div>
+  </div>
+  <script type="module">
+    import { init } from './demo1-myopic.js';
+    init(document.getElementById('demo-myopic'));
+  </script>
+</body>
+</html>
