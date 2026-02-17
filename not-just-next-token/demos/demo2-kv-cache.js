@@ -136,14 +136,14 @@ export function init(container) {
     // Gray arrow from current token to model center
     const tx = tokenX(currentIdx, revealedCount) + TOKEN_W / 2;
     const ty = TOKEN_ROW_Y + TOKEN_H;
-    const midTokenY = modelTopY - 10;
+    const midTokenY = (ty + modelTopY) / 2;
     const tokenArrowD = `M ${tx} ${ty} L ${tx} ${midTokenY} L ${modelCenterX} ${midTokenY} L ${modelCenterX} ${modelTopY}`;
     const tokenArrow = path(arrowGroup, tokenArrowD, {
       stroke: COLORS.forward, strokeWidth: 2.5,
       markerEnd: 'url(#arrow-input)', opacity: 0,
       className: 'input-arrow',
     });
-    phase1Els.push({ el: tokenArrow, maxOpacity: 0.7 });
+    phase1Els.push({ el: tokenArrow, maxOpacity: 0.6 });
 
     // KV selection box + right-angle arrow (step 2+ only)
     if (currentIdx > 0) {
