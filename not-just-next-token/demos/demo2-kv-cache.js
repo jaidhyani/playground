@@ -136,7 +136,7 @@ export function init(container) {
     // Gray arrow from current token to model center
     const tx = tokenX(currentIdx, revealedCount) + TOKEN_W / 2;
     const ty = TOKEN_ROW_Y + TOKEN_H;
-    const midTokenY = (ty + modelTopY) / 2;
+    const midTokenY = modelTopY - 10;
     const tokenArrowD = `M ${tx} ${ty} L ${tx} ${midTokenY} L ${modelCenterX} ${midTokenY} L ${modelCenterX} ${modelTopY}`;
     const tokenArrow = path(arrowGroup, tokenArrowD, {
       stroke: COLORS.forward, strokeWidth: 2.5,
