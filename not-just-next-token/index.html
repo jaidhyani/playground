@@ -22,19 +22,9 @@
       <div class="demo-container" id="demo-myopic"></div>
     </section>
 
-    <section id="section-gradients">
+    <section id="section-kv-cache">
       <!-- Author prose goes here -->
-      <div class="demo-container" id="demo-gradients"></div>
-    </section>
-
-    <section id="section-two-outputs">
-      <!-- Author prose goes here -->
-      <div class="demo-container" id="demo-two-outputs"></div>
-    </section>
-
-    <section id="section-hidden-state">
-      <!-- Author prose goes here -->
-      <div class="demo-container" id="demo-hidden-state"></div>
+      <div class="demo-container" id="demo-kv"></div>
     </section>
 
     <section id="section-conclusion">
@@ -45,14 +35,10 @@
 
   <script type="module">
     import { init as initMyopic } from './demos/demo1-myopic.js';
-    import { init as initGradients } from './demos/demo2-gradients.js';
-    import { init as initTwoOutputs } from './demos/demo3-two-outputs.js';
-    import { init as initHiddenState } from './demos/demo4-hidden-state.js';
+    import { init as initKV } from './demos/demo2-kv-cache.js';
 
     initMyopic(document.getElementById('demo-myopic'));
-    initGradients(document.getElementById('demo-gradients'));
-    initTwoOutputs(document.getElementById('demo-two-outputs'));
-    initHiddenState(document.getElementById('demo-hidden-state'));
+    initKV(document.getElementById('demo-kv'));
   </script>
 </body>
 </html>
