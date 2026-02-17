@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 2: KV Cache</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="article">
+    <h2>Demo 2: The KV Cache</h2>
+    <p>Each forward pass produces two outputs: a prediction and KV activations.</p>
+    <div class="demo-container" id="demo-kv"></div>
+  </div>
+  <script type="module">
+    import { init } from './demo2-kv-cache.js';
+    init(document.getElementById('demo-kv'));
+  </script>
+</body>
+</html>
