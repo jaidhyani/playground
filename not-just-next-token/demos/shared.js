@@ -136,14 +136,17 @@ export function curvedArrow(parent, x1, y1, x2, y2, opts = {}) {
 // --- Animation ---
 
 export function animate(duration, callback) {
+  let cancelled = false;
   const start = performance.now();
   function tick(now) {
+    if (cancelled) return;
     const elapsed = now - start;
     const t = Math.min(elapsed / duration, 1);
     callback(t);
     if (t < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
+  return () => { cancelled = true; };
 }
 
 export function easeOutCubic(t) {

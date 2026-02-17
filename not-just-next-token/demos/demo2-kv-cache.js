@@ -70,6 +70,7 @@ export function init(container) {
   let playing = false;
   let playTimer = null;
   let animating = false;
+  let activeCancellers = [];
 
   function render() {
     while (arrowGroup.firstChild) arrowGroup.removeChild(arrowGroup.firstChild);
@@ -151,7 +152,7 @@ export function init(container) {
       inputArrows.push({ el: kvArrow, maxOpacity: 0.5 });
     }
 
-    animate(ANIM_MS, (t) => {
+    activeCancellers.push(animate(ANIM_MS, (t) => {
       const e = easeOutCubic(t);
       inputArrows.forEach(({ el, maxOpacity }) => el.setAttribute('opacity', String(e * maxOpacity)));
 
@@ -211,7 +212,7 @@ export function init(container) {
         predText.setAttribute('opacity', '0');
 
         const staggerTotal = (LAYER_COUNT - 1) * 50;
-        animate(ANIM_MS + staggerTotal, (t2) => {
+        activeCancellers.push(animate(ANIM_MS + staggerTotal, (t2) => {
           const elapsed = t2 * (ANIM_MS + staggerTotal);
 
           // KV slices with stagger
@@ -235,7 +236,7 @@ export function init(container) {
           if (t2 < 1) return;
 
           // Phase 4: Prediction slides up, arrows fade out
-          animate(ANIM_MS, (t3) => {
+          activeCancellers.push(animate(ANIM_MS, (t3) => {
             const e3 = easeOutCubic(t3);
             const y = PRED_Y + (TOKEN_ROW_Y - PRED_Y) * e3;
             predRect.setAttribute('y', String(y));
@@ -257,13 +258,16 @@ export function init(container) {
               playing = false;
               updateButtons();
             }
-          });
-        });
+          }));
+        }));
       }, 80);
-    });
+      activeCancellers.push(() => clearInterval(layerInterval));
+    }));
   }
 
   function reset() {
+    activeCancellers.forEach(cancel => cancel());
+    activeCancellers = [];
     playing = false;
     animating = false;
     clearTimeout(playTimer);
