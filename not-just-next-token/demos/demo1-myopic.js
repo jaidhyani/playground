@@ -162,11 +162,31 @@ export function init(container) {
 
               if (t2 >= 1) {
                 // Phase 4: prediction slides up into the token row
+                // Simultaneously shift existing tokens to their expanded-row positions
+                const existingTokenData = [];
+                for (let i = 0; i < revealedCount; i++) {
+                  const curX = tokenX(i, revealedCount);
+                  const tgtX = tokenX(i, revealedCount + 1);
+                  existingTokenData.push({
+                    rectEl: tokenGroup.children[i * 2],
+                    textEl: tokenGroup.children[i * 2 + 1],
+                    curX, tgtX,
+                  });
+                }
+
                 activeCancellers.push(animate(ANIM_MS, (t3) => {
                   const e3 = easeOutCubic(t3);
                   const y = PRED_Y + (TOKEN_ROW_Y - PRED_Y) * e3;
                   predRect.setAttribute('y', String(y));
                   predText.setAttribute('y', String(y + TOKEN_H / 2));
+
+                  // Slide existing tokens from current to expanded positions
+                  existingTokenData.forEach(({ rectEl, textEl, curX, tgtX }) => {
+                    const x = curX + (tgtX - curX) * e3;
+                    rectEl.setAttribute('x', String(x));
+                    textEl.setAttribute('x', String(x + TOKEN_W / 2));
+                  });
+
                   // Fade out arrows
                   inputArrows.forEach(a => a.setAttribute('opacity', String(0.7 * (1 - e3))));
                   outArrow.setAttribute('opacity', String(1 - e3));
