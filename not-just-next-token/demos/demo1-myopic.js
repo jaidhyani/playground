@@ -30,8 +30,8 @@ function tokenX(i, total) {
 
 export function init(container) {
   const svg = createSVG(container, VB_W, VB_H);
-  addArrowMarker(svg, 'arrow-input', COLORS.forward, 6);
-  addArrowMarker(svg, 'arrow-output', COLORS.pred, 7);
+  addArrowMarker(svg, 'arrow-input', COLORS.forward, 8);
+  addArrowMarker(svg, 'arrow-output', COLORS.pred, 9);
 
   const tokenGroup = group(svg, 'token-row');
   const arrowGroup = group(svg, 'arrow-layer');
@@ -110,10 +110,10 @@ export function init(container) {
       const ty = TOKEN_ROW_Y + TOKEN_H;
       const targetX = MODEL_X + 15 + (MODEL_W - 30) * ((i + 0.5) / revealedCount);
       const clampedX = Math.max(MODEL_X + 10, Math.min(MODEL_X + MODEL_W - 10, targetX));
-      const cpY = (ty + modelTopY) / 2 - 5;
-      const d = `M ${tx} ${ty} Q ${(tx + clampedX) / 2} ${cpY} ${clampedX} ${modelTopY}`;
+      const midY = (ty + modelTopY) / 2;
+      const d = `M ${tx} ${ty} L ${tx} ${midY} L ${clampedX} ${midY} L ${clampedX} ${modelTopY}`;
       const arrow = path(arrowGroup, d, {
-        stroke: COLORS.forward, strokeWidth: 1.5,
+        stroke: COLORS.forward, strokeWidth: 2.5,
         markerEnd: 'url(#arrow-input)', opacity: 0,
         className: 'input-arrow',
       });
@@ -138,10 +138,10 @@ export function init(container) {
             // Position where this token will land in the expanded row
             const predX = tokenX(nextIdx, revealedCount + 1);
             const predCenterX = predX + TOKEN_W / 2;
-            const cpY = (modelBottomY + PRED_Y) / 2;
-            const d = `M ${modelCenterX} ${modelBottomY} Q ${(modelCenterX + predCenterX) / 2} ${cpY} ${predCenterX} ${PRED_Y}`;
+            const midY = (modelBottomY + PRED_Y) / 2;
+            const d = `M ${modelCenterX} ${modelBottomY} L ${modelCenterX} ${midY} L ${predCenterX} ${midY} L ${predCenterX} ${PRED_Y}`;
             const outArrow = path(arrowGroup, d, {
-              stroke: COLORS.pred, strokeWidth: 2,
+              stroke: COLORS.pred, strokeWidth: 2.5,
               markerEnd: 'url(#arrow-output)', opacity: 0,
             });
 

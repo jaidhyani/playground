@@ -31,9 +31,9 @@ function tokenX(i, total) {
 
 export function init(container) {
   const svg = createSVG(container, VB_W, VB_H);
-  addArrowMarker(svg, 'arrow-input', COLORS.forward, 6);
-  addArrowMarker(svg, 'arrow-output', COLORS.pred, 7);
-  addArrowMarker(svg, 'arrow-kv', COLORS.kvGreen, 6);
+  addArrowMarker(svg, 'arrow-input', COLORS.forward, 8);
+  addArrowMarker(svg, 'arrow-output', COLORS.pred, 9);
+  addArrowMarker(svg, 'arrow-kv', COLORS.kvGreen, 8);
 
   const tokenGroup = group(svg, 'token-row');
   const kvGroup = group(svg, 'kv-layer');
@@ -136,10 +136,10 @@ export function init(container) {
     // Gray arrow from current token to model center
     const tx = tokenX(currentIdx, revealedCount) + TOKEN_W / 2;
     const ty = TOKEN_ROW_Y + TOKEN_H;
-    const cpTokenY = (ty + modelTopY) / 2 - 5;
-    const tokenArrowD = `M ${tx} ${ty} Q ${(tx + modelCenterX) / 2} ${cpTokenY} ${modelCenterX} ${modelTopY}`;
+    const midTokenY = (ty + modelTopY) / 2;
+    const tokenArrowD = `M ${tx} ${ty} L ${tx} ${midTokenY} L ${modelCenterX} ${midTokenY} L ${modelCenterX} ${modelTopY}`;
     const tokenArrow = path(arrowGroup, tokenArrowD, {
-      stroke: COLORS.forward, strokeWidth: 1.5,
+      stroke: COLORS.forward, strokeWidth: 2.5,
       markerEnd: 'url(#arrow-input)', opacity: 0,
       className: 'input-arrow',
     });
@@ -170,7 +170,7 @@ export function init(container) {
       const midY = (boxBottomY + modelTopY) / 2;
       const kvArrowD = `M ${boxCenterX} ${boxBottomY} L ${boxCenterX} ${midY} L ${modelCenterX} ${midY} L ${modelCenterX} ${modelTopY}`;
       const kvArrow = path(arrowGroup, kvArrowD, {
-        stroke: COLORS.kvGreen, strokeWidth: 2,
+        stroke: COLORS.kvGreen, strokeWidth: 2.5,
         markerEnd: 'url(#arrow-kv)', opacity: 0,
         className: 'kv-arrow',
       });
@@ -216,10 +216,10 @@ export function init(container) {
 
           const predX = tokenX(revealedCount, revealedCount + 1);
           const predCenterX = predX + TOKEN_W / 2;
-          const cpOutY = (modelBottomY + PRED_Y) / 2;
-          const outArrowD = `M ${modelCenterX} ${modelBottomY} Q ${(modelCenterX + predCenterX) / 2} ${cpOutY} ${predCenterX} ${PRED_Y}`;
+          const midOutY = (modelBottomY + PRED_Y) / 2;
+          const outArrowD = `M ${modelCenterX} ${modelBottomY} L ${modelCenterX} ${midOutY} L ${predCenterX} ${midOutY} L ${predCenterX} ${PRED_Y}`;
           const outArrow = path(arrowGroup, outArrowD, {
-            stroke: COLORS.pred, strokeWidth: 2,
+            stroke: COLORS.pred, strokeWidth: 2.5,
             markerEnd: 'url(#arrow-output)', opacity: 0,
           });
 
