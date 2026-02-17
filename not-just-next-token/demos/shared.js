@@ -5,6 +5,8 @@ export const COLORS = {
   tokenBorder: '#d1d5db',
   kv: '#4f46e5',
   kvLight: '#c7d2fe',
+  kvGreen: '#16a34a',
+  kvGreenLight: '#bbf7d0',
   pred: '#f59e0b',
   predLight: '#fde68a',
   forward: '#9ca3af',

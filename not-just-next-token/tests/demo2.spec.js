@@ -35,7 +35,7 @@ test.describe('Demo 2: KV Cache', () => {
     await expect(page.locator('.token-block')).toHaveCount(2, { timeout: 5000 });
 
     await page.getByRole('button', { name: 'Step' }).click();
-    // One indigo KV arrow from the first token's cache to the model
+    // Green right-angle KV arrow from selection box to the model
     await expect(page.locator('.kv-arrow')).toHaveCount(1, { timeout: 5000 });
   });
 
