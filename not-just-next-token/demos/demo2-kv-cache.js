@@ -183,55 +183,34 @@ export function init(container) {
 
       if (t < 1) return;
 
-      // --- Phase 2: Layers light up sequentially ---
-      let layerIdx = 0;
-      const layerInterval = setInterval(() => {
-        if (layerIdx < LAYER_COUNT) {
-          layerRects[layerIdx].setAttribute('fill', '#c7d2fe');
-          layerIdx++;
-          return;
-        }
-        clearInterval(layerInterval);
+      // --- Phase 2+3a: Interleave layer lighting with KV tab emergence ---
+      const kvOutputEls = [];
+      for (let s = 0; s < LAYER_COUNT; s++) {
+        const layerCenterY = layersStartY + s * (LAYER_H + LAYER_GAP) + LAYER_H / 2;
+        const tabStartX = MODEL_X + MODEL_W + KV_TAB_GAP;
+        const tabStartY = layerCenterY - KV_SLICE_H / 2;
 
-        // --- Phase 3a: KV output tabs emerge from model layers ---
-        const kvOutputEls = [];
-        for (let s = 0; s < LAYER_COUNT; s++) {
-          const layerCenterY = layersStartY + s * (LAYER_H + LAYER_GAP) + LAYER_H / 2;
-          const tabStartX = MODEL_X + MODEL_W + KV_TAB_GAP;
-          const tabStartY = layerCenterY - KV_SLICE_H / 2;
-
-          const tabLine = path(arrowGroup,
-            `M ${MODEL_X + MODEL_W} ${layerCenterY} L ${tabStartX} ${layerCenterY}`, {
-              stroke: COLORS.kvGreen, strokeWidth: 1.5, opacity: 0,
-            });
-          const tab = rect(kvGroup, tabStartX, tabStartY, KV_TAB_W, KV_SLICE_H, COLORS.kvGreenLight, {
-            rx: 2, stroke: COLORS.kvGreen, strokeWidth: 1, opacity: 0, className: 'kv-slice',
+        const tabLine = path(arrowGroup,
+          `M ${MODEL_X + MODEL_W} ${layerCenterY} L ${tabStartX} ${layerCenterY}`, {
+            stroke: COLORS.kvGreen, strokeWidth: 1.5, opacity: 0,
           });
-          kvOutputEls.push({ tab, tabLine, startX: tabStartX, startY: tabStartY, delay: s * 50 });
-        }
+        const tab = rect(kvGroup, tabStartX, tabStartY, KV_TAB_W, KV_SLICE_H, COLORS.kvGreenLight, {
+          rx: 2, stroke: COLORS.kvGreen, strokeWidth: 1, opacity: 0, className: 'kv-slice',
+        });
+        kvOutputEls.push({ tab, tabLine, startX: tabStartX, startY: tabStartY });
+      }
 
-        let newKvLabel = null;
-        if (currentIdx === 0) {
-          const labelX = tokenX(0, revealedCount) - 4;
-          newKvLabel = text(kvGroup, labelX, KV_ZONE_TOP + KV_SLICE_H / 2, 'KV', {
-            fontSize: 9, fill: COLORS.kvGreen, anchor: 'end', fontWeight: '600',
-          });
-          newKvLabel.setAttribute('opacity', '0');
-        }
+      let newKvLabel = null;
+      if (currentIdx === 0) {
+        const labelX = tokenX(0, revealedCount) - 4;
+        newKvLabel = text(kvGroup, labelX, KV_ZONE_TOP + KV_SLICE_H / 2, 'KV', {
+          fontSize: 9, fill: COLORS.kvGreen, anchor: 'end', fontWeight: '600',
+        });
+        newKvLabel.setAttribute('opacity', '0');
+      }
 
-        const staggerTotal = (LAYER_COUNT - 1) * 50;
-        activeCancellers.push(animate(ANIM_MS + staggerTotal, (t2) => {
-          const elapsed = t2 * (ANIM_MS + staggerTotal);
-
-          kvOutputEls.forEach(({ tab, tabLine, delay }) => {
-            const progress = Math.max(0, Math.min(1, (elapsed - delay) / ANIM_MS));
-            const e2 = easeOutCubic(progress);
-            tab.setAttribute('opacity', String(e2));
-            tabLine.setAttribute('opacity', String(e2 * 0.7));
-          });
-
-          if (t2 < 1) return;
-
+      function animateLayerPair(idx) {
+        if (idx >= LAYER_COUNT) {
           // --- Phase 3b: KV tabs fly up to position + prediction emerges ---
           const finalKvX = tokenX(currentIdx, revealedCount);
 
@@ -256,7 +235,6 @@ export function init(container) {
           activeCancellers.push(animate(ANIM_MS, (t3) => {
             const e3 = easeOutCubic(t3);
 
-            // KV tabs fly from model side to final position, expanding to full width
             kvOutputEls.forEach(({ tab, tabLine, startX, startY }, s) => {
               const finalY = KV_ZONE_TOP + s * (KV_SLICE_H + KV_SLICE_GAP);
               tab.setAttribute('x', String(lerp(startX, finalKvX, e3)));
@@ -277,29 +255,24 @@ export function init(container) {
             activeCancellers.push(animate(ANIM_MS, (t4) => {
               const e4 = easeOutCubic(t4);
 
-              // Prediction slides up
               const predY = PRED_Y + (TOKEN_ROW_Y - PRED_Y) * e4;
               predRect.setAttribute('y', String(predY));
               predText.setAttribute('y', String(predY + TOKEN_H / 2));
 
-              // Existing tokens shift to accommodate the new token
               tokenEls.forEach(({ rect: r, text: t }, i) => {
                 const curX = lerp(tokenX(i, revealedCount), tokenX(i, revealedCount + 1), e4);
                 r.setAttribute('x', String(curX));
                 t.setAttribute('x', String(curX + TOKEN_W / 2));
               });
 
-              // Existing KV stacks shift with their tokens
               kvSliceEls.forEach((slices, i) => {
                 const curX = lerp(tokenX(i, revealedCount), tokenX(i, revealedCount + 1), e4);
                 slices.forEach(slice => slice.setAttribute('x', String(curX)));
               });
 
-              // New KV stack (just placed for currentIdx) also shifts
               const newKvCurX = lerp(tokenX(currentIdx, revealedCount), tokenX(currentIdx, revealedCount + 1), e4);
               kvOutputEls.forEach(({ tab }) => tab.setAttribute('x', String(newKvCurX)));
 
-              // KV label shifts
               if (kvLabelEl) {
                 kvLabelEl.setAttribute('x', String(lerp(tokenX(0, revealedCount) - 4, tokenX(0, revealedCount + 1) - 4, e4)));
               }
@@ -307,7 +280,6 @@ export function init(container) {
                 newKvLabel.setAttribute('x', String(lerp(tokenX(0, revealedCount) - 4, tokenX(0, revealedCount + 1) - 4, e4)));
               }
 
-              // Arrows fade out
               phase1Els.forEach(({ el, maxOpacity }) =>
                 el.setAttribute('opacity', String(maxOpacity * (1 - e4)))
               );
@@ -326,9 +298,20 @@ export function init(container) {
               }
             }));
           }));
+          return;
+        }
+
+        layerRects[idx].setAttribute('fill', '#c7d2fe');
+        activeCancellers.push(animate(100, (tp) => {
+          const ep = easeOutCubic(tp);
+          kvOutputEls[idx].tab.setAttribute('opacity', String(ep));
+          kvOutputEls[idx].tabLine.setAttribute('opacity', String(ep * 0.7));
+          if (tp < 1) return;
+          animateLayerPair(idx + 1);
         }));
-      }, 80);
-      activeCancellers.push(() => clearInterval(layerInterval));
+      }
+
+      animateLayerPair(0);
     }));
   }
 
